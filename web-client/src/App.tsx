@@ -75,11 +75,11 @@ function getFranceUnits(): any[] {
 
 // --- 高级隐藏单位库 (通过军校解锁) ---
 export const ADVANCED_CARDS_DATA = [
-  { id: 'adv-soviet-1', name: '斯大林格勒近卫师', faction: Faction.SOVIET, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 7, atk: 12, def: 8, hp: 15, desc: '【高级】经历过最残酷巷战的钢铁部队。', keywords: [Keyword.GUARD, Keyword.AMBUSH, Keyword.HEAVY_ARMOR] },
-  { id: 'adv-german-1', name: '虎王重型坦克', faction: Faction.GERMANY, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 10, atk: 20, def: 15, hp: 25, desc: '【高级】无敌的正面装甲，盟军装甲的终极噩梦。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD, Keyword.BLITZ] },
-  { id: 'adv-usa-1', name: '101空降师 "啸鹰"', faction: Faction.USA, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 6, atk: 10, def: 6, hp: 10, desc: '【高级】"从天而降，包围敌军"！', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
-  { id: 'adv-uk-1', name: 'SAS 特种空勤团', faction: Faction.UK, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 12, def: 5, hp: 8, desc: '【高级】"勇者必胜"，执行最高难度破坏任务。', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
-  { id: 'adv-france-1', name: '自由法国装甲师', faction: Faction.FRANCE, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 8, atk: 12, def: 10, hp: 15, desc: '【高级】为光复祖国而战的精锐装甲力量。', keywords: [Keyword.BLITZ, Keyword.HEAVY_ARMOR] },
+  { id: 'adv-soviet-1', name: '斯大林格勒近卫师', faction: Faction.SOVIET, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 7, atk: 10, def: 7, hp: 12, desc: '【高级】经历过最残酷巷战的钢铁部队。', keywords: [Keyword.GUARD, Keyword.AMBUSH, Keyword.HEAVY_ARMOR] },
+  { id: 'adv-german-1', name: '虎王重型坦克', faction: Faction.GERMANY, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 10, atk: 14, def: 12, hp: 18, desc: '【高级】无敌的正面装甲，盟军装甲的终极噩梦。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD, Keyword.BLITZ] },
+  { id: 'adv-usa-1', name: '101空降师 "啸鹰"', faction: Faction.USA, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 6, atk: 8, def: 5, hp: 8, desc: '【高级】"从天而降，包围敌军"！', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
+  { id: 'adv-uk-1', name: 'SAS 特种空勤团', faction: Faction.UK, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 9, def: 4, hp: 7, desc: '【高级】"勇者必胜"，执行最高难度破坏任务。', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
+  { id: 'adv-france-1', name: '自由法国装甲师', faction: Faction.FRANCE, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 8, atk: 10, def: 8, hp: 12, desc: '【高级】为光复祖国而战的精锐装甲力量。', keywords: [Keyword.BLITZ, Keyword.HEAVY_ARMOR] },
 ];
 
 export const ADVANCED_ORDERS_DATA = [
@@ -307,8 +307,8 @@ function buildDeck(faction: Faction): any[] {
   const myAdvancedOrders = ADVANCED_ORDERS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id));
 
   for (let i = 1; i <= 60; i++) {
-    // 每10张牌尝试随机塞入一张高级牌
-    if (i % 10 === 0 && (myAdvancedUnits.length > 0 || myAdvancedOrders.length > 0)) {
+    // 每30张牌尝试随机塞入一张高级牌（也就是一副60张的牌库最多只有2张高级牌，保证稀有度）
+    if (i % 30 === 0 && (myAdvancedUnits.length > 0 || myAdvancedOrders.length > 0)) {
        const pool = [...myAdvancedUnits, ...myAdvancedOrders];
        const adv = pool[Math.floor(Math.random() * pool.length)];
        if (adv.type === CardType.UNIT) {
