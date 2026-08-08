@@ -75,24 +75,24 @@ function getFranceUnits(): any[] {
 
 // --- 高级隐藏单位库 (通过军校解锁) ---
 export const ADVANCED_CARDS_DATA = [
-  { id: 'adv-soviet-1', name: '斯大林格勒近卫师', faction: Faction.SOVIET, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 6, def: 5, hp: 8, desc: '【高级】经历过最残酷巷战的钢铁部队。', keywords: [Keyword.GUARD, Keyword.AMBUSH] },
-  { id: 'adv-german-1', name: '虎王重型坦克', faction: Faction.GERMANY, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 10, atk: 15, def: 12, hp: 15, desc: '【高级】无敌的正面装甲，盟军装甲的终极噩梦。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD] },
-  { id: 'adv-usa-1', name: '101空降师 "啸鹰"', faction: Faction.USA, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 6, atk: 7, def: 4, hp: 6, desc: '【高级】"从天而降，包围敌军"！', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
-  { id: 'adv-uk-1', name: 'SAS 特种空勤团', faction: Faction.UK, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 8, def: 3, hp: 5, desc: '【高级】"勇者必胜"，执行最高难度破坏任务。', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
-  { id: 'adv-france-1', name: '自由法国装甲师', faction: Faction.FRANCE, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 7, atk: 8, def: 7, hp: 9, desc: '【高级】为光复祖国而战的精锐装甲力量。', keywords: [Keyword.BLITZ, Keyword.HEAVY_ARMOR] },
+  { id: 'adv-soviet-1', name: '斯大林格勒近卫师', faction: Faction.SOVIET, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 7, atk: 12, def: 8, hp: 15, desc: '【高级】经历过最残酷巷战的钢铁部队。', keywords: [Keyword.GUARD, Keyword.AMBUSH, Keyword.HEAVY_ARMOR] },
+  { id: 'adv-german-1', name: '虎王重型坦克', faction: Faction.GERMANY, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 10, atk: 20, def: 15, hp: 25, desc: '【高级】无敌的正面装甲，盟军装甲的终极噩梦。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD, Keyword.BLITZ] },
+  { id: 'adv-usa-1', name: '101空降师 "啸鹰"', faction: Faction.USA, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 6, atk: 10, def: 6, hp: 10, desc: '【高级】"从天而降，包围敌军"！', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
+  { id: 'adv-uk-1', name: 'SAS 特种空勤团', faction: Faction.UK, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 12, def: 5, hp: 8, desc: '【高级】"勇者必胜"，执行最高难度破坏任务。', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
+  { id: 'adv-france-1', name: '自由法国装甲师', faction: Faction.FRANCE, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 8, atk: 12, def: 10, hp: 15, desc: '【高级】为光复祖国而战的精锐装甲力量。', keywords: [Keyword.BLITZ, Keyword.HEAVY_ARMOR] },
 ];
 
 export const ADVANCED_ORDERS_DATA = [
   {
-    id: 'adv-order-soviet', name: '朱可夫的决断', faction: Faction.SOVIET, type: CardType.ORDER, cost: 6, desc: '【高级指令】最高统帅部下达总攻命令！我方全军攻击力+3，血量+3。',
-    effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.attack += 3; u.hp += 3; u.maxHp += 3; }); }
+    id: 'adv-order-soviet', name: '朱可夫的决断', faction: Faction.SOVIET, type: CardType.ORDER, cost: 6, desc: '【高级指令】最高统帅部下达总攻命令！我方全军攻击力+5，血量+5。',
+    effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.attack += 5; u.hp += 5; u.maxHp += 5; }); }
   },
   {
-    id: 'adv-order-german', name: '古德里安的装甲矛头', faction: Faction.GERMANY, type: CardType.ORDER, cost: 6, desc: '【高级指令】突破极限！我方所有单位恢复行动，并获得重甲。',
-    effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.hasAttackedThisTurn = false; u.hasMovedThisTurn = false; if(!u.keywords.includes(Keyword.HEAVY_ARMOR)) u.keywords.push(Keyword.HEAVY_ARMOR); }); }
+    id: 'adv-order-german', name: '古德里安的装甲矛头', faction: Faction.GERMANY, type: CardType.ORDER, cost: 6, desc: '【高级指令】突破极限！我方所有单位恢复行动，攻击力+3，并获得重甲。',
+    effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.attack += 3; u.hasAttackedThisTurn = false; u.hasMovedThisTurn = false; if(!u.keywords.includes(Keyword.HEAVY_ARMOR)) u.keywords.push(Keyword.HEAVY_ARMOR); }); }
   },
   {
-    id: 'adv-order-usa', name: '曼哈顿计划', faction: Faction.USA, type: CardType.ORDER, cost: 10, desc: '【高级指令】终极武器！对敌方总部直接造成 12 点毁灭性伤害。',
+    id: 'adv-order-manhattan', name: '曼哈顿计划', faction: Faction.USA, type: CardType.ORDER, cost: 10, desc: '【高级指令】终极武器！对敌方总部直接造成 12 点毁灭性伤害。',
     effect: (game: Game) => { const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1; enemy.takeHqDamage(12); }
   },
 ];
@@ -125,6 +125,11 @@ function createGenericOrders(faction: Faction): OrderCard[] {
 function createSovietOrders(): OrderCard[] {
   return [
     {
+      id: 'soviet-order-heal', name: '战地医院', description: '紧急救治！总部恢复 8 点血量。',
+      type: CardType.ORDER, faction: Faction.SOVIET, deployCost: 3,
+      effect: (game: Game) => { game.currentPlayer.hqHp = Math.min(25, game.currentPlayer.hqHp + 8); }
+    },
+    {
       id: 'soviet-order-ura', name: '乌拉冲锋', description: '全线反击！我方所有场上单位攻击力+2，血量+1。',
       type: CardType.ORDER, faction: Faction.SOVIET, deployCost: 3,
       effect: (game: Game) => {
@@ -145,6 +150,11 @@ function createSovietOrders(): OrderCard[] {
 
 function createGermanOrders(): OrderCard[] {
   return [
+    {
+      id: 'german-order-heal', name: '野战急救', description: '紧急救治！总部恢复 8 点血量。',
+      type: CardType.ORDER, faction: Faction.GERMANY, deployCost: 3,
+      effect: (game: Game) => { game.currentPlayer.hqHp = Math.min(25, game.currentPlayer.hqHp + 8); }
+    },
     {
       id: 'german-order-blitzkrieg', name: '闪电战', description: '装甲突袭！摸2张牌，恢复我方所有单位行动状态，并获得2点CP。',
       type: CardType.ORDER, faction: Faction.GERMANY, deployCost: 3,
@@ -168,6 +178,11 @@ function createGermanOrders(): OrderCard[] {
 
 function createUSAOrders(): OrderCard[] {
   return [
+    {
+      id: 'usa-order-heal', name: '医疗物资空投', description: '紧急救治！总部恢复 8 点血量。',
+      type: CardType.ORDER, faction: Faction.USA, deployCost: 3,
+      effect: (game: Game) => { game.currentPlayer.hqHp = Math.min(25, game.currentPlayer.hqHp + 8); }
+    },
     {
       id: 'usa-order-carpet', name: 'B-17地毯轰炸', description: '空中打击！对敌方支援战线的所有单位造成 4 点伤害。',
       type: CardType.ORDER, faction: Faction.USA, deployCost: 5,
@@ -194,6 +209,11 @@ function createUSAOrders(): OrderCard[] {
 function createUKOrders(): OrderCard[] {
   return [
     {
+      id: 'uk-order-heal', name: '红十字会', description: '紧急救治！总部恢复 8 点血量。',
+      type: CardType.ORDER, faction: Faction.UK, deployCost: 3,
+      effect: (game: Game) => { game.currentPlayer.hqHp = Math.min(25, game.currentPlayer.hqHp + 8); }
+    },
+    {
       id: 'uk-order-radar', name: '雷达预警', description: '提前部署！抽2张牌，我方所有单位防御力+1。',
       type: CardType.ORDER, faction: Faction.UK, deployCost: 3,
       effect: (game: Game) => {
@@ -218,6 +238,11 @@ function createUKOrders(): OrderCard[] {
 
 function createFranceOrders(): OrderCard[] {
   return [
+    {
+      id: 'france-order-heal', name: '自由法国医疗队', description: '紧急救治！总部恢复 8 点血量。',
+      type: CardType.ORDER, faction: Faction.FRANCE, deployCost: 3,
+      effect: (game: Game) => { game.currentPlayer.hqHp = Math.min(25, game.currentPlayer.hqHp + 8); }
+    },
     {
       id: 'france-order-maginot', name: '马奇诺防线', description: '坚固设防！总部恢复5点血量，我方所有单位获得重甲（防御力+2）。',
       type: CardType.ORDER, faction: Faction.FRANCE, deployCost: 4,
@@ -355,7 +380,7 @@ export default function App() {
   const [attackAnim, setAttackAnim] = useState<{ attackerId: string, defenderId: string, phase: 'windup' | 'strike' } | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [globalShake, setGlobalShake] = useState(0);
-  const [flash, setFlash] = useState<'red' | 'white' | null>(null);
+  const [flash, setFlash] = useState<'red' | 'white' | 'gold' | null>(null);
   const [turnBanner, setTurnBanner] = useState<string | null>(null);
   const [orderVfx, setOrderVfx] = useState<{ type: 'explosions' | 'nuke' | 'buff', area: 'p1-support' | 'p2-support' | 'p1-hq' | 'p2-hq' | 'p1-board' | 'p2-board' | 'p1-frontline' | 'p2-frontline' } | null>(null);
 
@@ -412,7 +437,7 @@ export default function App() {
         } else if (data.type === 'PLAY_CARD') {
           const card = game.player2.hand[data.index];
           game.player2.playCard(data.index, game);
-          if (card && card.type === CardType.ORDER) {
+          if (card && (card.type === CardType.ORDER || card.isAdvanced)) {
             playOrderVFX(card.id, false);
             networkManager.send({ type: 'VFX', cardId: card.id, isP1: false });
           }
@@ -470,7 +495,7 @@ export default function App() {
             setPlayingAnim(null);
             forceUpdate();
             
-            if (cardToPlay.type === CardType.ORDER) {
+            if (cardToPlay.type === CardType.ORDER || cardToPlay.isAdvanced) {
               await playOrderVFX(cardToPlay.id, false);
             } else {
               await sleep(800);
@@ -716,15 +741,21 @@ export default function App() {
   const p2 = game.player2;
 
   const playOrderVFX = async (cardId: string, isP1: boolean) => {
+    if (cardId.includes('adv-')) {
+      setFlash('gold');
+      setGlobalShake(30);
+      await new Promise(r => setTimeout(r, 600));
+    }
+
     if (cardId.includes('katyusha') || cardId.includes('carpet')) {
       setOrderVfx({ type: 'explosions', area: isP1 ? 'p2-support' : 'p1-support' });
       setGlobalShake(20);
       setFlash('red');
-    } else if (cardId.includes('v2')) {
+    } else if (cardId.includes('v2') || cardId.includes('manhattan')) {
       setOrderVfx({ type: 'nuke', area: isP1 ? 'p2-hq' : 'p1-hq' });
-      setGlobalShake(40);
+      setGlobalShake(50);
       setFlash('white');
-    } else if (cardId.includes('ura') || cardId.includes('blitzkrieg') || cardId.includes('radar') || cardId.includes('maginot')) {
+    } else if (cardId.includes('ura') || cardId.includes('blitzkrieg') || cardId.includes('radar') || cardId.includes('maginot') || cardId.includes('adv-order')) {
       setOrderVfx({ type: 'buff', area: isP1 ? 'p1-board' : 'p2-board' });
     } else if (cardId.includes('navy')) {
       setOrderVfx({ type: 'explosions', area: isP1 ? 'p2-board' : 'p1-board' });
@@ -732,7 +763,7 @@ export default function App() {
     } else if (cardId.includes('resistance') || cardId.includes('order-2')) {
       setOrderVfx({ type: 'explosions', area: isP1 ? 'p2-board' : 'p1-board' });
       setGlobalShake(15);
-    } else if (cardId.includes('logistics') || cardId.includes('order-1')) {
+    } else if (cardId.includes('logistics') || cardId.includes('order-1') || cardId.includes('heal')) {
       setOrderVfx({ type: 'buff', area: isP1 ? 'p1-hq' : 'p2-hq' });
     }
     
@@ -798,7 +829,7 @@ export default function App() {
       setHiddenHandIndex(null);
       if (success) {
         forceUpdate();
-        if (!isUnit) {
+        if (card.type === CardType.ORDER || card.isAdvanced) {
           await playOrderVFX(card.id, true);
         }
       }
@@ -964,7 +995,7 @@ export default function App() {
       <AnimatePresence>
         {flash && (
           <motion.div initial={{ opacity: 0.8 }} animate={{ opacity: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.8, ease: "easeOut" }}
-            className={`fixed inset-0 pointer-events-none z-[150] mix-blend-overlay ${flash === 'red' ? 'bg-[radial-gradient(circle,transparent_20%,#7f1d1d_100%)]' : 'bg-white'}`}
+            className={`fixed inset-0 pointer-events-none z-[150] mix-blend-overlay ${flash === 'red' ? 'bg-[radial-gradient(circle,transparent_20%,#7f1d1d_100%)]' : flash === 'gold' ? 'bg-[radial-gradient(circle,transparent_20%,#ca8a04_100%)]' : 'bg-white'}`}
           />
         )}
       </AnimatePresence>
