@@ -39,8 +39,13 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
       </div>
 
       {/* 卡牌类型标识 - 右上角 */}
-      <div className="absolute top-2 right-2 text-xs font-bold uppercase opacity-80 z-10 bg-black/50 px-1 rounded">
-        {card.type === CardType.UNIT ? (unitCard?.category || '单位') : '指令'}
+      <div className="absolute top-2 right-2 text-xs font-bold uppercase opacity-80 z-10 flex gap-1">
+        {card.isAdvanced && (
+           <span className="bg-amber-600 text-white px-1 rounded shadow-lg border border-amber-400">高级</span>
+        )}
+        <span className="bg-black/50 px-1 rounded">
+          {card.type === CardType.UNIT ? (unitCard?.category || '单位') : '指令'}
+        </span>
       </div>
 
       {/* 图片/插图占位 */}

@@ -4,6 +4,7 @@ import { Player } from './engine/Player';
 import { Faction, CardType, UnitCategory, Keyword } from './engine/types';
 import type { UnitCard, OrderCard, BaseCard } from './engine/types';
 import { CardComponent } from './components/CardComponent';
+import { Academy } from './components/Academy';
 import { motion, AnimatePresence } from 'framer-motion';
 import { networkManager, type NetworkAction } from './engine/NetworkManager';
 import './index.css';
@@ -71,6 +72,30 @@ function getFranceUnits(): any[] {
     { name: '自由法国游击队', cat: UnitCategory.INFANTRY, cost: 2, atk: 4, def: 1, hp: 3, desc: '在敌后进行破坏活动的抵抗力量。', keywords: [Keyword.AMBUSH] }
   ];
 }
+
+// --- 高级隐藏单位库 (通过军校解锁) ---
+export const ADVANCED_CARDS_DATA = [
+  { id: 'adv-soviet-1', name: '斯大林格勒近卫师', faction: Faction.SOVIET, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 6, def: 5, hp: 8, desc: '【高级】经历过最残酷巷战的钢铁部队。', keywords: [Keyword.GUARD, Keyword.AMBUSH] },
+  { id: 'adv-german-1', name: '虎王重型坦克', faction: Faction.GERMANY, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 10, atk: 15, def: 12, hp: 15, desc: '【高级】无敌的正面装甲，盟军装甲的终极噩梦。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD] },
+  { id: 'adv-usa-1', name: '101空降师 "啸鹰"', faction: Faction.USA, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 6, atk: 7, def: 4, hp: 6, desc: '【高级】"从天而降，包围敌军"！', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
+  { id: 'adv-uk-1', name: 'SAS 特种空勤团', faction: Faction.UK, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 8, def: 3, hp: 5, desc: '【高级】"勇者必胜"，执行最高难度破坏任务。', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
+  { id: 'adv-france-1', name: '自由法国装甲师', faction: Faction.FRANCE, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 7, atk: 8, def: 7, hp: 9, desc: '【高级】为光复祖国而战的精锐装甲力量。', keywords: [Keyword.BLITZ, Keyword.HEAVY_ARMOR] },
+];
+
+export const ADVANCED_ORDERS_DATA = [
+  {
+    id: 'adv-order-soviet', name: '朱可夫的决断', faction: Faction.SOVIET, type: CardType.ORDER, cost: 6, desc: '【高级指令】最高统帅部下达总攻命令！我方全军攻击力+3，血量+3。',
+    effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.attack += 3; u.hp += 3; u.maxHp += 3; }); }
+  },
+  {
+    id: 'adv-order-german', name: '古德里安的装甲矛头', faction: Faction.GERMANY, type: CardType.ORDER, cost: 6, desc: '【高级指令】突破极限！我方所有单位恢复行动，并获得重甲。',
+    effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.hasAttackedThisTurn = false; u.hasMovedThisTurn = false; if(!u.keywords.includes(Keyword.HEAVY_ARMOR)) u.keywords.push(Keyword.HEAVY_ARMOR); }); }
+  },
+  {
+    id: 'adv-order-usa', name: '曼哈顿计划', faction: Faction.USA, type: CardType.ORDER, cost: 10, desc: '【高级指令】终极武器！对敌方总部直接造成 12 点毁灭性伤害。',
+    effect: (game: Game) => { const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1; enemy.takeHqDamage(12); }
+  },
+];
 
 // --- 真实历史背景指令卡 ---
 function createGenericOrders(faction: Faction): OrderCard[] {
@@ -247,7 +272,32 @@ function buildDeck(faction: Faction): any[] {
     default: factionUnits = getSovietUnits();
   }
   
+  // 注入已解锁的高级卡牌
+  let unlockedIds: string[] = [];
+  try {
+    unlockedIds = JSON.parse(localStorage.getItem('unlockedCards') || '[]');
+  } catch(e) {}
+
+  const myAdvancedUnits = ADVANCED_CARDS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id));
+  const myAdvancedOrders = ADVANCED_ORDERS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id));
+
   for (let i = 1; i <= 60; i++) {
+    // 每10张牌尝试随机塞入一张高级牌
+    if (i % 10 === 0 && (myAdvancedUnits.length > 0 || myAdvancedOrders.length > 0)) {
+       const pool = [...myAdvancedUnits, ...myAdvancedOrders];
+       const adv = pool[Math.floor(Math.random() * pool.length)];
+       if (adv.type === CardType.UNIT) {
+          deck.push({
+            id: `${adv.id}-${i}`, name: adv.name, description: adv.desc, type: CardType.UNIT, category: adv.cat, faction: adv.faction,
+            deployCost: adv.cost, attack: adv.atk, defense: adv.def, hp: adv.hp, maxHp: adv.hp, moveCost: 1, keywords: adv.keywords || [],
+            hasMovedThisTurn: false, hasAttackedThisTurn: false, line: 'support', isAdvanced: true
+          } as UnitCard);
+       } else {
+          deck.push({ ...adv, id: `${adv.id}-${i}`, isAdvanced: true, deployCost: adv.cost });
+       }
+       continue;
+    }
+
     if (i % 4 === 0 || i % 4 === 3) {
       const randomOrder = factionOrders[Math.floor(Math.random() * factionOrders.length)];
       deck.push({ ...randomOrder, id: `${randomOrder.id}-${i}` });
@@ -292,6 +342,7 @@ export default function App() {
   const isAITurnRunning = useRef(false);
 
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showAcademy, setShowAcademy] = useState(false);
 
   const forceUpdate = () => setTick(t => t + 1);
 
@@ -492,12 +543,20 @@ export default function App() {
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/black-linen.png')] relative">
         
         {/* 游戏教程按钮 */}
-        <button 
-          onClick={() => setShowTutorial(true)}
-          className="absolute top-8 right-8 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transition-colors border-2 border-blue-400"
-        >
-          📖 游戏教程
-        </button>
+        <div className="absolute top-8 right-8 flex flex-col gap-3">
+          <button 
+            onClick={() => setShowTutorial(true)}
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transition-colors border-2 border-blue-400"
+          >
+            📖 游戏教程
+          </button>
+          <button 
+            onClick={() => setShowAcademy(true)}
+            className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transition-colors border-2 border-amber-400"
+          >
+            🏛️ 历史军校 (解锁卡牌)
+          </button>
+        </div>
 
         <h1 className="text-6xl font-black mb-8 tracking-widest text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.8)]">二战卡牌风云</h1>
         
@@ -642,6 +701,10 @@ export default function App() {
               </motion.div>
             </motion.div>
           )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showAcademy && <Academy onClose={() => setShowAcademy(false)} />}
         </AnimatePresence>
       </div>
     );

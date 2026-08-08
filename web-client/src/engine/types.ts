@@ -27,6 +27,7 @@ export interface BaseCard {
   type: CardType;
   faction: Faction;
   deployCost: number; // 部署消耗的指挥点 (1-15)
+  isAdvanced?: boolean; // 是否为高级卡牌（需通过军校解锁）
 }
 
 // 词条系统
