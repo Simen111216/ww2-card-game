@@ -382,7 +382,7 @@ export default function App() {
   const [globalShake, setGlobalShake] = useState(0);
   const [flash, setFlash] = useState<'red' | 'white' | 'gold' | null>(null);
   const [turnBanner, setTurnBanner] = useState<string | null>(null);
-  const [orderVfx, setOrderVfx] = useState<{ type: 'explosions' | 'nuke' | 'buff', area: 'p1-support' | 'p2-support' | 'p1-hq' | 'p2-hq' | 'p1-board' | 'p2-board' | 'p1-frontline' | 'p2-frontline' } | null>(null);
+  const [orderVfx, setOrderVfx] = useState<{ type: 'explosions' | 'nuke' | 'buff' | 'advanced', area: 'p1-support' | 'p2-support' | 'p1-hq' | 'p2-hq' | 'p1-board' | 'p2-board' | 'p1-frontline' | 'p2-frontline' | 'global' } | null>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -742,8 +742,9 @@ export default function App() {
 
   const playOrderVFX = async (cardId: string, isP1: boolean) => {
     if (cardId.includes('adv-')) {
+      setOrderVfx({ type: 'advanced', area: 'global' });
       setFlash('gold');
-      setGlobalShake(30);
+      setGlobalShake(40);
       await new Promise(r => setTimeout(r, 600));
     }
 
@@ -1049,6 +1050,22 @@ export default function App() {
             transition={{ duration: 1.2, ease: "easeOut" }}
             className={`fixed ${orderVfx.area === 'p2-hq' ? 'top-10' : 'bottom-10'} left-1/2 -translate-x-1/2 z-[200] pointer-events-none rounded-full ${orderVfx.type === 'buff' ? 'bg-[radial-gradient(circle,rgba(250,204,21,1)_0%,transparent_70%)] mix-blend-screen w-[300px] h-[300px]' : 'bg-[radial-gradient(circle,rgba(255,255,255,1)_0%,rgba(255,50,0,0.8)_30%,transparent_100%)] mix-blend-screen w-[400px] h-[400px]'}`}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {orderVfx && orderVfx.type === 'advanced' && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
+            animate={{ opacity: [0, 1, 0.8, 0], scale: [0.5, 1.2, 1.5, 2], rotate: 0 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="fixed inset-0 z-[300] pointer-events-none flex items-center justify-center mix-blend-screen"
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(250,204,21,0.5)_0%,transparent_70%)]" />
+            <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-yellow-600 drop-shadow-[0_0_20px_rgba(250,204,21,1)] tracking-widest uppercase italic">
+              高级部署
+            </h1>
+          </motion.div>
         )}
       </AnimatePresence>
 
