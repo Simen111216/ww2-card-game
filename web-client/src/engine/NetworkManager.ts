@@ -12,7 +12,8 @@ export type NetworkAction =
   | { type: 'END_TURN' }
   | { type: 'USE_SKILL' }
   | { type: 'SYNC_STATE', state: any }
-  | { type: 'VFX', cardId: string, isP1: boolean };
+  | { type: 'VFX', cardId: string, isP1: boolean }
+  | { type: 'START_PLAY_ANIM', index: number, isP1: boolean, card: any };
 
 export class NetworkManager {
   private peer: Peer | null = null;

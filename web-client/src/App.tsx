@@ -736,6 +736,9 @@ export default function App() {
       } else if (data.type === 'VFX') {
         const localIsP1 = networkManager.isHost ? data.isP1 : !data.isP1;
         playOrderVFX(data.cardId, localIsP1);
+      } else if (data.type === 'START_PLAY_ANIM') {
+        const localIsP1 = networkManager.isHost ? data.isP1 : !data.isP1;
+        runPlayAnim(localIsP1 ? 'p1' : 'p2', data.index, data.card);
       }
       
       // If we are host, process incoming actions from client
@@ -744,10 +747,22 @@ export default function App() {
           game.nextTurn();
         } else if (data.type === 'PLAY_CARD') {
           const card = game.player2.hand[data.index];
-          game.player2.playCard(data.index, game);
-          if (card && (card.type === CardType.ORDER || card.isAdvanced)) {
-            playOrderVFX(card.id, false);
-            networkManager.send({ type: 'VFX', cardId: card.id, isP1: false });
+          if (card) {
+            networkManager.send({ type: 'START_PLAY_ANIM', index: data.index, isP1: false, card });
+            runPlayAnim('p2', data.index, card).then(() => {
+              game.player2.playCard(data.index, game);
+              forceUpdate();
+              try {
+                networkManager.send({ type: 'SYNC_STATE', state: game.serialize() });
+              } catch (e) {
+                console.error("Host serialize error in onDataCb:", e);
+              }
+              if (card.type === CardType.ORDER || card.isAdvanced) {
+                playOrderVFX(card.id, false);
+                networkManager.send({ type: 'VFX', cardId: card.id, isP1: false });
+              }
+            });
+            return; // Skip the global forceUpdate and SYNC_STATE below
           }
         } else if (data.type === 'MOVE_UNIT') {
           game.moveUnit(game.player2, game.player1, game.player2.board[data.index]);
@@ -1194,6 +1209,33 @@ export default function App() {
     }
   };
 
+  const runPlayAnim = async (player: 'p1' | 'p2', index: number, card: BaseCard) => {
+    if (player === 'p1') {
+      setHiddenHandIndex(index);
+    }
+    const isUnit = card.type === CardType.UNIT;
+    let statsSum = isUnit ? card.deployCost + ((card as any).attack || 0) + ((card as any).hp || 0) : card.deployCost * 2;
+
+    setPlayingAnim({ card, index, status: 'hover', statsSum, player });
+    await new Promise(r => setTimeout(r, Math.min(1500, 500 + statsSum * 40)));
+
+    if (isUnit) {
+      setPlayingAnim(p => p ? { ...p, status: 'slam' } : null);
+      setGlobalShake(Math.min(40, statsSum * 1.5));
+      await new Promise(r => setTimeout(r, 150));
+      setGlobalShake(0);
+      await new Promise(r => setTimeout(r, 150));
+    } else {
+      setPlayingAnim(p => p ? { ...p, status: 'slide' } : null);
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    setPlayingAnim(null);
+    if (player === 'p1') {
+      setHiddenHandIndex(null);
+    }
+  };
+
   const handleDragEnd = async (_e: any, info: any, index: number, card: BaseCard) => {
     if (gameMode === 'multiplayer' && !isHost) {
       if (info.offset.y < -100) {
@@ -1205,37 +1247,22 @@ export default function App() {
     if (p1.cp < card.deployCost) return;
 
     if (info.point.y < window.innerHeight - 250) {
-      const isUnit = card.type === CardType.UNIT;
-      let statsSum = isUnit ? card.deployCost + (card as UnitCard).attack + (card as UnitCard).hp : card.deployCost * 2;
-
-      setHiddenHandIndex(index);
-          setPlayingAnim({ card, index, status: 'hover', statsSum, player: 'p1' });
-          await new Promise(r => setTimeout(r, Math.min(1500, 500 + statsSum * 40)));
-
-      if (isUnit) {
-        setPlayingAnim(p => p ? { ...p, status: 'slam' } : null);
-        setGlobalShake(Math.min(40, statsSum * 1.5));
-        await new Promise(r => setTimeout(r, 150));
-        setGlobalShake(0);
-        await new Promise(r => setTimeout(r, 150));
-      } else {
-        setPlayingAnim(p => p ? { ...p, status: 'slide' } : null);
-        await new Promise(r => setTimeout(r, 400));
+      if (gameMode === 'multiplayer' && isHost) {
+         networkManager.send({ type: 'START_PLAY_ANIM', index, isP1: true, card });
       }
+      await runPlayAnim('p1', index, card);
 
       const success = p1.playCard(index, game);
-      setPlayingAnim(null);
-      setHiddenHandIndex(null);
       if (success) {
         forceUpdate();
+        if (gameMode === 'multiplayer' && isHost) {
+          networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
+        }
         if (card.type === CardType.ORDER || card.isAdvanced) {
-          await playOrderVFX(card.id, true);
           if (gameMode === 'multiplayer' && isHost) {
             networkManager.send({ type: 'VFX', cardId: card.id, isP1: true });
           }
-        }
-        if (gameMode === 'multiplayer' && isHost) {
-          networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
+          await playOrderVFX(card.id, true);
         }
       }
     }
@@ -1707,12 +1734,12 @@ export default function App() {
                        p1.commander!.useActive(game, p1);
                        showToast(`指挥官技能: ${p1.commander!.activeName}`);
                        game.addLog(p1.name, `消耗 ${p1.commander!.activeCost} CP 释放了主动技能 [${p1.commander!.activeName}]！`, 'skill');
-                       playOrderVFX('cmd-skill', true);
                        forceUpdate();
                        if (gameMode === 'multiplayer' && isHost) {
-                         networkManager.send({ type: 'VFX', cardId: 'cmd-skill', isP1: true });
                          networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
+                         networkManager.send({ type: 'VFX', cardId: 'cmd-skill', isP1: true });
                        }
+                       playOrderVFX('cmd-skill', true);
                     }}
                     className="bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg border-2 border-purple-900 shadow-lg animate-pulse flex flex-col items-center"
                   >
