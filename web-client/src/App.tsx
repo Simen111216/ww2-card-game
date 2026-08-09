@@ -1033,7 +1033,7 @@ export default function App() {
           )}
         </div>
 
-        {(gameMode === 'ai' || gameMode === 'campaign' || (gameMode === 'multiplayer' && isHost && connectionStatus === '已连接！')) && (
+        {(gameMode === 'ai' || gameMode === 'campaign' || (gameMode === 'multiplayer' && isHost && connectionStatus.startsWith('已连接！'))) && (
           <button onClick={startGame} className="mt-12 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-4 px-16 rounded-xl border-b-4 border-yellow-800 text-3xl transition-transform hover:-translate-y-1 active:translate-y-1 active:border-b-0">
             进入战场
           </button>
