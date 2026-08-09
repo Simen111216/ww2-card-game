@@ -383,7 +383,7 @@ export function createFranceOrders(): OrderCard[] {
   ];
 }
 
-export function buildDeck(faction: Faction): any[] {
+export function buildDeck(faction: Faction, customCounts?: Record<string, number>): any[] {
   const deck: any[] = [];
   let factionOrders;
   switch (faction) {
@@ -416,9 +416,8 @@ export function buildDeck(faction: Faction): any[] {
 
   // 检查是否有自定义卡组
   try {
-      const customDecks = JSON.parse(localStorage.getItem('customDecks') || '{}');
-      if (customDecks[faction]) {
-          const counts = customDecks[faction];
+      const counts = customCounts || JSON.parse(localStorage.getItem('customDecks') || '{}')[faction];
+      if (counts) {
           // 将所有单元补充上统一ID，供匹配
           const allUnits = factionUnits.map(u => ({ ...u, id: `${faction}-unit-${u.name}`, type: CardType.UNIT, category: u.cat, deployCost: u.cost, attack: u.atk, defense: u.def, hp: u.hp, maxHp: u.hp, moveCost: 1, keywords: u.keywords || [], line: 'support', hasMovedThisTurn: false, hasAttackedThisTurn: false }));
           const allAdvUnits = myAdvancedUnits.map(c => ({...c, cat: c.cat, cost: c.cost, atk: c.atk, def: c.def, isAdvanced: true, line: 'support', hasMovedThisTurn: false, hasAttackedThisTurn: false}));
@@ -651,8 +650,8 @@ export default function App() {
     p1.commander = COMMANDERS_DATA.find(c => c.faction === p1Fac) || null;
     
     let p2Deck = buildDeck(p2Fac);
-    if (gameMode === 'multiplayer' && isHost && (window as any).guestDeck) {
-        p2Deck = (window as any).guestDeck;
+    if (gameMode === 'multiplayer' && isHost && (window as any).guestDeckCounts) {
+        p2Deck = buildDeck(p2Fac, (window as any).guestDeckCounts);
     }
     
     const p2 = new Player(gameMode === 'ai' || isCampaign ? "AI 指挥官 (敌方)" : "敌方指挥官", p2Fac, p2Deck);
@@ -687,8 +686,12 @@ export default function App() {
       if (networkManager.isHost) {
         if (game) networkManager.send({ type: 'SYNC_STATE', state: game.serialize() });
       } else {
-        // Guest joins, send their custom deck and faction
-        networkManager.send({ type: 'GUEST_READY', faction: playerFaction, deck: buildDeck(playerFaction) });
+        // Guest joins, send their custom deck config
+        let deckCounts = {};
+        try {
+           deckCounts = JSON.parse(localStorage.getItem('customDecks') || '{}')[playerFaction] || {};
+        } catch(e) {}
+        networkManager.send({ type: 'GUEST_READY', faction: playerFaction, deckCounts });
       }
     };
 
@@ -696,8 +699,8 @@ export default function App() {
       if (data.type === 'GUEST_READY' && networkManager.isHost) {
           setAiFaction(data.faction as Faction);
           setConnectionStatus(`已连接！对手阵营: ${data.faction}`);
-          // We will apply this deck when startGame is clicked
-          (window as any).guestDeck = data.deck; 
+          // We will apply this deck config when startGame is clicked
+          (window as any).guestDeckCounts = data.deckCounts; 
       } else if (data.type === 'SYNC_STATE') {
         console.log('Received SYNC_STATE', data.state);
         if (!networkManager.isHost && game) {
@@ -747,6 +750,14 @@ export default function App() {
           game.attackUnit(game.player2.board[data.attackerIndex], game.player1.board[data.defenderIndex], game.player2, game.player1);
         } else if (data.type === 'ATTACK_HQ') {
           game.attackHQ(game.player2.board[data.attackerIndex], game.player1);
+        } else if (data.type === 'USE_SKILL') {
+          if (game.player2.cp >= game.player2.commander!.activeCost) {
+            game.player2.cp -= game.player2.commander!.activeCost;
+            game.player2.commander!.useActive(game, game.player2);
+            game.addLog(game.player2.name, `消耗 ${game.player2.commander!.activeCost} CP 释放了主动技能 [${game.player2.commander!.activeName}]！`, 'skill');
+            // 简单处理特效，触发一个全局的
+            playOrderVFX('cmd-skill', false);
+          }
         }
         forceUpdate();
         try {
@@ -1662,12 +1673,19 @@ export default function App() {
                 {game.currentPlayer === p1 && p1.cp >= p1.commander.activeCost && (
                   <button 
                     onClick={() => {
+                       if (gameMode === 'multiplayer' && !isHost) {
+                         networkManager.send({ type: 'USE_SKILL' });
+                         return;
+                       }
                        p1.cp -= p1!.commander!.activeCost;
                        p1.commander!.useActive(game, p1);
                        showToast(`指挥官技能: ${p1.commander!.activeName}`);
                        game.addLog(p1.name, `消耗 ${p1.commander!.activeCost} CP 释放了主动技能 [${p1.commander!.activeName}]！`, 'skill');
                        setOrderVfx({ type: 'buff', area: 'p1-board' });
                        forceUpdate();
+                       if (gameMode === 'multiplayer' && isHost) {
+                         networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
+                       }
                     }}
                     className="bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg border-2 border-purple-900 shadow-lg animate-pulse flex flex-col items-center"
                   >

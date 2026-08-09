@@ -2,13 +2,14 @@ import Peer from 'peerjs';
 import type { DataConnection } from 'peerjs';
 
 export type NetworkAction = 
-  | { type: 'GUEST_READY', faction: string, deck: any[] }
+  | { type: 'GUEST_READY', faction: string, deckCounts: Record<string, number> }
   | { type: 'GAME_START', p1Faction: string, p2Faction: string }
   | { type: 'PLAY_CARD', index: number }
   | { type: 'MOVE_UNIT', index: number }
   | { type: 'ATTACK_UNIT', attackerIndex: number, defenderIndex: number }
   | { type: 'ATTACK_HQ', attackerIndex: number }
   | { type: 'END_TURN' }
+  | { type: 'USE_SKILL' }
   | { type: 'SYNC_STATE', state: any }
   | { type: 'VFX', cardId: string, isP1: boolean };
 
@@ -72,7 +73,14 @@ export class NetworkManager {
 
   public send(data: NetworkAction) {
     if (this.conn && this.conn.open) {
-      this.conn.send(data);
+      try {
+        // 使用 JSON.parse(JSON.stringify) 剔除对象中可能存在的不可序列化属性（如函数）
+        // 避免 PeerJS 底层的 DataChannel 报 DataCloneError
+        const safeData = JSON.parse(JSON.stringify(data));
+        this.conn.send(safeData);
+      } catch (e) {
+        console.error("Network send error:", e);
+      }
     }
   }
 }
