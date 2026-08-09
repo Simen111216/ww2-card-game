@@ -7,7 +7,7 @@ import { CardComponent } from './components/CardComponent';
 import { Academy } from './components/Academy';
 import { motion, AnimatePresence } from 'framer-motion';
 import { networkManager, type NetworkAction } from './engine/NetworkManager';
-import type { Commander, EnvironmentCard } from './engine/types';
+import type { Commander, EnvironmentCard, CampaignScenario, UnitCard } from './engine/types';
 import './index.css';
 
 // --- 指挥官系统库 ---
@@ -437,13 +437,64 @@ function buildDeck(faction: Faction): any[] {
   return deck;
 }
 
+// --- 战役模式数据 ---
+export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
+  {
+    id: 'campaign-normandy',
+    name: '诺曼底登陆 (奥马哈海滩)',
+    description: '1944年6月6日。盟军在诺曼底登陆。德军在悬崖上部署了坚固的暗堡。\n目标：在 10 回合内突破大西洋壁垒，摧毁德军指挥部！\n奖励：解锁高级卡牌【101空降师】',
+    playerFaction: Faction.USA,
+    aiFaction: Faction.GERMANY,
+    maxTurns: 10,
+    rewardCardId: 'adv-usa-1',
+    setupBoard: (game: Game) => {
+      // 德军前线部署 3 个暗堡
+      for(let i=0; i<3; i++) {
+        const bunker: UnitCard = {
+          id: `bunker-${i}`, name: '大西洋壁垒暗堡', description: '坚不可摧的混凝土工事。',
+          type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: Faction.GERMANY,
+          deployCost: 0, attack: 2, defense: 10, hp: 15, maxHp: 15, moveCost: 0,
+          keywords: [Keyword.GUARD, Keyword.HEAVY_ARMOR],
+          hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'frontline'
+        };
+        game.player2.board.push(bunker);
+      }
+      game.player2.hqHp = 40; // 德军指挥部血量提升
+    }
+  },
+  {
+    id: 'campaign-stalingrad',
+    name: '斯大林格勒保卫战',
+    description: '1942年冬。德军第6集团军大举进攻。城市化为废墟，环境极其恶劣。\n目标：在 15 回合内击溃德军指挥部。\n奖励：解锁高级卡牌【斯大林格勒近卫师】',
+    playerFaction: Faction.SOVIET,
+    aiFaction: Faction.GERMANY,
+    maxTurns: 15,
+    rewardCardId: 'adv-soviet-1',
+    setupBoard: (game: Game) => {
+      game.activeEnvironment = ENVIRONMENT_CARDS_DATA.find(e => e.name === '城市巷战') as EnvironmentCard;
+      for(let i=0; i<2; i++) {
+         const tank: UnitCard = {
+          id: `pzv-${i}`, name: '四号中型坦克 (前锋)', description: '德军装甲先锋。',
+          type: CardType.UNIT, category: UnitCategory.ARMOR, faction: Faction.GERMANY,
+          deployCost: 0, attack: 6, defense: 5, hp: 7, maxHp: 7, moveCost: 1,
+          keywords: [Keyword.BLITZ],
+          hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'frontline'
+        };
+        game.player2.board.push(tank);
+      }
+      game.player2.hqHp = 30;
+    }
+  }
+];
+
 export default function App() {
   const [gamePhase, setGamePhase] = useState<'lobby' | 'playing'>('lobby');
   const [playerFaction, setPlayerFaction] = useState<Faction>(Faction.SOVIET);
   const [aiFaction, setAiFaction] = useState<Faction>(Faction.GERMANY);
   
-  const [gameMode, setGameMode] = useState<'ai' | 'multiplayer'>('ai');
-  const [roomId, setRoomId] = useState<string>('');
+  const [gameMode, setGameMode] = useState<'ai' | 'multiplayer' | 'campaign'>('ai');
+  const [selectedCampaign, setSelectedCampaign] = useState<string | null>('campaign-normandy');
+  const [roomId, setRoomId] = useState('');
   const [isHost, setIsHost] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<string>('');
   const [remoteState, setRemoteState] = useState<any>(null);
@@ -476,11 +527,29 @@ export default function App() {
   };
 
   const startGame = () => {
-    const p1 = new Player("指挥官 (我方)", playerFaction, buildDeck(playerFaction));
-    p1.commander = COMMANDERS_DATA.find(c => c.faction === playerFaction) || null;
-    const p2 = new Player(gameMode === 'ai' ? "AI 指挥官 (敌方)" : "敌方指挥官", aiFaction, buildDeck(aiFaction));
-    p2.commander = COMMANDERS_DATA.find(c => c.faction === aiFaction) || null;
+    let p1Fac = playerFaction;
+    let p2Fac = aiFaction;
+    const isCampaign = gameMode === 'campaign' && selectedCampaign;
+    const scenario = isCampaign ? CAMPAIGN_SCENARIOS.find(c => c.id === selectedCampaign) : null;
+
+    if (isCampaign && scenario) {
+      p1Fac = scenario.playerFaction;
+      p2Fac = scenario.aiFaction;
+      setPlayerFaction(p1Fac);
+      setAiFaction(p2Fac);
+    }
+
+    const p1 = new Player("指挥官 (我方)", p1Fac, buildDeck(p1Fac));
+    p1.commander = COMMANDERS_DATA.find(c => c.faction === p1Fac) || null;
+    const p2 = new Player(gameMode === 'ai' || isCampaign ? "AI 指挥官 (敌方)" : "敌方指挥官", p2Fac, buildDeck(p2Fac));
+    p2.commander = COMMANDERS_DATA.find(c => c.faction === p2Fac) || null;
     const newGame = new Game(p1, p2);
+
+    if (isCampaign && scenario) {
+      newGame.maxTurns = scenario.maxTurns;
+      scenario.setupBoard(newGame);
+    }
+
     newGame.startGame();
     setGame(newGame);
     setGamePhase('playing');
@@ -555,7 +624,7 @@ export default function App() {
 
         // 1. AI 部署卡牌
         let canPlay = true;
-        while (canPlay && p2.hqHp > 0 && p1.hqHp > 0) {
+        while (canPlay && !game.isGameOver) {
           const affordableCards = p2.hand.map((card, index) => ({ card, index })).filter(item => item.card.deployCost <= p2.cp);
           if (affordableCards.length > 0) {
             affordableCards.sort((a, b) => b.card.deployCost - a.card.deployCost);
@@ -636,7 +705,7 @@ export default function App() {
 
         await sleep(500);
         isAITurnRunning.current = false;
-        if (p1.hqHp > 0 && p2.hqHp > 0) handleEndTurn();
+        if (!game.isGameOver) handleEndTurn();
       };
       playAITurn();
     }
@@ -675,72 +744,94 @@ export default function App() {
         
         <div className="flex gap-4 mb-8">
           <button onClick={() => setGameMode('ai')} className={`px-8 py-2 rounded font-bold transition-all ${gameMode === 'ai' ? 'bg-amber-600 text-white border-2 border-amber-400' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'}`}>单人 (VS AI)</button>
+          <button onClick={() => setGameMode('campaign')} className={`px-8 py-2 rounded font-bold transition-all ${gameMode === 'campaign' ? 'bg-amber-600 text-white border-2 border-amber-400' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'}`}>历史战役 (PVE)</button>
           <button onClick={() => setGameMode('multiplayer')} className={`px-8 py-2 rounded font-bold transition-all ${gameMode === 'multiplayer' ? 'bg-amber-600 text-white border-2 border-amber-400' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'}`}>联机对战</button>
         </div>
 
-        <div className="flex gap-16 bg-black/50 p-12 rounded-2xl border-4 border-gray-700 shadow-2xl relative">
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-4">选择您的阵营</h2>
-            <div className="flex flex-col gap-3">
-              {Object.values(Faction).map(f => (
-                <button 
-                  key={f} onClick={() => setPlayerFaction(f)}
-                  className={`px-8 py-3 rounded font-bold transition-all ${playerFaction === f ? 'bg-red-700 text-white border-2 border-red-400 scale-110' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-4">{gameMode === 'ai' ? '选择敌方阵营' : '联机大厅'}</h2>
-            {gameMode === 'ai' ? (
-              <div className="flex flex-col gap-3">
-                {Object.values(Faction).map(f => (
-                  <button 
-                    key={f} onClick={() => setAiFaction(f)}
-                    className={`px-8 py-3 rounded font-bold transition-all ${aiFaction === f ? 'bg-gray-200 text-black border-2 border-white scale-110' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-                  >
-                    {f}
+        <div className="flex gap-16 bg-black/50 p-12 rounded-2xl border-4 border-gray-700 shadow-2xl relative w-full max-w-5xl justify-center">
+          {gameMode === 'campaign' ? (
+            <div className="flex flex-col gap-4 w-full">
+              <h2 className="text-2xl font-bold mb-4 text-center">选择历史战役</h2>
+              <div className="grid grid-cols-2 gap-6">
+                {CAMPAIGN_SCENARIOS.map(sc => (
+                  <button key={sc.id} onClick={() => setSelectedCampaign(sc.id)} className={`p-6 rounded-xl text-left transition-all flex flex-col gap-3 ${selectedCampaign === sc.id ? 'bg-red-900/80 border-2 border-red-500 shadow-[0_0_15px_red] scale-105' : 'bg-gray-800 border-2 border-gray-700 hover:bg-gray-700'}`}>
+                    <h3 className="text-2xl font-black text-amber-500">{sc.name}</h3>
+                    <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">{sc.description}</p>
+                    <div className="mt-auto pt-4 border-t border-gray-600 flex justify-between text-xs font-bold text-gray-400">
+                       <span>我方: {sc.playerFaction}</span>
+                       <span>敌方: {sc.aiFaction}</span>
+                       <span>限时: {sc.maxTurns} 回合</span>
+                    </div>
                   </button>
                 ))}
               </div>
-            ) : (
-              <div className="w-64 bg-gray-800 p-6 rounded-lg border border-gray-600 flex flex-col gap-4">
-                <div className="flex gap-2">
-                  <button onClick={() => { setIsHost(true); networkManager.initHost(); }} className={`flex-1 py-2 text-sm rounded font-bold ${isHost ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>创建房间</button>
-                  <button onClick={() => setIsHost(false)} className={`flex-1 py-2 text-sm rounded font-bold ${!isHost ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>加入房间</button>
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col items-center">
+                <h2 className="text-2xl font-bold mb-4">选择您的阵营</h2>
+                <div className="flex flex-col gap-3">
+                  {Object.values(Faction).map(f => (
+                    <button 
+                      key={f} onClick={() => setPlayerFaction(f)}
+                      className={`px-8 py-3 rounded font-bold transition-all ${playerFaction === f ? 'bg-red-700 text-white border-2 border-red-400 scale-110' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                    >
+                      {f}
+                    </button>
+                  ))}
                 </div>
-                
-                {isHost ? (
-                  <div className="text-center text-gray-300 text-sm p-4 bg-black/40 rounded border border-gray-700 min-h-[100px] flex items-center justify-center break-all">
-                    {connectionStatus || "点击上方按钮生成房间码"}
+              </div>
+              
+              <div className="flex flex-col items-center">
+                <h2 className="text-2xl font-bold mb-4">{gameMode === 'ai' ? '选择敌方阵营' : '联机大厅'}</h2>
+                {gameMode === 'ai' ? (
+                  <div className="flex flex-col gap-3">
+                    {Object.values(Faction).map(f => (
+                      <button 
+                        key={f} onClick={() => setAiFaction(f)}
+                        className={`px-8 py-3 rounded font-bold transition-all ${aiFaction === f ? 'bg-gray-200 text-black border-2 border-white scale-110' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                      >
+                        {f}
+                      </button>
+                    ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
-                    <input 
-                      type="text" 
-                      placeholder="输入主机房间码" 
-                      value={roomId}
-                      onChange={e => setRoomId(e.target.value)}
-                      className="bg-black/50 border border-gray-500 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-                    />
-                    <button 
-                      onClick={() => { networkManager.initClient(roomId); setConnectionStatus('正在连接...'); }}
-                      className="bg-green-600 hover:bg-green-500 text-white py-2 rounded text-sm font-bold transition-colors"
-                    >
-                      连接主机
-                    </button>
-                    <div className="text-center text-xs text-gray-400 mt-2">{connectionStatus}</div>
+                  <div className="w-64 bg-gray-800 p-6 rounded-lg border border-gray-600 flex flex-col gap-4">
+                    <div className="flex gap-2">
+                      <button onClick={() => { setIsHost(true); networkManager.initHost(); }} className={`flex-1 py-2 text-sm rounded font-bold ${isHost ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>创建房间</button>
+                      <button onClick={() => setIsHost(false)} className={`flex-1 py-2 text-sm rounded font-bold ${!isHost ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>加入房间</button>
+                    </div>
+                    
+                    {isHost ? (
+                      <div className="text-center text-gray-300 text-sm p-4 bg-black/40 rounded border border-gray-700 min-h-[100px] flex items-center justify-center break-all">
+                        {connectionStatus || "点击上方按钮生成房间码"}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <input 
+                          type="text" 
+                          placeholder="输入主机房间码" 
+                          value={roomId}
+                          onChange={e => setRoomId(e.target.value)}
+                          className="bg-black/50 border border-gray-500 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                        />
+                        <button 
+                          onClick={() => { networkManager.initClient(roomId); setConnectionStatus('正在连接...'); }}
+                          className="bg-green-600 hover:bg-green-500 text-white py-2 rounded text-sm font-bold transition-colors"
+                        >
+                          连接主机
+                        </button>
+                        <div className="text-center text-xs text-gray-400 mt-2">{connectionStatus}</div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
-        {(gameMode === 'ai' || (gameMode === 'multiplayer' && isHost && connectionStatus === '已连接！')) && (
+        {(gameMode === 'ai' || gameMode === 'campaign' || (gameMode === 'multiplayer' && isHost && connectionStatus === '已连接！')) && (
           <button onClick={startGame} className="mt-12 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-4 px-16 rounded-xl border-b-4 border-yellow-800 text-3xl transition-transform hover:-translate-y-1 active:translate-y-1 active:border-b-0">
             进入战场
           </button>
@@ -1371,8 +1462,9 @@ export default function App() {
           </div>
           <div className="flex flex-col items-end">
              <div className={`text-xl font-bold mb-2 ${game.currentPlayer === p1 ? 'text-green-400' : 'text-gray-500'}`}>
-                回合 {game.turnNumber} : {game.currentPlayer.name} 的回合
-             </div>
+                    回合 {game.turnNumber} : {game.currentPlayer.name} 的回合
+                    {game.maxTurns !== Infinity && <span className="ml-4 text-red-400 text-sm">(战役限时: 剩余 {game.maxTurns - game.currentRound + 1} 回合)</span>}
+                 </div>
              <button onClick={handleEndTurn} disabled={game.currentPlayer !== p1}
                className={`font-bold py-3 px-8 rounded-xl border-b-4 transition-all ${game.currentPlayer === p1 ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-800 text-white active:border-b-0 active:translate-y-1' : 'bg-gray-700 text-gray-500 border-gray-900 cursor-not-allowed'}`}
              >
@@ -1393,12 +1485,34 @@ export default function App() {
         </div>
       </motion.div>
 
-      {(p1.hqHp <= 0 || p2.hqHp <= 0) && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center flex-col">
-          <h1 className="text-6xl font-bold text-red-500 mb-8 tracking-widest drop-shadow-lg">{p1.hqHp <= 0 ? '游戏失败 (DEFEAT)' : '游戏胜利 (VICTORY)'}</h1>
-          <button onClick={() => window.location.reload()} className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-4 px-12 rounded-xl border-b-4 border-yellow-800 text-2xl transition-transform hover:-translate-y-1 active:translate-y-1 active:border-b-0">重新开始</button>
-        </div>
-      )}
+      {(game.isGameOver) && (() => {
+        const isTimeOut = game.maxTurns !== Infinity && game.currentRound > game.maxTurns;
+        const isDefeat = p1.hqHp <= 0 || isTimeOut;
+        const isVictory = p2.hqHp <= 0 && !isDefeat;
+        
+        if (isVictory && gameMode === 'campaign' && selectedCampaign) {
+           const scenario = CAMPAIGN_SCENARIOS.find(c => c.id === selectedCampaign);
+           if (scenario && scenario.rewardCardId) {
+              let unlockedIds: string[] = [];
+              try { unlockedIds = JSON.parse(localStorage.getItem('unlockedCards') || '[]'); } catch(e) {}
+              if (!unlockedIds.includes(scenario.rewardCardId)) {
+                unlockedIds.push(scenario.rewardCardId);
+                localStorage.setItem('unlockedCards', JSON.stringify(unlockedIds));
+              }
+           }
+        }
+
+        return (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center flex-col">
+            <h1 className="text-6xl font-bold text-red-500 mb-4 tracking-widest drop-shadow-lg">{isVictory ? '游戏胜利 (VICTORY)' : '游戏失败 (DEFEAT)'}</h1>
+            {isTimeOut && <p className="text-xl text-yellow-500 mb-4 font-bold">时间耗尽！指挥部已下达撤退命令。</p>}
+            {isVictory && gameMode === 'campaign' && (
+              <p className="text-2xl text-green-400 mb-8 font-bold animate-pulse">🎉 战役胜利！高级卡牌奖励已解锁。</p>
+            )}
+            <button onClick={() => window.location.reload()} className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-4 px-12 rounded-xl border-b-4 border-yellow-800 text-2xl transition-transform hover:-translate-y-1 active:translate-y-1 active:border-b-0 mt-4">重新开始</button>
+          </div>
+        );
+      })()}
     </div>
   );
 }

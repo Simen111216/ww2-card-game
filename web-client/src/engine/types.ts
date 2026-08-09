@@ -75,6 +75,17 @@ export interface Commander {
   onTurnStart?: (game: any, player: any) => void;
 }
 
+export interface CampaignScenario {
+  id: string;
+  name: string;
+  description: string;
+  playerFaction: Faction;
+  aiFaction: Faction;
+  maxTurns: number;
+  setupBoard: (game: any) => void;
+  rewardCardId?: string;
+}
+
 export interface EnvironmentCard extends BaseCard {
   type: CardType.ENVIRONMENT;
   onPlay: (game: any) => void; // 替换环境时的即时效果

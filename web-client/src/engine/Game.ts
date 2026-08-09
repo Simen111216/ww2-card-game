@@ -7,6 +7,17 @@ export class Game {
   public currentPlayer: Player;
   public turnNumber: number = 0;
   public activeEnvironment: EnvironmentCard | null = null;
+  public maxTurns: number = Infinity;
+
+  public get currentRound() {
+    return Math.ceil(this.turnNumber / 2);
+  }
+
+  public get isGameOver() {
+    if (this.player1.hqHp <= 0 || this.player2.hqHp <= 0) return true;
+    if (this.maxTurns !== Infinity && this.currentRound > this.maxTurns) return true;
+    return false;
+  }
 
   constructor(player1: Player, player2: Player) {
     this.player1 = player1;
