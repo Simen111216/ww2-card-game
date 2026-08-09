@@ -734,7 +734,8 @@ export default function App() {
         setGame(newGame);
         setGamePhase('playing');
       } else if (data.type === 'VFX') {
-        playOrderVFX(data.cardId, data.isP1);
+        const localIsP1 = networkManager.isHost ? data.isP1 : !data.isP1;
+        playOrderVFX(data.cardId, localIsP1);
       }
       
       // If we are host, process incoming actions from client
@@ -761,6 +762,7 @@ export default function App() {
             game.addLog(game.player2.name, `消耗 ${game.player2.commander!.activeCost} CP 释放了主动技能 [${game.player2.commander!.activeName}]！`, 'skill');
             // 简单处理特效，触发一个全局的
             playOrderVFX('cmd-skill', false);
+            networkManager.send({ type: 'VFX', cardId: 'cmd-skill', isP1: false });
           }
         }
         forceUpdate();
@@ -1155,6 +1157,10 @@ export default function App() {
       setGlobalShake(15);
     } else if (cardId.includes('logistics') || cardId.includes('order-1') || cardId.includes('heal')) {
       setOrderVfx({ type: 'buff', area: isP1 ? 'p1-hq' : 'p2-hq' });
+    } else if (cardId === 'cmd-skill') {
+      setOrderVfx({ type: 'buff', area: isP1 ? 'p1-board' : 'p2-board' });
+      setFlash('gold');
+      setGlobalShake(10);
     }
     
     await new Promise(r => setTimeout(r, 1200));
@@ -1183,6 +1189,9 @@ export default function App() {
     setGlobalShake(0);
     setFlash(null);
     setAttackAnim(null);
+    if (gameMode === 'multiplayer' && isHost) {
+      networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
+    }
   };
 
   const handleDragEnd = async (_e: any, info: any, index: number, card: BaseCard) => {
@@ -1221,6 +1230,12 @@ export default function App() {
         forceUpdate();
         if (card.type === CardType.ORDER || card.isAdvanced) {
           await playOrderVFX(card.id, true);
+          if (gameMode === 'multiplayer' && isHost) {
+            networkManager.send({ type: 'VFX', cardId: card.id, isP1: true });
+          }
+        }
+        if (gameMode === 'multiplayer' && isHost) {
+          networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
         }
       }
     }
@@ -1340,6 +1355,9 @@ export default function App() {
       if (game.moveUnit(p1, p2, unit)) {
          setSelectedBoardUnit(null);
          forceUpdate();
+         if (gameMode === 'multiplayer' && isHost) {
+           networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
+         }
       } else {
          if (p1.cp < unit.moveCost) showToast("CP不足！");
          else showToast("无法移动，敌方可能控制着前线！");
@@ -1689,9 +1707,10 @@ export default function App() {
                        p1.commander!.useActive(game, p1);
                        showToast(`指挥官技能: ${p1.commander!.activeName}`);
                        game.addLog(p1.name, `消耗 ${p1.commander!.activeCost} CP 释放了主动技能 [${p1.commander!.activeName}]！`, 'skill');
-                       setOrderVfx({ type: 'buff', area: 'p1-board' });
+                       playOrderVFX('cmd-skill', true);
                        forceUpdate();
                        if (gameMode === 'multiplayer' && isHost) {
+                         networkManager.send({ type: 'VFX', cardId: 'cmd-skill', isP1: true });
                          networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
                        }
                     }}
