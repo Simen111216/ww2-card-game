@@ -32,6 +32,17 @@ export class Game {
     this.player1.drawCard(5);
     this.player2.drawCard(5);
     
+    // 如果没有被特殊规则（如战役）设置过 maxCp，则初始化为 0
+    // 这样第一个回合 startTurn 时就会正确变为 1
+    if (this.player1.maxCp === undefined || this.player1.maxCp === 0) {
+      this.player1.maxCp = 0;
+      this.player2.maxCp = 0;
+    } else {
+      // 战役特殊规则，开局设置了极高上限，减去1，因为 startTurn 马上会 +1
+      this.player1.maxCp -= 1;
+      this.player2.maxCp -= 1;
+    }
+
     this.addLog(this.player1.name, `游戏开始！你的先手回合。`, 'system');
     this.nextTurn();
   }

@@ -553,7 +553,7 @@ export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
     maxTurns: 15,
     rewardCardId: 'adv-german-1', // Actually it's unlocked for player, maybe they play as Germany? Let's keep Soviet and give them German tank? No, let's make player Germany for this one.
     setupBoard: (game: Game) => {
-      // 双方初始10CP
+      // 双方初始10CP，但这只是当前回合的CP，为了让后续回合也保持10CP上限，需要修改 maxCp
       game.player1.maxCp = 10;
       game.player1.cp = 10;
       game.player2.maxCp = 10;
