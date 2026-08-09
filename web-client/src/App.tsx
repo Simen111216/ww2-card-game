@@ -1671,7 +1671,7 @@ export default function App() {
              <button onClick={handleEndTurn} disabled={game.currentPlayer !== p1}
                className={`font-bold py-3 px-8 rounded-xl border-b-4 transition-all ${game.currentPlayer === p1 ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-800 text-white active:border-b-0 active:translate-y-1' : 'bg-gray-700 text-gray-500 border-gray-900 cursor-not-allowed'}`}
              >
-               {game.currentPlayer === p1 ? '结束回合' : 'AI 思考中...'}
+               {game.currentPlayer === p1 ? '结束回合' : (gameMode === 'multiplayer' ? '等待对方回合...' : 'AI 思考中...')}
              </button>
           </div>
         </div>
