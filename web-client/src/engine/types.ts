@@ -59,9 +59,26 @@ export interface OrderCard extends BaseCard {
   effect: (game: any, target?: any) => void; 
 }
 
+export interface Commander {
+  id: string;
+  name: string;
+  faction: Faction;
+  avatar?: string;
+  passiveName: string;
+  passiveDesc: string;
+  activeName: string;
+  activeDesc: string;
+  activeCost: number;
+  activeCooldown: number;
+  currentCooldown?: number;
+  useActive: (game: any, player: any) => void;
+  onTurnStart?: (game: any, player: any) => void;
+}
+
 export interface EnvironmentCard extends BaseCard {
   type: CardType.ENVIRONMENT;
-  effect: (game: any) => void;
+  onPlay: (game: any) => void; // 替换环境时的即时效果
+  onTurnStart?: (game: any) => void; // 每回合持续效果
 }
 
 export interface HQCard extends BaseCard {

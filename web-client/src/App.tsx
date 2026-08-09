@@ -7,7 +7,86 @@ import { CardComponent } from './components/CardComponent';
 import { Academy } from './components/Academy';
 import { motion, AnimatePresence } from 'framer-motion';
 import { networkManager, type NetworkAction } from './engine/NetworkManager';
+import type { Commander, EnvironmentCard } from './engine/types';
 import './index.css';
+
+// --- 指挥官系统库 ---
+export const COMMANDERS_DATA: Commander[] = [
+  {
+    id: 'cmd-zhukov', name: '格奥尔基·朱可夫', faction: Faction.SOVIET,
+    passiveName: '坚壁清野', passiveDesc: '每回合开始时，总部恢复 1 点血量。',
+    activeName: '总攻令', activeDesc: '消耗 6 CP，我方场上所有单位攻击力+1，血量+1。',
+    activeCost: 6, activeCooldown: 0,
+    onTurnStart: (game, player) => { player.hqHp = Math.min(25, player.hqHp + 1); },
+    useActive: (game, player) => { player.board.forEach((u: UnitCard) => { u.attack += 1; u.hp += 1; u.maxHp += 1; }); }
+  },
+  {
+    id: 'cmd-rommel', name: '埃尔温·隆美尔', faction: Faction.GERMANY,
+    passiveName: '装甲先锋', passiveDesc: '每回合开始时，获得 1 点额外 CP。',
+    activeName: '闪电突击', activeDesc: '消耗 5 CP，我方所有装甲单位获得【闪击】。',
+    activeCost: 5, activeCooldown: 0,
+    onTurnStart: (game, player) => { player.cp += 1; },
+    useActive: (game, player) => { player.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => { if(!u.keywords.includes(Keyword.BLITZ)) u.keywords.push(Keyword.BLITZ); u.hasAttackedThisTurn = false; }); }
+  },
+  {
+    id: 'cmd-patton', name: '乔治·巴顿', faction: Faction.USA,
+    passiveName: '血胆将军', passiveDesc: '你的所有步兵在部署时攻击力+1。',
+    activeName: '地毯式轰炸', activeDesc: '消耗 7 CP，对敌方全场单位造成 2 点伤害。',
+    activeCost: 7, activeCooldown: 0,
+    onTurnStart: (game, player) => {}, // 被动在playCard时生效或者全局生效，这里简化为只影响已部署的，我们在每次更新时处理，或者写死在部署逻辑。这里用被动加成？我们改为每回合给新部署的加？太复杂。改回每回合开始时所有步兵攻击力+1？不行。改成每回合开始时，总部受伤害减免？
+    // 重写被动：每回合开始时，随机使一个我方单位攻击力+1。
+    useActive: (game, player) => { const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1; enemy.board.forEach((u: UnitCard) => u.hp -= 2); enemy.board = enemy.board.filter((u: UnitCard) => u.hp > 0); }
+  },
+  {
+    id: 'cmd-monty', name: '伯纳德·蒙哥马利', faction: Faction.UK,
+    passiveName: '稳扎稳打', passiveDesc: '每回合开始时，若前线有我方单位，总部恢复 2 点血量。',
+    activeName: '后勤筹备', activeDesc: '消耗 3 CP，抽 2 张牌。',
+    activeCost: 3, activeCooldown: 0,
+    onTurnStart: (game, player) => { if(player.board.some((u: UnitCard) => u.line === 'frontline')) player.hqHp = Math.min(25, player.hqHp + 2); },
+    useActive: (game, player) => { player.drawCard(2); }
+  },
+  {
+    id: 'cmd-degaulle', name: '夏尔·戴高乐', faction: Faction.FRANCE,
+    passiveName: '不屈抵抗', passiveDesc: '当总部血量低于 10 时，每回合开始额外抽 1 张牌。',
+    activeName: '全国动员', activeDesc: '消耗 4 CP，总部恢复 5 点血量。',
+    activeCost: 4, activeCooldown: 0,
+    onTurnStart: (game, player) => { if(player.hqHp < 10) player.drawCard(1); },
+    useActive: (game, player) => { player.hqHp = Math.min(25, player.hqHp + 5); }
+  }
+];
+// 修正巴顿被动
+COMMANDERS_DATA[2].passiveDesc = '每回合开始时，随机使我方一个单位攻击力+1。';
+COMMANDERS_DATA[2].onTurnStart = (game, player) => { if(player.board.length > 0) { const target = player.board[Math.floor(Math.random() * player.board.length)]; target.attack += 1; } };
+
+// --- 环境卡数据 ---
+export const ENVIRONMENT_CARDS_DATA: Omit<EnvironmentCard, 'id' | 'faction'>[] = [
+  {
+    name: '凛冬严寒', description: '环境卡：每回合开始时，所有前线单位受到 1 点伤害。', type: CardType.ENVIRONMENT, deployCost: 4,
+    onPlay: (game) => {},
+    onTurnStart: (game) => {
+      game.player1.board.filter((u: UnitCard) => u.line === 'frontline').forEach((u: UnitCard) => u.hp -= 1);
+      game.player2.board.filter((u: UnitCard) => u.line === 'frontline').forEach((u: UnitCard) => u.hp -= 1);
+      game.player1.board = game.player1.board.filter((u: UnitCard) => u.hp > 0);
+      game.player2.board = game.player2.board.filter((u: UnitCard) => u.hp > 0);
+    }
+  },
+  {
+    name: '泥泞泥土 (Rasputitsa)', description: '环境卡：所有装甲单位移动到前线的 CP 消耗增加 1 点。', type: CardType.ENVIRONMENT, deployCost: 3,
+    onPlay: (game) => {
+      game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => u.moveCost += 1);
+      game.player2.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => u.moveCost += 1);
+    },
+    onTurnStart: (game) => {}
+  },
+  {
+    name: '城市巷战', description: '环境卡：每回合开始时，所有步兵单位攻击力+1。', type: CardType.ENVIRONMENT, deployCost: 3,
+    onPlay: (game) => {},
+    onTurnStart: (game) => {
+      game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.attack += 1);
+      game.player2.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.attack += 1);
+    }
+  }
+];
 
 // --- 真实历史单位库 ---
 function getSovietUnits(): any[] {
@@ -307,6 +386,13 @@ function buildDeck(faction: Faction): any[] {
   const myAdvancedOrders = ADVANCED_ORDERS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id));
 
   for (let i = 1; i <= 60; i++) {
+    // 随机塞入环境卡
+    if (i === 15 || i === 45) {
+      const randomEnv = ENVIRONMENT_CARDS_DATA[Math.floor(Math.random() * ENVIRONMENT_CARDS_DATA.length)];
+      deck.push({ ...randomEnv, id: `env-${i}`, faction: faction } as EnvironmentCard);
+      continue;
+    }
+
     // 每30张牌尝试随机塞入一张高级牌（也就是一副60张的牌库最多只有2张高级牌，保证稀有度）
     if (i % 30 === 0 && (myAdvancedUnits.length > 0 || myAdvancedOrders.length > 0)) {
        const pool = [...myAdvancedUnits, ...myAdvancedOrders];
@@ -391,7 +477,9 @@ export default function App() {
 
   const startGame = () => {
     const p1 = new Player("指挥官 (我方)", playerFaction, buildDeck(playerFaction));
+    p1.commander = COMMANDERS_DATA.find(c => c.faction === playerFaction) || null;
     const p2 = new Player(gameMode === 'ai' ? "AI 指挥官 (敌方)" : "敌方指挥官", aiFaction, buildDeck(aiFaction));
+    p2.commander = COMMANDERS_DATA.find(c => c.faction === aiFaction) || null;
     const newGame = new Game(p1, p2);
     newGame.startGame();
     setGame(newGame);
@@ -1069,14 +1157,42 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* 环境卡显示 */}
+      <AnimatePresence>
+        {game.activeEnvironment && (
+          <motion.div
+            initial={{ x: 300, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
+            className="fixed top-1/2 right-4 -translate-y-1/2 z-50 bg-black/80 border-2 border-amber-600 rounded-lg p-4 w-64 shadow-2xl flex flex-col items-center pointer-events-none"
+          >
+            <div className="text-amber-500 font-bold mb-2 flex items-center gap-2">
+              <span>🌍 当前环境</span>
+            </div>
+            <h3 className="text-lg font-black text-white">{game.activeEnvironment.name}</h3>
+            <p className="text-xs text-gray-300 mt-2 text-center">{game.activeEnvironment.description}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div animate={attackAnim?.defenderId === 'hq' && game.currentPlayer === p1 ? { x: [-10, 10, -10, 10, 0], backgroundColor: ['#1f2937', '#7f1d1d', '#1f2937'] } : {}}
         className="bg-gray-800 p-4 border-b-4 border-gray-700 flex justify-between items-center shadow-lg z-10 relative">
-        <div>
-          <h2 className="text-xl font-bold text-gray-300">{p2.name} - {p2.faction}</h2>
-          <div className="flex gap-4 mt-2 text-sm">
-            <span className="bg-red-900 px-3 py-1 rounded-full font-bold">HQ 血量: {p2.hqHp} / 25</span>
-            <span className="bg-blue-900 px-3 py-1 rounded-full">指挥点: {p2.cp} / {p2.maxCp}</span>
-            <span className="bg-gray-700 px-3 py-1 rounded-full">手牌数: {p2.hand.length}</span>
+        <div className="flex items-center gap-4">
+          {/* 敌方指挥官 */}
+          {p2.commander && (
+            <div className="w-16 h-16 bg-gray-900 rounded-full border-2 border-red-700 flex items-center justify-center flex-col shadow-lg overflow-hidden group relative">
+              <span className="text-[10px] font-bold text-gray-400 group-hover:hidden text-center">{p2.commander.name.split('·').pop()}</span>
+              <div className="absolute inset-0 bg-black/90 hidden group-hover:flex flex-col items-center justify-center p-1">
+                <span className="text-[8px] text-amber-400 font-bold">{p2.commander.passiveName}</span>
+                <span className="text-[8px] text-blue-400 font-bold mt-1">{p2.commander.activeName}</span>
+              </div>
+            </div>
+          )}
+          <div>
+            <h2 className="text-xl font-bold text-gray-300">{p2.name} - {p2.faction}</h2>
+            <div className="flex gap-4 mt-2 text-sm">
+              <span className="bg-red-900 px-3 py-1 rounded-full font-bold">HQ 血量: {p2.hqHp} / 25</span>
+              <span className="bg-blue-900 px-3 py-1 rounded-full">指挥点: {p2.cp} / {p2.maxCp}</span>
+              <span className="bg-gray-700 px-3 py-1 rounded-full">手牌数: {p2.hand.length}</span>
+            </div>
           </div>
         </div>
         
@@ -1216,12 +1332,41 @@ export default function App() {
       <motion.div animate={attackAnim?.defenderId === 'hq' && game.currentPlayer === p2 ? { x: [-10, 10, -10, 10, 0], backgroundColor: ['#1f2937', '#7f1d1d', '#1f2937'] } : {}}
         className="bg-gray-800 border-t-4 border-gray-700 p-4 shadow-2xl relative z-30">
         <div className="flex justify-between items-end mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-white">{p1.name} - {p1.faction}</h2>
-            <div className="flex gap-4 mt-2 text-sm">
-              <span className="bg-red-900 px-3 py-1 rounded-full font-bold shadow-inner">HQ 血量: {p1.hqHp} / 25</span>
-              <span className="bg-blue-900 px-3 py-1 rounded-full font-bold shadow-inner">指挥点(CP): <span className="text-yellow-400 text-lg">{p1.cp}</span> / {p1.maxCp}</span>
-              <span className="bg-gray-700 px-3 py-1 rounded-full">牌库剩余: {p1.deck.length}</span>
+          <div className="flex items-center gap-4">
+            {/* 我方指挥官 */}
+            {p1.commander && (
+              <div className="flex items-center gap-2">
+                <div className="w-20 h-20 bg-gray-900 rounded-full border-2 border-blue-700 flex items-center justify-center flex-col shadow-lg overflow-hidden group relative">
+                  <span className="text-xs font-bold text-gray-300 group-hover:hidden text-center">{p1.commander.name.split('·').pop()}</span>
+                  <div className="absolute inset-0 bg-black/90 hidden group-hover:flex flex-col items-center justify-center p-1 text-center">
+                    <span className="text-[10px] text-amber-400 font-bold">{p1.commander.passiveName}</span>
+                    <span className="text-[8px] text-gray-400 mt-1">{p1.commander.passiveDesc}</span>
+                  </div>
+                </div>
+                {game.currentPlayer === p1 && p1.cp >= p1.commander.activeCost && (
+                  <button 
+                    onClick={() => {
+                       p1.cp -= p1!.commander!.activeCost;
+                       p1.commander!.useActive(game, p1);
+                       showToast(`指挥官技能: ${p1.commander!.activeName}`);
+                       setOrderVfx({ type: 'buff', area: 'p1-board' });
+                       forceUpdate();
+                    }}
+                    className="bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg border-2 border-purple-900 shadow-lg animate-pulse flex flex-col items-center"
+                  >
+                    <span className="text-sm">{p1.commander.activeName}</span>
+                    <span className="text-xs text-purple-300">(-{p1.commander.activeCost} CP)</span>
+                  </button>
+                )}
+              </div>
+            )}
+            <div>
+              <h2 className="text-2xl font-bold text-white">{p1.name} - {p1.faction}</h2>
+              <div className="flex gap-4 mt-2 text-sm">
+                <span className="bg-red-900 px-3 py-1 rounded-full font-bold shadow-inner">HQ 血量: {p1.hqHp} / 25</span>
+                <span className="bg-blue-900 px-3 py-1 rounded-full font-bold shadow-inner">指挥点(CP): <span className="text-yellow-400 text-lg">{p1.cp}</span> / {p1.maxCp}</span>
+                <span className="bg-gray-700 px-3 py-1 rounded-full">牌库剩余: {p1.deck.length}</span>
+              </div>
             </div>
           </div>
           <div className="flex flex-col items-end">

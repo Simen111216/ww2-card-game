@@ -1,10 +1,11 @@
 import { CardType, Faction, Keyword } from './types';
-import type { BaseCard, UnitCard, OrderCard, EnvironmentCard, HQCard } from './types';
+import type { BaseCard, UnitCard, OrderCard, EnvironmentCard, HQCard, Commander } from './types';
 
 export class Player {
   public name: string;
   public faction: Faction;
   public hqHp: number = 25;
+  public commander: Commander | null = null;
   
   public cp: number = 0; // 当前指挥点
   public maxCp: number = 0; // 当前回合最大指挥点，上限30
@@ -73,6 +74,16 @@ export class Player {
 
     // 每过一个回合抽一张牌
     this.drawCard(1);
+
+    // 指挥官技能冷却与被动触发
+    if (this.commander) {
+      if (this.commander.currentCooldown && this.commander.currentCooldown > 0) {
+        this.commander.currentCooldown--;
+      }
+      if (this.commander.onTurnStart) {
+        // 需要传入 game 实例，我们在 Game.ts 的 nextTurn 中会再次调用
+      }
+    }
   }
 
   // 部署单位或使用指令
@@ -104,7 +115,9 @@ export class Player {
     } else if (card.type === CardType.ENVIRONMENT) {
       console.log(`${this.name} 使用了环境卡 [${card.name}]`);
       if (game) {
-        (card as EnvironmentCard).effect(game);
+        // 设置当前全局环境
+        game.activeEnvironment = card;
+        (card as EnvironmentCard).onPlay(game);
       }
       this.graveyard.push(card);
     }

@@ -1,11 +1,12 @@
 import { Player } from './Player';
-import { UnitCategory, Keyword, type UnitCard } from './types';
+import { UnitCategory, Keyword, type UnitCard, type EnvironmentCard } from './types';
 
 export class Game {
   public player1: Player;
   public player2: Player;
   public currentPlayer: Player;
   public turnNumber: number = 0;
+  public activeEnvironment: EnvironmentCard | null = null;
 
   constructor(player1: Player, player2: Player) {
     this.player1 = player1;
@@ -27,6 +28,16 @@ export class Game {
     this.currentPlayer = this.currentPlayer === this.player1 ? this.player2 : this.player1;
     console.log(`\n=== 第 ${this.turnNumber} 回合 : ${this.currentPlayer.name} 的回合 ===`);
     this.currentPlayer.startTurn();
+
+    // 触发环境卡的每回合效果
+    if (this.activeEnvironment && this.activeEnvironment.onTurnStart) {
+      this.activeEnvironment.onTurnStart(this);
+    }
+
+    // 触发指挥官的被动（需要game上下文）
+    if (this.currentPlayer.commander && this.currentPlayer.commander.onTurnStart) {
+      this.currentPlayer.commander.onTurnStart(this, this.currentPlayer);
+    }
   }
 
   // 移动单位
@@ -144,13 +155,15 @@ export class Game {
     return {
       turnNumber: this.turnNumber,
       currentPlayer: this.currentPlayer === this.player1 ? 'p1' : 'p2',
+      activeEnvironment: this.activeEnvironment,
       p1: {
         hqHp: this.player1.hqHp,
         cp: this.player1.cp,
         maxCp: this.player1.maxCp,
         hand: this.player1.hand, // Array of cards
         board: this.player1.board,
-        deckCount: this.player1.deck.length
+        deckCount: this.player1.deck.length,
+        commander: this.player1.commander
       },
       p2: {
         hqHp: this.player2.hqHp,
@@ -158,7 +171,8 @@ export class Game {
         maxCp: this.player2.maxCp,
         hand: this.player2.hand,
         board: this.player2.board,
-        deckCount: this.player2.deck.length
+        deckCount: this.player2.deck.length,
+        commander: this.player2.commander
       }
     };
   }
