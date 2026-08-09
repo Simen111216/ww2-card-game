@@ -747,7 +747,7 @@ export default function App() {
   // 客机同步状态逻辑
   useEffect(() => {
     if (gameMode === 'multiplayer' && !networkManager.isHost && remoteState && game) {
-      game.deserialize(remoteState);
+      game.deserialize(remoteState, false); // 传入 isHost=false，启用状态反转映射
       forceUpdate();
     }
   }, [remoteState, game]);

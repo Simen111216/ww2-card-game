@@ -259,24 +259,44 @@ export class Game {
     };
   }
 
-  public deserialize(state: any) {
+  public deserialize(state: any, isHost: boolean = true) {
     this.turnNumber = state.turnNumber;
-    this.currentPlayer = state.currentPlayer === 'p1' ? this.player1 : this.player2;
     this.activeEnvironment = state.activeEnvironment;
     this.logs = state.logs || [];
     
-    this.player1.hqHp = state.p1.hqHp;
-    this.player1.cp = state.p1.cp;
-    this.player1.maxCp = state.p1.maxCp;
-    this.player1.hand = state.p1.hand;
-    this.player1.board = state.p1.board;
-    this.player1.commander = state.p1.commander;
-    
-    this.player2.hqHp = state.p2.hqHp;
-    this.player2.cp = state.p2.cp;
-    this.player2.maxCp = state.p2.maxCp;
-    this.player2.hand = state.p2.hand;
-    this.player2.board = state.p2.board;
-    this.player2.commander = state.p2.commander;
+    if (isHost) {
+      this.currentPlayer = state.currentPlayer === 'p1' ? this.player1 : this.player2;
+      
+      this.player1.hqHp = state.p1.hqHp;
+      this.player1.cp = state.p1.cp;
+      this.player1.maxCp = state.p1.maxCp;
+      this.player1.hand = state.p1.hand;
+      this.player1.board = state.p1.board;
+      this.player1.commander = state.p1.commander;
+      
+      this.player2.hqHp = state.p2.hqHp;
+      this.player2.cp = state.p2.cp;
+      this.player2.maxCp = state.p2.maxCp;
+      this.player2.hand = state.p2.hand;
+      this.player2.board = state.p2.board;
+      this.player2.commander = state.p2.commander;
+    } else {
+      // 客机视角：主机的 p1 是客机的 p2，主机的 p2 是客机的 p1
+      this.currentPlayer = state.currentPlayer === 'p1' ? this.player2 : this.player1;
+      
+      this.player1.hqHp = state.p2.hqHp;
+      this.player1.cp = state.p2.cp;
+      this.player1.maxCp = state.p2.maxCp;
+      this.player1.hand = state.p2.hand;
+      this.player1.board = state.p2.board;
+      this.player1.commander = state.p2.commander;
+      
+      this.player2.hqHp = state.p1.hqHp;
+      this.player2.cp = state.p1.cp;
+      this.player2.maxCp = state.p1.maxCp;
+      this.player2.hand = state.p1.hand;
+      this.player2.board = state.p1.board;
+      this.player2.commander = state.p1.commander;
+    }
   }
 }
