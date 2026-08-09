@@ -442,47 +442,50 @@ export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
   {
     id: 'campaign-normandy',
     name: '诺曼底登陆 (奥马哈海滩)',
-    description: '1944年6月6日。盟军在诺曼底登陆。德军在悬崖上部署了坚固的暗堡。\n目标：在 10 回合内突破大西洋壁垒，摧毁德军指挥部！\n奖励：解锁高级卡牌【101空降师】',
+    description: '1944年6月6日。盟军在诺曼底登陆。德军在悬崖上部署了坚固的暗堡。\n目标：在 15 回合内突破大西洋壁垒，摧毁德军指挥部！\n奖励：解锁高级卡牌【101空降师】',
     playerFaction: Faction.USA,
     aiFaction: Faction.GERMANY,
-    maxTurns: 10,
+    maxTurns: 15,
     rewardCardId: 'adv-usa-1',
     setupBoard: (game: Game) => {
-      // 德军前线部署 3 个暗堡
-      for(let i=0; i<3; i++) {
+      // 史诗级削弱：德军前线部署 2 个暗堡 (原为3个)
+      for(let i=0; i<2; i++) {
         const bunker: UnitCard = {
-          id: `bunker-${i}`, name: '大西洋壁垒暗堡', description: '坚不可摧的混凝土工事。',
+          id: `bunker-${i}`, name: '大西洋壁垒暗堡', description: '坚固的混凝土工事，无法攻击。',
           type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: Faction.GERMANY,
-          deployCost: 0, attack: 2, defense: 10, hp: 15, maxHp: 15, moveCost: 0,
-          keywords: [Keyword.GUARD, Keyword.HEAVY_ARMOR],
+          deployCost: 0, attack: 0, defense: 5, hp: 10, maxHp: 10, moveCost: 0,
+          keywords: [Keyword.GUARD], // 移除重甲，削弱血防，移除攻击力
           hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'frontline'
         };
         game.player2.board.push(bunker);
       }
-      game.player2.hqHp = 40; // 德军指挥部血量提升
+      game.player2.hqHp = 30; // 德军指挥部血量从 40 下调至 30
+      game.player1.cp = 2;    // 玩家获得抢滩登陆支援：初始自带 2 点 CP
     }
   },
   {
     id: 'campaign-stalingrad',
     name: '斯大林格勒保卫战',
-    description: '1942年冬。德军第6集团军大举进攻。城市化为废墟，环境极其恶劣。\n目标：在 15 回合内击溃德军指挥部。\n奖励：解锁高级卡牌【斯大林格勒近卫师】',
+    description: '1942年冬。德军第6集团军大举进攻。城市化为废墟，环境极其恶劣。\n目标：在 20 回合内击溃德军指挥部。\n奖励：解锁高级卡牌【斯大林格勒近卫师】',
     playerFaction: Faction.SOVIET,
     aiFaction: Faction.GERMANY,
-    maxTurns: 15,
+    maxTurns: 20,
     rewardCardId: 'adv-soviet-1',
     setupBoard: (game: Game) => {
       game.activeEnvironment = ENVIRONMENT_CARDS_DATA.find(e => e.name === '城市巷战') as EnvironmentCard;
+      // 史诗级削弱：移除开局两辆贴脸的四号坦克，改为两支在支援战线的普通步兵
       for(let i=0; i<2; i++) {
-         const tank: UnitCard = {
-          id: `pzv-${i}`, name: '四号中型坦克 (前锋)', description: '德军装甲先锋。',
-          type: CardType.UNIT, category: UnitCategory.ARMOR, faction: Faction.GERMANY,
-          deployCost: 0, attack: 6, defense: 5, hp: 7, maxHp: 7, moveCost: 1,
-          keywords: [Keyword.BLITZ],
-          hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'frontline'
-        };
-        game.player2.board.push(tank);
+         const infantry: UnitCard = {
+           id: `inf-${i}`, name: '国防军步兵', description: '进入废墟的德军步兵。',
+           type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: Faction.GERMANY,
+           deployCost: 0, attack: 4, defense: 4, hp: 5, maxHp: 5, moveCost: 1,
+           keywords: [],
+           hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'support'
+         };
+         game.player2.board.push(infantry);
       }
-      game.player2.hqHp = 30;
+      game.player2.hqHp = 25; // 恢复正常血量 25 (原为 30)
+      game.player1.cp = 2;    // 玩家获得政委支援：初始自带 2 点 CP
     }
   }
 ];
