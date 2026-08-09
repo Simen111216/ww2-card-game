@@ -699,7 +699,18 @@ export default function App() {
           // We will apply this deck when startGame is clicked
           (window as any).guestDeck = data.deck; 
       } else if (data.type === 'SYNC_STATE') {
-        setRemoteState(data.state);
+        console.log('Received SYNC_STATE', data.state);
+        if (!networkManager.isHost && game) {
+           try {
+             game.deserialize(data.state, false);
+             console.log('Guest game after deserialize (direct):', game);
+             forceUpdate();
+           } catch(e) {
+             console.error("Guest deserialize error:", e);
+           }
+        } else {
+           setRemoteState(data.state);
+        }
         if (gamePhase === 'lobby') setGamePhase('playing');
       } else if (data.type === 'GAME_START') {
         setPlayerFaction(data.p2Faction as Faction);
@@ -738,19 +749,30 @@ export default function App() {
           game.attackHQ(game.player2.board[data.attackerIndex], game.player1);
         }
         forceUpdate();
-        networkManager.send({ type: 'SYNC_STATE', state: game.serialize() });
+        try {
+          networkManager.send({ type: 'SYNC_STATE', state: game.serialize() });
+        } catch (e) {
+          console.error("Host serialize error in onDataCb:", e);
+        }
       }
     };
 
   }, [gameMode, game, gamePhase]);
 
-  // 客机同步状态逻辑
+  // 客机同步状态逻辑 (Fallback for the first sync or missed updates)
   useEffect(() => {
     if (gameMode === 'multiplayer' && !networkManager.isHost && remoteState && game) {
-      game.deserialize(remoteState, false); // 传入 isHost=false，启用状态反转映射
-      forceUpdate();
+      console.log('Guest received remoteState (fallback):', remoteState);
+      try {
+        game.deserialize(remoteState, false); // 传入 isHost=false，启用状态反转映射
+        console.log('Guest game after deserialize (fallback):', game);
+        forceUpdate();
+      } catch(e) {
+        console.error("Guest deserialize error (fallback):", e);
+      }
+      setRemoteState(null); // Clear to avoid re-running
     }
-  }, [remoteState, game]);
+  }, [remoteState, game, gameMode]);
 
   useEffect(() => {
     if (!game || gamePhase !== 'playing' || gameMode === 'multiplayer') return;
@@ -1198,7 +1220,11 @@ export default function App() {
     setSelectedBoardUnit(null);
     forceUpdate();
     if (gameMode === 'multiplayer' && isHost) {
-      networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
+      try {
+        networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
+      } catch (e) {
+        console.error("Host serialize error in handleEndTurn:", e);
+      }
     }
   };
 

@@ -49,7 +49,10 @@ export class NetworkManager {
       this.peerId = id;
       this.conn = this.peer!.connect(hostId);
       this.setupConnection();
-      if (this.onConnectionCb) this.onConnectionCb(this.conn);
+      // Wait for connection to actually open before calling callback
+      this.conn.on('open', () => {
+        if (this.onConnectionCb) this.onConnectionCb(this.conn!);
+      });
     });
   }
 
