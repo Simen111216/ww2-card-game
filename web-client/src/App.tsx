@@ -704,6 +704,16 @@ export default function App() {
       } else if (data.type === 'GAME_START') {
         setPlayerFaction(data.p2Faction as Faction);
         setAiFaction(data.p1Faction as Faction);
+        
+        // 客机收到游戏开始指令，初始化本地 Game 对象用于渲染
+        const p1 = new Player("指挥官 (我方)", data.p2Faction as Faction, buildDeck(data.p2Faction as Faction));
+        p1.commander = COMMANDERS_DATA.find(c => c.faction === data.p2Faction) || null;
+        
+        const p2 = new Player("敌方指挥官", data.p1Faction as Faction, []);
+        p2.commander = COMMANDERS_DATA.find(c => c.faction === data.p1Faction) || null;
+        
+        const newGame = new Game(p1, p2);
+        setGame(newGame);
         setGamePhase('playing');
       } else if (data.type === 'VFX') {
         playOrderVFX(data.cardId, data.isP1);
@@ -733,6 +743,15 @@ export default function App() {
     };
 
   }, [gameMode, game, gamePhase]);
+
+  // 客机同步状态逻辑
+  useEffect(() => {
+    if (gameMode === 'multiplayer' && !networkManager.isHost && remoteState && game) {
+      game.deserialize(remoteState);
+      forceUpdate();
+    }
+  }, [remoteState, game]);
+
   useEffect(() => {
     if (!game || gamePhase !== 'playing' || gameMode === 'multiplayer') return;
     const p1 = game.player1;
