@@ -701,6 +701,10 @@ export default function App() {
           setConnectionStatus(`已连接！对手阵营: ${data.faction}`);
           // We will apply this deck config when startGame is clicked
           (window as any).guestDeckCounts = data.deckCounts; 
+          networkManager.send({ type: 'HOST_INFO', faction: playerFaction });
+      } else if (data.type === 'HOST_INFO' && !networkManager.isHost) {
+          setAiFaction(data.faction as Faction);
+          setConnectionStatus(`已连接！对手阵营: ${data.faction}`);
       } else if (data.type === 'SYNC_STATE') {
         console.log('Received SYNC_STATE', data.state);
         if (!networkManager.isHost && game) {
@@ -1242,9 +1246,13 @@ export default function App() {
   // 攻击或移动验证
   const handleBoardUnitClick = async (owner: 'p1' | 'p2', index: number) => {
     if (gameMode === 'multiplayer' && !isHost) {
-      if (owner === 'p2') {
-        setSelectedBoardUnit({ player: 'p2', index });
-      } else if (owner === 'p1' && selectedBoardUnit?.player === 'p2') {
+      if (owner === 'p1') {
+        if (selectedBoardUnit?.player === 'p1' && selectedBoardUnit.index === index) {
+          setSelectedBoardUnit(null);
+        } else {
+          setSelectedBoardUnit({ player: 'p1', index });
+        }
+      } else if (owner === 'p2' && selectedBoardUnit?.player === 'p1') {
         networkManager.send({ type: 'ATTACK_UNIT', attackerIndex: selectedBoardUnit.index, defenderIndex: index });
         setSelectedBoardUnit(null);
       }
@@ -1287,7 +1295,7 @@ export default function App() {
 
   const handleAttackHQ = async () => {
     if (gameMode === 'multiplayer' && !isHost) {
-      if (selectedBoardUnit?.player === 'p2') {
+      if (selectedBoardUnit?.player === 'p1') {
         networkManager.send({ type: 'ATTACK_HQ', attackerIndex: selectedBoardUnit.index });
         setSelectedBoardUnit(null);
       }
@@ -1320,7 +1328,7 @@ export default function App() {
 
   const handleMoveFrontline = () => {
     if (gameMode === 'multiplayer' && !isHost) {
-      if (selectedBoardUnit?.player === 'p2') {
+      if (selectedBoardUnit?.player === 'p1') {
         networkManager.send({ type: 'MOVE_UNIT', index: selectedBoardUnit.index });
         setSelectedBoardUnit(null);
       }

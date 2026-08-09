@@ -3,6 +3,7 @@ import type { DataConnection } from 'peerjs';
 
 export type NetworkAction = 
   | { type: 'GUEST_READY', faction: string, deckCounts: Record<string, number> }
+  | { type: 'HOST_INFO', faction: string }
   | { type: 'GAME_START', p1Faction: string, p2Faction: string }
   | { type: 'PLAY_CARD', index: number }
   | { type: 'MOVE_UNIT', index: number }
