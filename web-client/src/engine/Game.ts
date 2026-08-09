@@ -1,5 +1,5 @@
 import { Player } from './Player';
-import { UnitCategory, Keyword, type UnitCard, type EnvironmentCard } from './types';
+import { UnitCategory, Keyword, type UnitCard, type EnvironmentCard, type CombatLog } from './types';
 
 export class Game {
   public player1: Player;
@@ -8,6 +8,7 @@ export class Game {
   public turnNumber: number = 0;
   public activeEnvironment: EnvironmentCard | null = null;
   public maxTurns: number = Infinity;
+  public logs: CombatLog[] = [];
 
   public get currentRound() {
     return Math.ceil(this.turnNumber / 2);
@@ -31,6 +32,7 @@ export class Game {
     this.player1.drawCard(5);
     this.player2.drawCard(5);
     
+    this.addLog(this.player1.name, `游戏开始！你的先手回合。`, 'system');
     this.nextTurn();
   }
 
@@ -38,17 +40,30 @@ export class Game {
     this.turnNumber++;
     this.currentPlayer = this.currentPlayer === this.player1 ? this.player2 : this.player1;
     console.log(`\n=== 第 ${this.turnNumber} 回合 : ${this.currentPlayer.name} 的回合 ===`);
+    this.addLog(this.currentPlayer.name, `回合开始。`, 'system');
     this.currentPlayer.startTurn();
 
     // 触发环境卡的每回合效果
     if (this.activeEnvironment && this.activeEnvironment.onTurnStart) {
+      this.addLog('全局', `环境 [${this.activeEnvironment.name}] 生效。`, 'environment');
       this.activeEnvironment.onTurnStart(this);
     }
 
     // 触发指挥官的被动（需要game上下文）
     if (this.currentPlayer.commander && this.currentPlayer.commander.onTurnStart) {
+      this.addLog(this.currentPlayer.name, `指挥官被动 [${this.currentPlayer.commander.passiveName}] 触发。`, 'skill');
       this.currentPlayer.commander.onTurnStart(this, this.currentPlayer);
     }
+  }
+
+  public addLog(playerName: string, message: string, type: 'play' | 'attack' | 'skill' | 'environment' | 'system') {
+    this.logs.push({
+      id: Math.random().toString(36).substring(7),
+      turn: this.turnNumber,
+      playerName,
+      message,
+      type
+    });
   }
 
   // 移动单位
@@ -71,6 +86,7 @@ export class Game {
     unit.line = 'frontline';
     unit.hasMovedThisTurn = true;
     console.log(`${unit.name} 推进到了前线！`);
+    this.addLog(player.name, `消耗 ${unit.moveCost} CP 将 [${unit.name}] 推进至前线。`, 'play');
     return true;
   }
 
@@ -87,6 +103,7 @@ export class Game {
     }
 
     console.log(`\n[战斗] ${attacker.name}(攻:${attacker.attack}) 攻击 ${defender.name}(防:${defender.defense}, 血:${defender.hp})`);
+    this.addLog(attackerOwner.name, `[${attacker.name}] 攻击了 [${defender.name}]。`, 'attack');
     
     let atk = attacker.attack;
     if (defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
@@ -103,12 +120,14 @@ export class Game {
       defender.defense = 0;
       defender.hp -= damageToHp;
       console.log(`-> 造成了 ${damageToHp} 点血量伤害，${defender.name} 剩余血量: ${defender.hp}`);
+      this.addLog(attackerOwner.name, `[${attacker.name}] 对 [${defender.name}] 造成了 ${damageToHp} 点伤害。`, 'attack');
     }
 
     attacker.hasAttackedThisTurn = true;
 
     if (defender.hp > 0 && defender.keywords.includes(Keyword.AMBUSH)) {
       console.log(`-> [伏击] ${defender.name} 触发伏击，对 ${attacker.name} 造成反击！`);
+      this.addLog(defenderOwner.name, `[${defender.name}] 触发伏击，反击了 [${attacker.name}]。`, 'attack');
       let counterAtk = defender.attack;
       if (attacker.keywords.includes(Keyword.HEAVY_ARMOR)) {
         counterAtk = Math.max(0, counterAtk - 2);
@@ -117,21 +136,45 @@ export class Game {
       if (counterAtk <= attacker.defense) {
         attacker.defense -= counterAtk;
       } else {
-        attacker.hp -= (counterAtk - attacker.defense);
+        const damageToHp = counterAtk - attacker.defense;
+        attacker.hp -= damageToHp;
         attacker.defense = 0;
+        this.addLog(defenderOwner.name, `[${defender.name}] 反击了 [${attacker.name}]，造成了 ${damageToHp} 点伤害。`, 'attack');
       }
-      if (attacker.hp <= 0) {
+    if (attacker.hp <= 0) {
         console.log(`=> 伏击导致 ${attacker.name} 阵亡！`);
+        this.addLog('系统', `[${attacker.name}] 阵亡。`, 'system');
         this.destroyUnit(attackerOwner, attacker);
+        this.promoteUnit(defender, defenderOwner);
       }
     }
 
     if (defender.hp <= 0) {
       console.log(`=> ${defender.name} 阵亡！`);
+      this.addLog('系统', `[${defender.name}] 阵亡。`, 'system');
       this.destroyUnit(defenderOwner, defender);
+      if (attacker.hp > 0) {
+          this.promoteUnit(attacker, attackerOwner);
+      }
     }
     
     return true;
+  }
+
+  // 单位晋升逻辑 (Veterancy)
+  private promoteUnit(unit: UnitCard, owner: Player) {
+      unit.kills = (unit.kills || 0) + 1;
+      const rankThresholds = [2, 5, 9]; // 2杀老兵，5杀精锐，9杀王牌
+      const currentRank = unit.rank || 0;
+      
+      if (currentRank < rankThresholds.length && unit.kills >= rankThresholds[currentRank]) {
+          unit.rank = currentRank + 1;
+          const rankNames = ['新兵', '老兵', '精锐', '王牌'];
+          unit.attack += 1;
+          unit.maxHp += 2;
+          unit.hp = unit.maxHp; // 晋升时回满血
+          this.addLog('系统', `[${unit.name}] 晋升为 ${rankNames[unit.rank]}！攻击力+1，血量+2并恢复满血。`, 'skill');
+      }
   }
 
   // 攻击敌方总部
@@ -148,7 +191,20 @@ export class Game {
     }
 
     console.log(`\n[战斗] ${attacker.name}(攻:${attacker.attack}) 攻击了 ${defenderPlayer.name} 的总部！`);
-    defenderPlayer.takeHqDamage(attacker.attack);
+    
+    let damage = attacker.attack;
+    if (attacker.category === UnitCategory.AIR_FORCE) {
+      damage = Math.floor(damage * 1.5);
+    }
+    
+    defenderPlayer.takeHqDamage(damage);
+    this.addLog(this.currentPlayer.name, `[${attacker.name}] 攻击了敌方指挥部，造成了 ${damage} 点伤害。`, 'attack');
+    
+    if (defenderPlayer.hqHp <= 0) {
+      console.log(`=> 敌方HQ被摧毁，游戏结束！`);
+      this.addLog('系统', `敌方指挥部被摧毁！`, 'system');
+    }
+    
     attacker.hasAttackedThisTurn = true;
     return true;
   }

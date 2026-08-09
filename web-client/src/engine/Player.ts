@@ -106,17 +106,20 @@ export class Player {
       u.hasMovedThisTurn = true;
       this.board.push(u);
       console.log(`${this.name} 部署了单位 [${card.name}]`);
+      if (game) game.addLog(this.name, `消耗 ${card.deployCost} CP 部署了 [${card.name}]。`, 'play');
     } else if (card.type === CardType.ORDER) {
       console.log(`${this.name} 使用了指令卡 [${card.name}]`);
       if (game) {
+        game.addLog(this.name, `消耗 ${card.deployCost} CP 使用了指令 [${card.name}]。`, 'skill');
         (card as OrderCard).effect(game);
       }
       this.graveyard.push(card);
     } else if (card.type === CardType.ENVIRONMENT) {
       console.log(`${this.name} 使用了环境卡 [${card.name}]`);
       if (game) {
+        game.addLog(this.name, `改变了战场环境: [${card.name}]。`, 'environment');
         // 设置当前全局环境
-        game.activeEnvironment = card;
+        game.activeEnvironment = card as EnvironmentCard;
         (card as EnvironmentCard).onPlay(game);
       }
       this.graveyard.push(card);

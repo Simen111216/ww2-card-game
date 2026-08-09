@@ -2,6 +2,7 @@ import Peer from 'peerjs';
 import type { DataConnection } from 'peerjs';
 
 export type NetworkAction = 
+  | { type: 'GUEST_READY', faction: string, deck: any[] }
   | { type: 'GAME_START', p1Faction: string, p2Faction: string }
   | { type: 'PLAY_CARD', index: number }
   | { type: 'MOVE_UNIT', index: number }

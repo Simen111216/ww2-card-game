@@ -51,6 +51,8 @@ export interface UnitCard extends BaseCard {
   hasMovedThisTurn: boolean;
   hasAttackedThisTurn: boolean;
   line: 'support' | 'frontline'; // 所处战线
+  kills?: number; // 击杀数
+  rank?: number; // 军衔等级 (0:新兵, 1:老兵, 2:精锐, 3:王牌)
 }
 
 export interface OrderCard extends BaseCard {
@@ -96,4 +98,12 @@ export interface HQCard extends BaseCard {
   type: CardType.HQ;
   hp: number; // 初始为25
   maxHp: number;
+}
+
+export interface CombatLog {
+  id: string;
+  turn: number;
+  playerName: string;
+  message: string;
+  type: 'play' | 'attack' | 'skill' | 'environment' | 'system';
 }

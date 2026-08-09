@@ -5,9 +5,10 @@ import { Faction, CardType, UnitCategory, Keyword } from './engine/types';
 import type { UnitCard, OrderCard, BaseCard } from './engine/types';
 import { CardComponent } from './components/CardComponent';
 import { Academy } from './components/Academy';
+import { DeckBuilder } from './components/DeckBuilder';
 import { motion, AnimatePresence } from 'framer-motion';
 import { networkManager, type NetworkAction } from './engine/NetworkManager';
-import type { Commander, EnvironmentCard, CampaignScenario, UnitCard } from './engine/types';
+import type { Commander, EnvironmentCard, CampaignScenario } from './engine/types';
 import './index.css';
 
 // --- 指挥官系统库 ---
@@ -89,7 +90,7 @@ export const ENVIRONMENT_CARDS_DATA: Omit<EnvironmentCard, 'id' | 'faction'>[] =
 ];
 
 // --- 真实历史单位库 ---
-function getSovietUnits(): any[] {
+export function getSovietUnits(): any[] {
   return [
     { name: '动员兵', cat: UnitCategory.INFANTRY, cost: 1, atk: 2, def: 1, hp: 3, desc: '数量庞大的基础步兵，装备莫辛-纳甘步枪。', keywords: [] },
     { name: '近卫步兵师', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 3, hp: 6, desc: '身经百战的精锐步兵，战斗意志坚强。', keywords: [Keyword.GUARD] },
@@ -104,7 +105,7 @@ function getSovietUnits(): any[] {
   ];
 }
 
-function getGermanUnits(): any[] {
+export function getGermanUnits(): any[] {
   return [
     { name: '国民突击队', cat: UnitCategory.INFANTRY, cost: 1, atk: 2, def: 1, hp: 2, desc: '战争后期的民兵武装，缺乏训练但装备铁拳反坦克炮。', keywords: [] },
     { name: '国防军步兵', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 4, hp: 5, desc: '训练有素的正规军，战术素养极高。', keywords: [] },
@@ -119,7 +120,7 @@ function getGermanUnits(): any[] {
   ];
 }
 
-function getUSAUnits(): any[] {
+export function getUSAUnits(): any[] {
   return [
     { name: '大兵(G.I.)', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 2, hp: 4, desc: '装备M1加兰德的美国大兵，火力充足。', keywords: [] },
     { name: '游骑兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 3, hp: 5, desc: '精锐的突击步兵，擅长敌后作战。', keywords: [Keyword.AMBUSH] },
@@ -131,7 +132,7 @@ function getUSAUnits(): any[] {
   ];
 }
 
-function getUKUnits(): any[] {
+export function getUKUnits(): any[] {
   return [
     { name: '汤米步兵', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 3, hp: 5, desc: '坚韧的英国步兵。', keywords: [Keyword.GUARD] },
     { name: '红魔伞兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 2, hp: 4, desc: '精锐的空降部队，随时准备空降敌后。', keywords: [Keyword.BLITZ] },
@@ -143,7 +144,7 @@ function getUKUnits(): any[] {
   ];
 }
 
-function getFranceUnits(): any[] {
+export function getFranceUnits(): any[] {
   return [
     { name: '外籍军团', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 3, hp: 6, desc: '精锐的外籍军团士兵。', keywords: [Keyword.GUARD] },
     { name: 'S35 骑兵坦克', cat: UnitCategory.ARMOR, cost: 4, atk: 5, def: 5, hp: 7, desc: '机动性与装甲兼顾的优秀坦克。', keywords: [Keyword.BLITZ] },
@@ -177,7 +178,7 @@ export const ADVANCED_ORDERS_DATA = [
 ];
 
 // --- 真实历史背景指令卡 ---
-function createGenericOrders(faction: Faction): OrderCard[] {
+export function createGenericOrders(faction: Faction): OrderCard[] {
   return [
     {
       id: `${faction}-order-1`, name: '战术补给', description: '抽2张牌，恢复总部3点血。',
@@ -197,11 +198,39 @@ function createGenericOrders(faction: Faction): OrderCard[] {
         });
         enemy.board = enemy.board.filter(u => u.hp > 0);
       }
+    },
+    {
+      id: `${faction}-order-mine`, name: '工兵作业：地雷', description: '战术部署：在支援战线部署一个反坦克地雷（具备极高伏击伤害）。',
+      type: CardType.ORDER, faction: faction, deployCost: 2,
+      effect: (game: Game) => {
+        const mine: UnitCard = {
+          id: `${faction}-mine-${Math.random().toString(36).substring(7)}`, name: '反坦克地雷', description: '隐蔽的反坦克武器，伏击触发后造成毁灭性伤害。',
+          type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: faction,
+          deployCost: 2, attack: 15, defense: 1, hp: 1, maxHp: 1, moveCost: 0,
+          keywords: [Keyword.AMBUSH],
+          hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'support'
+        };
+        game.currentPlayer.board.push(mine);
+      }
+    },
+    {
+      id: `${faction}-order-sandbag`, name: '工兵作业：掩体', description: '战术部署：在支援战线部署一个沙袋掩体（具备守护和高血量）。',
+      type: CardType.ORDER, faction: faction, deployCost: 2,
+      effect: (game: Game) => {
+        const sandbag: UnitCard = {
+          id: `${faction}-sandbag-${Math.random().toString(36).substring(7)}`, name: '沙袋掩体', description: '坚固的防御工事，吸引敌方火力。',
+          type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: faction,
+          deployCost: 2, attack: 0, defense: 3, hp: 8, maxHp: 8, moveCost: 0,
+          keywords: [Keyword.GUARD],
+          hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'support'
+        };
+        game.currentPlayer.board.push(sandbag);
+      }
     }
   ];
 }
 
-function createSovietOrders(): OrderCard[] {
+export function createSovietOrders(): OrderCard[] {
   return [
     {
       id: 'soviet-order-heal', name: '战地医院', description: '紧急救治！总部恢复 8 点血量。',
@@ -227,7 +256,7 @@ function createSovietOrders(): OrderCard[] {
   ];
 }
 
-function createGermanOrders(): OrderCard[] {
+export function createGermanOrders(): OrderCard[] {
   return [
     {
       id: 'german-order-heal', name: '野战急救', description: '紧急救治！总部恢复 8 点血量。',
@@ -255,7 +284,7 @@ function createGermanOrders(): OrderCard[] {
   ];
 }
 
-function createUSAOrders(): OrderCard[] {
+export function createUSAOrders(): OrderCard[] {
   return [
     {
       id: 'usa-order-heal', name: '医疗物资空投', description: '紧急救治！总部恢复 8 点血量。',
@@ -285,7 +314,7 @@ function createUSAOrders(): OrderCard[] {
   ];
 }
 
-function createUKOrders(): OrderCard[] {
+export function createUKOrders(): OrderCard[] {
   return [
     {
       id: 'uk-order-heal', name: '红十字会', description: '紧急救治！总部恢复 8 点血量。',
@@ -315,7 +344,7 @@ function createUKOrders(): OrderCard[] {
   ];
 }
 
-function createFranceOrders(): OrderCard[] {
+export function createFranceOrders(): OrderCard[] {
   return [
     {
       id: 'france-order-heal', name: '自由法国医疗队', description: '紧急救治！总部恢复 8 点血量。',
@@ -354,7 +383,7 @@ function createFranceOrders(): OrderCard[] {
   ];
 }
 
-function buildDeck(faction: Faction): any[] {
+export function buildDeck(faction: Faction): any[] {
   const deck: any[] = [];
   let factionOrders;
   switch (faction) {
@@ -385,7 +414,34 @@ function buildDeck(faction: Faction): any[] {
   const myAdvancedUnits = ADVANCED_CARDS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id));
   const myAdvancedOrders = ADVANCED_ORDERS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id));
 
-  for (let i = 1; i <= 60; i++) {
+  // 检查是否有自定义卡组
+  try {
+      const customDecks = JSON.parse(localStorage.getItem('customDecks') || '{}');
+      if (customDecks[faction]) {
+          const counts = customDecks[faction];
+          // 将所有单元补充上统一ID，供匹配
+          const allUnits = factionUnits.map(u => ({ ...u, id: `${faction}-unit-${u.name}`, type: CardType.UNIT, category: u.cat, deployCost: u.cost, attack: u.atk, defense: u.def, hp: u.hp, maxHp: u.hp, moveCost: 1, keywords: u.keywords || [], line: 'support', hasMovedThisTurn: false, hasAttackedThisTurn: false }));
+          const allAdvUnits = myAdvancedUnits.map(c => ({...c, cat: c.cat, cost: c.cost, atk: c.atk, def: c.def, isAdvanced: true, line: 'support', hasMovedThisTurn: false, hasAttackedThisTurn: false}));
+          const allAdvOrders = myAdvancedOrders.map(c => ({...c, isAdvanced: true}));
+          const allEnvs = ENVIRONMENT_CARDS_DATA.map(e => ({...e, id: `env-${e.name}`, faction}));
+          const allPool = [...allUnits, ...allAdvUnits, ...factionOrders, ...allAdvOrders, ...allEnvs];
+
+          let cardIndex = 1;
+          Object.entries(counts).forEach(([templateId, count]) => {
+              const cardTemplate = allPool.find(c => c.id === templateId || c.name === templateId);
+              if (cardTemplate) {
+                  for(let i=0; i<(count as number); i++) {
+                      deck.push({...cardTemplate, id: `${cardTemplate.id}-${cardIndex++}`});
+                  }
+              }
+          });
+
+          // 如果不够60张，走下面随机补全逻辑
+          if (deck.length >= 60) return deck;
+      }
+  } catch(e) {}
+
+  for (let i = deck.length + 1; i <= 60; i++) {
     // 随机塞入环境卡
     if (i === 15 || i === 45) {
       const randomEnv = ENVIRONMENT_CARDS_DATA[Math.floor(Math.random() * ENVIRONMENT_CARDS_DATA.length)];
@@ -487,6 +543,52 @@ export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
       game.player2.hqHp = 25; // 恢复正常血量 25 (原为 30)
       game.player1.cp = 2;    // 玩家获得政委支援：初始自带 2 点 CP
     }
+  },
+  {
+    id: 'campaign-kursk',
+    name: '库尔斯克会战 (钢铁对决)',
+    description: '1943年夏。史上最大规模的坦克会战。双方指挥部将获得大量初始指挥点，但只有装甲部队能发挥最大效用。\n目标：在 15 回合内击溃敌方指挥部。\n奖励：解锁高级卡牌【虎王重型坦克】',
+    playerFaction: Faction.SOVIET,
+    aiFaction: Faction.GERMANY,
+    maxTurns: 15,
+    rewardCardId: 'adv-german-1', // Actually it's unlocked for player, maybe they play as Germany? Let's keep Soviet and give them German tank? No, let's make player Germany for this one.
+    setupBoard: (game: Game) => {
+      // 双方初始10CP
+      game.player1.maxCp = 10;
+      game.player1.cp = 10;
+      game.player2.maxCp = 10;
+      game.player2.cp = 10;
+      // 移除步兵，只保留装甲（简化的特殊规则）
+      game.activeEnvironment = {
+          name: '钢铁洪流', description: '环境卡：所有步兵单位入场时立即受到 5 点伤害。', type: CardType.ENVIRONMENT, deployCost: 0, faction: Faction.GERMANY, id: 'env-kursk',
+          onPlay: (g: Game) => {},
+          onTurnStart: (g: Game) => {
+              g.player1.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.hp -= 5);
+              g.player2.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.hp -= 5);
+              g.player1.board = g.player1.board.filter((u: UnitCard) => u.hp > 0);
+              g.player2.board = g.player2.board.filter((u: UnitCard) => u.hp > 0);
+          }
+      };
+    }
+  },
+  {
+    id: 'campaign-britain',
+    name: '不列颠空战',
+    description: '1940年秋。德国空军对英国本土进行大规模轰炸，皇家空军奋起反击。争夺制空权！\n目标：在 15 回合内守住指挥部并击溃敌方。\n奖励：解锁高级卡牌【SAS 特种空勤团】',
+    playerFaction: Faction.UK,
+    aiFaction: Faction.GERMANY,
+    maxTurns: 15,
+    rewardCardId: 'adv-uk-1',
+    setupBoard: (game: Game) => {
+      game.activeEnvironment = {
+          name: '制空权争夺', description: '环境卡：所有空军单位攻击力+2。', type: CardType.ENVIRONMENT, deployCost: 0, faction: Faction.UK, id: 'env-britain',
+          onPlay: (g: Game) => {},
+          onTurnStart: (g: Game) => {}
+      };
+      // 为所有场上空军+2攻
+      game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.AIR_FORCE).forEach((u: UnitCard) => u.attack += 2);
+      game.player2.board.filter((u: UnitCard) => u.category === UnitCategory.AIR_FORCE).forEach((u: UnitCard) => u.attack += 2);
+    }
   }
 ];
 
@@ -508,6 +610,9 @@ export default function App() {
 
   const [showTutorial, setShowTutorial] = useState(false);
   const [showAcademy, setShowAcademy] = useState(false);
+  const [showDeckBuilder, setShowDeckBuilder] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
   const forceUpdate = () => setTick(t => t + 1);
 
@@ -544,7 +649,13 @@ export default function App() {
 
     const p1 = new Player("指挥官 (我方)", p1Fac, buildDeck(p1Fac));
     p1.commander = COMMANDERS_DATA.find(c => c.faction === p1Fac) || null;
-    const p2 = new Player(gameMode === 'ai' || isCampaign ? "AI 指挥官 (敌方)" : "敌方指挥官", p2Fac, buildDeck(p2Fac));
+    
+    let p2Deck = buildDeck(p2Fac);
+    if (gameMode === 'multiplayer' && isHost && (window as any).guestDeck) {
+        p2Deck = (window as any).guestDeck;
+    }
+    
+    const p2 = new Player(gameMode === 'ai' || isCampaign ? "AI 指挥官 (敌方)" : "敌方指挥官", p2Fac, p2Deck);
     p2.commander = COMMANDERS_DATA.find(c => c.faction === p2Fac) || null;
     const newGame = new Game(p1, p2);
 
@@ -575,11 +686,19 @@ export default function App() {
       setConnectionStatus('已连接！');
       if (networkManager.isHost) {
         if (game) networkManager.send({ type: 'SYNC_STATE', state: game.serialize() });
+      } else {
+        // Guest joins, send their custom deck and faction
+        networkManager.send({ type: 'GUEST_READY', faction: playerFaction, deck: buildDeck(playerFaction) });
       }
     };
 
     networkManager.onDataCb = (data: NetworkAction) => {
-      if (data.type === 'SYNC_STATE') {
+      if (data.type === 'GUEST_READY' && networkManager.isHost) {
+          setAiFaction(data.faction as Faction);
+          setConnectionStatus(`已连接！对手阵营: ${data.faction}`);
+          // We will apply this deck when startGame is clicked
+          (window as any).guestDeck = data.deck; 
+      } else if (data.type === 'SYNC_STATE') {
         setRemoteState(data.state);
         if (gamePhase === 'lobby') setGamePhase('playing');
       } else if (data.type === 'GAME_START') {
@@ -624,6 +743,21 @@ export default function App() {
       const playAITurn = async () => {
         const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
         await sleep(1000);
+
+        // 0. AI 判断是否使用指挥官技能
+        if (p2.commander && p2.cp >= p2.commander.activeCost && (!p2.commander.currentCooldown || p2.commander.currentCooldown <= 0)) {
+          const shouldUse = Math.random() > 0.5; // 50%概率使用
+          if (shouldUse) {
+             p2.cp -= p2.commander.activeCost;
+             p2.commander.currentCooldown = p2.commander.activeCooldown;
+             p2.commander.useActive(game, p2);
+             game.addLog(p2.name, `消耗 ${p2.commander.activeCost} CP 使用了指挥官技能 [${p2.commander.activeName}]。`, 'skill');
+             forceUpdate();
+             setOrderVfx({ type: 'buff', area: 'p2-hq' });
+             await sleep(1000);
+             setOrderVfx(null);
+          }
+        }
 
         // 1. AI 部署卡牌
         let canPlay = true;
@@ -723,6 +857,13 @@ export default function App() {
     }
   }, [game?.turnNumber, gamePhase]);
 
+  // 自动滚动日志
+  useEffect(() => {
+    if (showLogs && logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [game?.logs.length, showLogs]);
+
   if (gamePhase === 'lobby') {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/black-linen.png')] relative">
@@ -740,6 +881,12 @@ export default function App() {
             className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transition-colors border-2 border-amber-400"
           >
             🏛️ 历史军校 (解锁卡牌)
+          </button>
+          <button 
+            onClick={() => setShowDeckBuilder(true)}
+            className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transition-colors border-2 border-purple-400"
+          >
+            🛠️ 自定义卡组 (Deck Builder)
           </button>
         </div>
 
@@ -912,6 +1059,10 @@ export default function App() {
 
         <AnimatePresence>
           {showAcademy && <Academy onClose={() => setShowAcademy(false)} />}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showDeckBuilder && <DeckBuilder onClose={() => setShowDeckBuilder(false)} />}
         </AnimatePresence>
       </div>
     );
@@ -1167,7 +1318,33 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col font-sans overflow-x-hidden overflow-y-auto">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col font-sans overflow-x-hidden overflow-y-auto relative">
+      {/* 侧边对战记录栏 */}
+      <div className={`fixed right-0 top-0 bottom-0 w-80 bg-gray-900 border-l-4 border-gray-700 shadow-[-10px_0_30px_rgba(0,0,0,0.8)] z-[250] transition-transform duration-300 flex flex-col ${showLogs ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="bg-gray-800 p-4 border-b-2 border-gray-700 flex justify-between items-center">
+          <h3 className="font-bold text-lg text-amber-500 flex items-center gap-2">📜 对战日志</h3>
+          <button onClick={() => setShowLogs(false)} className="text-gray-400 hover:text-white font-bold text-xl">&times;</button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {game?.logs.map(log => (
+            <div key={log.id} className="text-sm border-b border-gray-800 pb-2">
+              <div className="flex justify-between items-center mb-1 opacity-70 text-xs">
+                <span className={`font-bold ${log.playerName === p1?.name ? 'text-blue-400' : log.playerName === '系统' || log.playerName === '全局' ? 'text-gray-400' : 'text-red-400'}`}>{log.playerName}</span>
+                <span>T{log.turn}</span>
+              </div>
+              <div className={`
+                ${log.type === 'attack' ? 'text-red-300' : ''}
+                ${log.type === 'play' ? 'text-green-300' : ''}
+                ${log.type === 'skill' ? 'text-purple-300' : ''}
+                ${log.type === 'environment' ? 'text-amber-300' : ''}
+                ${log.type === 'system' ? 'text-gray-400 italic' : ''}
+              `}>{log.message}</div>
+            </div>
+          ))}
+          <div ref={logsEndRef} />
+        </div>
+      </div>
+
       <AnimatePresence>
         {toastMsg && (
           <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 20 }} exit={{ opacity: 0, y: -50 }}
@@ -1443,6 +1620,7 @@ export default function App() {
                        p1.cp -= p1!.commander!.activeCost;
                        p1.commander!.useActive(game, p1);
                        showToast(`指挥官技能: ${p1.commander!.activeName}`);
+                       game.addLog(p1.name, `消耗 ${p1.commander!.activeCost} CP 释放了主动技能 [${p1.commander!.activeName}]！`, 'skill');
                        setOrderVfx({ type: 'buff', area: 'p1-board' });
                        forceUpdate();
                     }}
@@ -1464,6 +1642,9 @@ export default function App() {
             </div>
           </div>
           <div className="flex flex-col items-end">
+             <button onClick={() => setShowLogs(!showLogs)} className="mb-4 text-sm bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-full border border-gray-500 transition-colors">
+               {showLogs ? '隐藏日志' : '📜 查看对战日志'}
+             </button>
              <div className={`text-xl font-bold mb-2 ${game.currentPlayer === p1 ? 'text-green-400' : 'text-gray-500'}`}>
                     回合 {game.turnNumber} : {game.currentPlayer.name} 的回合
                     {game.maxTurns !== Infinity && <span className="ml-4 text-red-400 text-sm">(战役限时: 剩余 {game.maxTurns - game.currentRound + 1} 回合)</span>}

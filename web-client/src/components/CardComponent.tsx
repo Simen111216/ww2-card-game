@@ -57,6 +57,15 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
       <div className="px-2 py-1 bg-black/60 text-center font-bold text-sm border-b-2 border-gray-800">
         {card.name}
       </div>
+      
+      {/* 军衔展示区 (仅单位卡且在场上时可能有 rank) */}
+      {unitCard && (unitCard.rank || 0) > 0 && (
+        <div className="absolute top-12 left-1/2 -translate-x-1/2 flex gap-0.5 z-10 drop-shadow-md">
+          {Array.from({ length: unitCard.rank! }).map((_, i) => (
+             <span key={i} className="text-yellow-400 text-lg leading-none">★</span>
+          ))}
+        </div>
+      )}
 
       {/* 词条展示区 (仅单位卡) */}
       {unitCard && unitCard.keywords.length > 0 && (
