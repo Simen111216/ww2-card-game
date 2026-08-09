@@ -205,6 +205,9 @@ export class Game {
       this.addLog('系统', `敌方指挥部被摧毁！`, 'system');
     }
     
+    // 攻击总部也算作一次击杀（战功）
+    this.promoteUnit(attacker, this.currentPlayer);
+    
     attacker.hasAttackedThisTurn = true;
     return true;
   }
