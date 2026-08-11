@@ -24,6 +24,7 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
 
   return (
     <div
+      id={`card-${card.id}`}
       onClick={canPlay ? onClick : undefined}
       className={`
         relative w-40 h-56 rounded-lg shadow-lg overflow-hidden border-4 transition-transform duration-200

@@ -1689,7 +1689,7 @@ export default function App() {
               </div>
             </div>
           )}
-          <div>
+          <div id="p2-hq">
             <h2 className="text-xl font-bold text-gray-300">{p2.name} - {p2.faction}</h2>
             <div className="flex gap-4 mt-2 text-sm">
               <span className="bg-red-900 px-3 py-1 rounded-full font-bold">HQ 血量: {p2.hqHp} / 25</span>
@@ -1872,7 +1872,7 @@ export default function App() {
                 )}
               </div>
             )}
-            <div>
+            <div id="p1-hq">
               <h2 className="text-2xl font-bold text-white">{p1.name} - {p1.faction}</h2>
               <div className="flex gap-4 mt-2 text-sm">
                 <span className="bg-red-900 px-3 py-1 rounded-full font-bold shadow-inner">HQ 血量: {p1.hqHp} / 25</span>
