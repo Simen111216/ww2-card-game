@@ -13,7 +13,9 @@ export type NetworkAction =
   | { type: 'USE_SKILL' }
   | { type: 'SYNC_STATE', state: any }
   | { type: 'VFX', cardId: string, isP1: boolean }
-  | { type: 'START_PLAY_ANIM', index: number, isP1: boolean, card: any };
+  | { type: 'START_PLAY_ANIM', index: number, isP1: boolean, card: any }
+  | { type: 'START_ATTACK_ANIM', attackerId: string, defenderId: string, isP1: boolean }
+  | { type: 'SPAWN_TRANSIENT_VFX', vfxType: 'damage' | 'heal' | 'armor' | 'death', text: string, targetId: string, isP1: boolean };
 
 export class NetworkManager {
   private peer: Peer | null = null;

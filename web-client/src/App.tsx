@@ -656,10 +656,33 @@ export default function App() {
   const [flash, setFlash] = useState<'red' | 'white' | 'gold' | null>(null);
   const [turnBanner, setTurnBanner] = useState<string | null>(null);
   const [orderVfx, setOrderVfx] = useState<{ type: 'explosions' | 'nuke' | 'buff' | 'advanced', area: 'p1-support' | 'p2-support' | 'p1-hq' | 'p2-hq' | 'p1-board' | 'p2-board' | 'p1-frontline' | 'p2-frontline' | 'global' } | null>(null);
+  const [transientVfx, setTransientVfx] = useState<Array<{ id: string, type: 'damage' | 'heal' | 'armor' | 'death', text?: string, x: number, y: number, color?: string }>>([]);
+
+  const executeAttackRef = useRef<any>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const spawnTransientVfx = (type: 'damage' | 'heal' | 'armor' | 'death', text: string, targetId: string) => {
+    const elId = targetId.includes('-hq') ? targetId : `card-${targetId}`;
+    const el = document.getElementById(elId);
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const id = Math.random().toString(36).substring(7);
+      
+      // Randomize position slightly for floating text
+      const offsetX = type === 'death' ? 0 : (Math.random() - 0.5) * 40;
+      const offsetY = type === 'death' ? 0 : (Math.random() - 0.5) * 40;
+
+      setTransientVfx(prev => [...prev, { id, type, text, x: x + offsetX, y: y + offsetY }]);
+      setTimeout(() => {
+        setTransientVfx(prev => prev.filter(v => v.id !== id));
+      }, type === 'death' ? 1000 : 1500);
+    }
   };
 
   const startGame = () => {
@@ -768,6 +791,29 @@ export default function App() {
       } else if (data.type === 'START_PLAY_ANIM') {
         const localIsP1 = networkManager.isHost ? data.isP1 : !data.isP1;
         runPlayAnim(localIsP1 ? 'p1' : 'p2', data.index, data.card);
+      } else if (data.type === 'START_ATTACK_ANIM') {
+        const localIsP1 = networkManager.isHost ? data.isP1 : !data.isP1;
+        let finalDefId = data.defenderId;
+        // Invert HQ ids if necessary
+        if (!networkManager.isHost) {
+           if (finalDefId === 'p1-hq') finalDefId = 'p2-hq';
+           else if (finalDefId === 'p2-hq') finalDefId = 'p1-hq';
+        }
+        setAttackAnim({ attackerId: data.attackerId, defenderId: finalDefId, phase: 'windup' });
+        setTimeout(() => {
+           setAttackAnim({ attackerId: data.attackerId, defenderId: finalDefId, phase: 'strike' });
+           setTimeout(() => {
+              setAttackAnim(null);
+           }, 100);
+        }, 300);
+      } else if (data.type === 'SPAWN_TRANSIENT_VFX') {
+        const localIsP1 = networkManager.isHost ? data.isP1 : !data.isP1;
+        let finalTargetId = data.targetId;
+        if (!networkManager.isHost) {
+           if (finalTargetId === 'p1-hq') finalTargetId = 'p2-hq';
+           else if (finalTargetId === 'p2-hq') finalTargetId = 'p1-hq';
+        }
+        spawnTransientVfx(data.vfxType, data.text, finalTargetId);
       }
       
       // If we are host, process incoming actions from client
@@ -796,9 +842,15 @@ export default function App() {
         } else if (data.type === 'MOVE_UNIT') {
           game.moveUnit(game.player2, game.player1, game.player2.board[data.index]);
         } else if (data.type === 'ATTACK_UNIT') {
-          game.attackUnit(game.player2.board[data.attackerIndex], game.player1.board[data.defenderIndex], game.player2, game.player1);
+          if (executeAttackRef.current) {
+            executeAttackRef.current(game.player2.board[data.attackerIndex], game.player1.board[data.defenderIndex], game.player2, game.player1, false);
+            return;
+          }
         } else if (data.type === 'ATTACK_HQ') {
-          game.attackHQ(game.player2.board[data.attackerIndex], game.player1);
+          if (executeAttackRef.current) {
+            executeAttackRef.current(game.player2.board[data.attackerIndex], 'hq', game.player2, game.player1, false);
+            return;
+          }
         } else if (data.type === 'USE_SKILL') {
           if (game.player2.cp >= game.player2.commander!.activeCost) {
             game.player2.cp -= game.player2.commander!.activeCost;
@@ -929,13 +981,13 @@ export default function App() {
 
           if (validTargets.length > 0) {
             const target = [...validTargets].sort((a, b) => a.hp - b.hp)[0];
-            await executeAttack(unit, target, p2, p1);
+            if (executeAttackRef.current) await executeAttackRef.current(unit, target, p2, p1, false);
           } else {
             // Check if can attack HQ
             const guards = p1.board.filter(u => u.keywords.includes(Keyword.GUARD));
             const canAtkHq = (unit.category === UnitCategory.ARTILLERY || unit.category === UnitCategory.AIR_FORCE) || (unit.line === 'frontline');
             if (guards.length === 0 && canAtkHq) {
-                await executeAttack(unit, 'hq', p2, p1);
+                if (executeAttackRef.current) await executeAttackRef.current(unit, 'hq', p2, p1, false);
             }
           }
           forceUpdate();
@@ -1213,20 +1265,61 @@ export default function App() {
     setFlash(null);
   };
 
-  const executeAttack = async (attacker: UnitCard, defender: UnitCard | 'hq', pAtk: Player, pDef: Player) => {
-    const defId = typeof defender === 'string' ? defender : defender.id;
+  const executeAttack = async (attacker: UnitCard, defender: UnitCard | 'hq', pAtk: Player, pDef: Player, isLocalP1: boolean = true) => {
+    const defId = typeof defender === 'string' ? (pDef === p2 ? 'p2-hq' : 'p1-hq') : defender.id;
+    
+    if (gameMode === 'multiplayer' && isHost) {
+       networkManager.send({ type: 'START_ATTACK_ANIM', attackerId: attacker.id, defenderId: defId, isP1: isLocalP1 });
+    }
+
     setAttackAnim({ attackerId: attacker.id, defenderId: defId, phase: 'windup' });
     await new Promise(r => setTimeout(r, 300));
     setAttackAnim({ attackerId: attacker.id, defenderId: defId, phase: 'strike' });
     await new Promise(r => setTimeout(r, 100));
 
+    const atkHpBefore = attacker.hp;
+    const defHpBefore = typeof defender === 'string' ? pDef.hqHp : defender.hp;
+
+    let success = false;
     if (typeof defender === 'string') {
-      const success = game.attackHQ(attacker, pDef);
+      success = game.attackHQ(attacker, pDef);
       if (success) setFlash('red');
     } else {
-      game.attackUnit(attacker, defender, pAtk, pDef);
+      success = game.attackUnit(attacker, defender, pAtk, pDef);
     }
     
+    if (success) {
+      const atkHpAfter = attacker.hp;
+      const defHpAfter = typeof defender === 'string' ? pDef.hqHp : (defender as UnitCard).hp;
+      
+      const atkDamage = atkHpBefore - atkHpAfter;
+      const defDamage = defHpBefore - defHpAfter;
+
+      const spawnAndSyncVfx = (type: 'damage' | 'heal' | 'armor' | 'death', text: string, targetId: string) => {
+         spawnTransientVfx(type, text, targetId);
+         if (gameMode === 'multiplayer' && isHost) {
+            networkManager.send({ type: 'SPAWN_TRANSIENT_VFX', vfxType: type, text, targetId, isP1: isLocalP1 });
+         }
+      };
+
+      if (defDamage > 0) {
+        spawnAndSyncVfx('damage', `-${defDamage}`, defId);
+      } else if (defDamage === 0 && typeof defender !== 'string' && defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
+        spawnAndSyncVfx('armor', '格挡', defId);
+      }
+      
+      if (atkDamage > 0) {
+        spawnAndSyncVfx('damage', `-${atkDamage}`, attacker.id);
+      }
+
+      if (defHpAfter <= 0 && typeof defender !== 'string') {
+        spawnAndSyncVfx('death', '', defId);
+      }
+      if (atkHpAfter <= 0) {
+        spawnAndSyncVfx('death', '', attacker.id);
+      }
+    }
+
     setGlobalShake(attacker.attack * (typeof defender === 'string' ? 4 : 2) + 10);
     forceUpdate();
     await new Promise(r => setTimeout(r, 400));
@@ -1237,6 +1330,7 @@ export default function App() {
       networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
     }
   };
+  executeAttackRef.current = executeAttack;
 
   const runPlayAnim = async (player: 'p1' | 'p2', index: number, card: BaseCard) => {
     if (player === 'p1') {
@@ -1814,6 +1908,21 @@ export default function App() {
           </AnimatePresence>
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {transientVfx.map((vfx) => (
+          <motion.div
+            key={vfx.id}
+            initial={{ opacity: 1, y: vfx.type === 'death' ? vfx.y : vfx.y + 20, scale: vfx.type === 'death' ? 0.5 : 1.5 }}
+            animate={{ opacity: 0, y: vfx.type === 'death' ? vfx.y : vfx.y - 80, scale: vfx.type === 'death' ? 2 : 1 }}
+            transition={{ duration: vfx.type === 'death' ? 0.6 : 1.2, ease: "easeOut" }}
+            className={`fixed pointer-events-none z-50 flex items-center justify-center font-black drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] ${vfx.type === 'death' ? 'text-8xl' : 'text-5xl'}`}
+            style={{ left: vfx.x, top: vfx.y, transform: 'translate(-50%, -50%)', color: vfx.type === 'damage' ? '#ff3333' : vfx.type === 'heal' ? '#33ff33' : vfx.type === 'armor' ? '#a0aec0' : '#ffa500' }}
+          >
+            {vfx.type === 'death' ? '💥' : vfx.text}
+          </motion.div>
+        ))}
+      </AnimatePresence>
 
       {(game.isGameOver) && (() => {
         const isTimeOut = game.maxTurns !== Infinity && game.currentRound > game.maxTurns;

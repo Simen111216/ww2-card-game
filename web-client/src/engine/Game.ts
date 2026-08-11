@@ -9,6 +9,7 @@ export class Game {
   public activeEnvironment: EnvironmentCard | null = null;
   public maxTurns: number = Infinity;
   public logs: CombatLog[] = [];
+  public onVfx?: (type: 'damage' | 'heal' | 'armor' | 'death', text: string, targetId: string) => void;
 
   public get currentRound() {
     return Math.ceil(this.turnNumber / 2);
