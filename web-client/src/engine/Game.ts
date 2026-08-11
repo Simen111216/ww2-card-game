@@ -44,15 +44,15 @@ export class Game {
     }
 
     this.addLog(this.player1.name, `游戏开始！你的先手回合。`, 'system');
-    this.nextTurn();
+    this.nextTurn(true);
   }
 
-  public nextTurn() {
+  public nextTurn(isFirstTurn: boolean = false) {
     this.turnNumber++;
     this.currentPlayer = this.currentPlayer === this.player1 ? this.player2 : this.player1;
     console.log(`\n=== 第 ${this.turnNumber} 回合 : ${this.currentPlayer.name} 的回合 ===`);
     this.addLog(this.currentPlayer.name, `回合开始。`, 'system');
-    this.currentPlayer.startTurn();
+    this.currentPlayer.startTurn(isFirstTurn);
 
     // 触发环境卡的每回合效果
     if (this.activeEnvironment && this.activeEnvironment.onTurnStart) {

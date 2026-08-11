@@ -274,6 +274,19 @@ export function createGermanOrders(): OrderCard[] {
       }
     },
     {
+      id: 'german-order-v1', name: 'V1飞弹', description: '初期巡航导弹。对敌方总部造成 4 点伤害。若敌方场上有空军单位，则有 50% 概率被拦截（无伤害）。',
+      type: CardType.ORDER, faction: Faction.GERMANY, deployCost: 3,
+      effect: (game: Game) => {
+        const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1;
+        const hasAirForce = enemy.board.some(u => u.category === UnitCategory.AIR_FORCE);
+        if (hasAirForce && Math.random() < 0.5) {
+          game.addLog(enemy.name, `敌方战斗机成功拦截了 V1飞弹！`, 'system');
+        } else {
+          enemy.takeHqDamage(4);
+        }
+      }
+    },
+    {
       id: 'german-order-v2', name: 'V2火箭', description: '战略打击！无视前线，直接对敌方总部造成 6 点伤害。',
       type: CardType.ORDER, faction: Faction.GERMANY, deployCost: 5,
       effect: (game: Game) => {
@@ -465,7 +478,23 @@ export function buildDeck(faction: Faction, customCounts?: Record<string, number
     }
 
     if (i % 4 === 0 || i % 4 === 3) {
-      const randomOrder = factionOrders[Math.floor(Math.random() * factionOrders.length)];
+      let randomOrder;
+      // 对于德国阵营，降低 V2 火箭的抽取概率
+      if (faction === Faction.GERMANY) {
+         // 生成 0-99 的随机数，如果小于 5（5%概率）才可能抽到 V2 火箭
+         const roll = Math.random() * 100;
+         if (roll < 5) {
+             randomOrder = factionOrders.find(o => o.id === 'german-order-v2');
+         }
+         // 如果没抽到或者没找到 V2 火箭，则在剩下的指令卡中随机抽
+         if (!randomOrder) {
+             const otherOrders = factionOrders.filter(o => o.id !== 'german-order-v2');
+             randomOrder = otherOrders[Math.floor(Math.random() * otherOrders.length)];
+         }
+      } else {
+         randomOrder = factionOrders[Math.floor(Math.random() * factionOrders.length)];
+      }
+      
       deck.push({ ...randomOrder, id: `${randomOrder.id}-${i}` });
     } else {
       const u = factionUnits[Math.floor(Math.random() * factionUnits.length)];

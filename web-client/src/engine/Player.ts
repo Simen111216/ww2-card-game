@@ -58,7 +58,7 @@ export class Player {
   }
 
   // 回合开始时的处理
-  public startTurn() {
+  public startTurn(isFirstTurn: boolean = false) {
     // 指挥点随回合推进逐渐增加，最大为10（或根据配置）
     // 但是库尔斯克战役等可能突破10的上限，所以我们只在 maxCp 小于 10 时才递增
     if (this.maxCp < 10) {
@@ -73,8 +73,10 @@ export class Player {
       unit.hasAttackedThisTurn = false;
     });
 
-    // 每过一个回合抽一张牌
-    this.drawCard(1);
+    // 每过一个回合抽一张牌 (第一回合不抽，因为开局已经抽了5张)
+    if (!isFirstTurn) {
+      this.drawCard(1);
+    }
 
     // 指挥官技能冷却与被动触发
     if (this.commander) {
