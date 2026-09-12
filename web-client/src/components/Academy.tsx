@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ADVANCED_CARDS_DATA, ADVANCED_ORDERS_DATA } from '../App';
+import { getAdvancedCardsData, getAdvancedOrdersData } from '../App';
 import { CardComponent } from './CardComponent';
 
 const LESSONS = [
@@ -68,7 +68,7 @@ export function Academy({ onClose }: { onClose: () => void }) {
   };
 
   const grantReward = () => {
-    const allAdv = [...ADVANCED_CARDS_DATA, ...ADVANCED_ORDERS_DATA];
+    const allAdv = [...getAdvancedCardsData(), ...getAdvancedOrdersData()];
     let unlockedIds: string[] = [];
     try {
       unlockedIds = JSON.parse(localStorage.getItem('unlockedCards') || '[]');

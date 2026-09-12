@@ -14,82 +14,89 @@ import i18n from './i18n';
 import './index.css';
 
 // --- 指挥官系统库 ---
-export const COMMANDERS_DATA: Commander[] = [
-  {
-    id: 'cmd-zhukov', name: i18n.t('cards.commander_77.name'), faction: Faction.SOVIET,
-    passiveName: i18n.t('cards.commander_77.passiveName'), passiveDesc: i18n.t('cards.commander_77.passiveDesc'),
-    activeName: i18n.t('cards.commander_77.activeName'), activeDesc: i18n.t('cards.commander_77.activeDesc'),
-    activeCost: 6, activeCooldown: 0,
-    onTurnStart: (game, player) => { player.hqHp = Math.min(25, player.hqHp + 1); },
-    useActive: (game, player) => { player.board.forEach((u: UnitCard) => { u.attack += 1; u.hp += 1; u.maxHp += 1; }); }
-  },
-  {
-    id: 'cmd-rommel', name: i18n.t('cards.commander_78.name'), faction: Faction.GERMANY,
-    passiveName: i18n.t('cards.commander_78.passiveName'), passiveDesc: i18n.t('cards.commander_78.passiveDesc'),
-    activeName: i18n.t('cards.commander_78.activeName'), activeDesc: i18n.t('cards.commander_78.activeDesc'),
-    activeCost: 5, activeCooldown: 0,
-    onTurnStart: (game, player) => { player.cp += 1; },
-    useActive: (game, player) => { player.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => { if(!u.keywords.includes(Keyword.BLITZ)) u.keywords.push(Keyword.BLITZ); u.hasAttackedThisTurn = false; }); }
-  },
-  {
-    id: 'cmd-patton', name: i18n.t('cards.commander_79.name'), faction: Faction.USA,
-    passiveName: i18n.t('cards.commander_79.passiveName'), passiveDesc: i18n.t('cards.commander_79.passiveDesc'),
-    activeName: i18n.t('cards.commander_79.activeName'), activeDesc: i18n.t('cards.commander_79.activeDesc'),
-    activeCost: 7, activeCooldown: 0,
-    onTurnStart: (game, player) => {}, // 被动在playCard时生效或者全局生效，这里简化为只影响已部署的，我们在每次更新时处理，或者写死在部署逻辑。这里用被动加成？我们改为每回合给新部署的加？太复杂。改回每回合开始时所有步兵攻击力+1？不行。改成每回合开始时，总部受伤害减免？
-    // 重写被动：每回合开始时，随机使一个我方单位攻击力+1。
-    useActive: (game, player) => { const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1; enemy.board.forEach((u: UnitCard) => u.hp -= 2); enemy.board = enemy.board.filter((u: UnitCard) => u.hp > 0); }
-  },
-  {
-    id: 'cmd-monty', name: i18n.t('cards.commander_80.name'), faction: Faction.UK,
-    passiveName: i18n.t('cards.commander_80.passiveName'), passiveDesc: i18n.t('cards.commander_80.passiveDesc'),
-    activeName: i18n.t('cards.commander_80.activeName'), activeDesc: i18n.t('cards.commander_80.activeDesc'),
-    activeCost: 3, activeCooldown: 0,
-    onTurnStart: (game, player) => { if(player.board.some((u: UnitCard) => u.line === 'frontline')) player.hqHp = Math.min(25, player.hqHp + 2); },
-    useActive: (game, player) => { player.drawCard(2); }
-  },
-  {
-    id: 'cmd-degaulle', name: i18n.t('cards.commander_81.name'), faction: Faction.FRANCE,
-    passiveName: i18n.t('cards.commander_81.passiveName'), passiveDesc: i18n.t('cards.commander_81.passiveDesc'),
-    activeName: i18n.t('cards.commander_81.activeName'), activeDesc: i18n.t('cards.commander_81.activeDesc'),
-    activeCost: 4, activeCooldown: 0,
-    onTurnStart: (game, player) => { if(player.hqHp < 10) player.drawCard(1); },
-    useActive: (game, player) => { player.hqHp = Math.min(25, player.hqHp + 5); }
-  }
-];
-// 修正巴顿被动
-COMMANDERS_DATA[2].passiveDesc = '每回合开始时，随机使我方一个单位攻击力+1。';
-COMMANDERS_DATA[2].onTurnStart = (game, player) => { if(player.board.length > 0) { const target = player.board[Math.floor(Math.random() * player.board.length)]; target.attack += 1; } };
+export function getCommandersData(): Commander[] {
+  const commanders: Commander[] = [
+    {
+      id: 'cmd-zhukov', name: i18n.t('cards.commander_77.name'), faction: Faction.SOVIET,
+      passiveName: i18n.t('cards.commander_77.passiveName'), passiveDesc: i18n.t('cards.commander_77.passiveDesc'),
+      activeName: i18n.t('cards.commander_77.activeName'), activeDesc: i18n.t('cards.commander_77.activeDesc'),
+      activeCost: 6, activeCooldown: 0,
+      onTurnStart: (game, player) => { player.hqHp = Math.min(25, player.hqHp + 1); },
+      useActive: (game, player) => { player.board.forEach((u: UnitCard) => { u.attack += 1; u.hp += 1; u.maxHp += 1; }); }
+    },
+    {
+      id: 'cmd-rommel', name: i18n.t('cards.commander_78.name'), faction: Faction.GERMANY,
+      passiveName: i18n.t('cards.commander_78.passiveName'), passiveDesc: i18n.t('cards.commander_78.passiveDesc'),
+      activeName: i18n.t('cards.commander_78.activeName'), activeDesc: i18n.t('cards.commander_78.activeDesc'),
+      activeCost: 5, activeCooldown: 0,
+      onTurnStart: (game, player) => { player.cp += 1; },
+      useActive: (game, player) => { player.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => { if(!u.keywords.includes(Keyword.BLITZ)) u.keywords.push(Keyword.BLITZ); u.hasAttackedThisTurn = false; }); }
+    },
+    {
+      id: 'cmd-patton', name: i18n.t('cards.commander_79.name'), faction: Faction.USA,
+      passiveName: i18n.t('cards.commander_79.passiveName'), passiveDesc: i18n.t('cards.commander_79.passiveDesc'),
+      activeName: i18n.t('cards.commander_79.activeName'), activeDesc: i18n.t('cards.commander_79.activeDesc'),
+      activeCost: 7, activeCooldown: 0,
+      onTurnStart: (game, player) => {}, // 被动在playCard时生效或者全局生效，这里简化为只影响已部署的，我们在每次更新时处理，或者写死在部署逻辑。这里用被动加成？我们改为每回合给新部署的加？太复杂。改回每回合开始时所有步兵攻击力+1？不行。改成每回合开始时，总部受伤害减免？
+      // 重写被动：每回合开始时，随机使一个我方单位攻击力+1。
+      useActive: (game, player) => { const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1; enemy.board.forEach((u: UnitCard) => u.hp -= 2); enemy.board = enemy.board.filter((u: UnitCard) => u.hp > 0); }
+    },
+    {
+      id: 'cmd-monty', name: i18n.t('cards.commander_80.name'), faction: Faction.UK,
+      passiveName: i18n.t('cards.commander_80.passiveName'), passiveDesc: i18n.t('cards.commander_80.passiveDesc'),
+      activeName: i18n.t('cards.commander_80.activeName'), activeDesc: i18n.t('cards.commander_80.activeDesc'),
+      activeCost: 3, activeCooldown: 0,
+      onTurnStart: (game, player) => { if(player.board.some((u: UnitCard) => u.line === 'frontline')) player.hqHp = Math.min(25, player.hqHp + 2); },
+      useActive: (game, player) => { player.drawCard(2); }
+    },
+    {
+      id: 'cmd-degaulle', name: i18n.t('cards.commander_81.name'), faction: Faction.FRANCE,
+      passiveName: i18n.t('cards.commander_81.passiveName'), passiveDesc: i18n.t('cards.commander_81.passiveDesc'),
+      activeName: i18n.t('cards.commander_81.activeName'), activeDesc: i18n.t('cards.commander_81.activeDesc'),
+      activeCost: 4, activeCooldown: 0,
+      onTurnStart: (game, player) => { if(player.hqHp < 10) player.drawCard(1); },
+      useActive: (game, player) => { player.hqHp = Math.min(25, player.hqHp + 5); }
+    }
+  ];
+  
+  // 修正巴顿被动
+  commanders[2].passiveDesc = '每回合开始时，随机使我方一个单位攻击力+1。';
+  commanders[2].onTurnStart = (game, player) => { if(player.board.length > 0) { const target = player.board[Math.floor(Math.random() * player.board.length)]; target.attack += 1; } };
+
+  return commanders;
+}
 
 // --- 环境卡数据 ---
-export const ENVIRONMENT_CARDS_DATA: Omit<EnvironmentCard, 'id' | 'faction'>[] = [
-  {
-    name: i18n.t('cards.order_44.name'), description: i18n.t('cards.order_44.desc'), type: CardType.ENVIRONMENT, deployCost: 4,
-    onPlay: (game) => {},
-    onTurnStart: (game) => {
-      game.player1.board.filter((u: UnitCard) => u.line === 'frontline').forEach((u: UnitCard) => u.hp -= 1);
-      game.player2.board.filter((u: UnitCard) => u.line === 'frontline').forEach((u: UnitCard) => u.hp -= 1);
-      game.player1.board = game.player1.board.filter((u: UnitCard) => u.hp > 0);
-      game.player2.board = game.player2.board.filter((u: UnitCard) => u.hp > 0);
-    }
-  },
-  {
-    name: i18n.t('cards.order_45.name'), description: i18n.t('cards.order_45.desc'), type: CardType.ENVIRONMENT, deployCost: 3,
-    onPlay: (game) => {
-      game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => u.moveCost += 1);
-      game.player2.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => u.moveCost += 1);
+export function getEnvironmentCardsData(): Omit<EnvironmentCard, 'id' | 'faction'>[] {
+  return [
+    {
+      name: i18n.t('cards.order_44.name'), description: i18n.t('cards.order_44.desc'), type: CardType.ENVIRONMENT, deployCost: 4,
+      onPlay: (game) => {},
+      onTurnStart: (game) => {
+        game.player1.board.filter((u: UnitCard) => u.line === 'frontline').forEach((u: UnitCard) => u.hp -= 1);
+        game.player2.board.filter((u: UnitCard) => u.line === 'frontline').forEach((u: UnitCard) => u.hp -= 1);
+        game.player1.board = game.player1.board.filter((u: UnitCard) => u.hp > 0);
+        game.player2.board = game.player2.board.filter((u: UnitCard) => u.hp > 0);
+      }
     },
-    onTurnStart: (game) => {}
-  },
-  {
-    name: i18n.t('cards.order_46.name'), description: i18n.t('cards.order_46.desc'), type: CardType.ENVIRONMENT, deployCost: 3,
-    onPlay: (game) => {},
-    onTurnStart: (game) => {
-      game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.attack += 1);
-      game.player2.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.attack += 1);
+    {
+      name: i18n.t('cards.order_45.name'), description: i18n.t('cards.order_45.desc'), type: CardType.ENVIRONMENT, deployCost: 3,
+      onPlay: (game) => {
+        game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => u.moveCost += 1);
+        game.player2.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => u.moveCost += 1);
+      },
+      onTurnStart: (game) => {}
+    },
+    {
+      name: i18n.t('cards.order_46.name'), description: i18n.t('cards.order_46.desc'), type: CardType.ENVIRONMENT, deployCost: 3,
+      onPlay: (game) => {},
+      onTurnStart: (game) => {
+        game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.attack += 1);
+        game.player2.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.attack += 1);
+      }
     }
-  }
-];
+  ];
+}
 
 // --- 真实历史单位库 ---
 export function getSovietUnits(): any[] {
@@ -158,15 +165,18 @@ export function getFranceUnits(): any[] {
 }
 
 // --- 高级隐藏单位库 (通过军校解锁) ---
-export const ADVANCED_CARDS_DATA = [
-  { id: 'adv-soviet-1', name: '斯大林格勒近卫师', faction: Faction.SOVIET, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 7, atk: 10, def: 7, hp: 12, desc: '【高级】经历过最残酷巷战的钢铁部队。', keywords: [Keyword.GUARD, Keyword.AMBUSH, Keyword.HEAVY_ARMOR], exclusiveName: '浴血卫国', exclusiveDesc: '自身不会被秒杀，场上每阵亡一个己方单位，自身全属性永久提升，血量越低伤害越高。' },
-  { id: 'adv-german-1', name: '虎王重型坦克', faction: Faction.GERMANY, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 10, atk: 14, def: 12, hp: 18, desc: '【高级】无敌的正面装甲，盟军装甲的终极噩梦。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD, Keyword.BLITZ], exclusiveName: '帝国终焉', exclusiveDesc: '登场嘲讽全场、范围震慑敌方，降低所有敌军输出，阵亡后己方小幅掉费。' },
-  { id: 'adv-usa-1', name: '101空降师 "啸鹰"', faction: Faction.USA, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 6, atk: 8, def: 5, hp: 8, desc: '【高级】"从天而降，包围敌军"！', keywords: [Keyword.BLITZ, Keyword.AMBUSH], exclusiveName: '天降奇兵', exclusiveDesc: '登场可直接突袭敌方任意位置，无视所有防御词条，击杀单位后可再次触发闪击。' },
-  { id: 'adv-uk-1', name: 'SAS 特种空勤团', faction: Faction.UK, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 9, def: 4, hp: 7, desc: '【高级】"勇者必胜"，执行最高难度破坏任务。', keywords: [Keyword.BLITZ, Keyword.AMBUSH], exclusiveName: '暗夜绝杀', exclusiveDesc: '永久潜伏隐身状态，首次攻击必定暴击秒杀敌方高阶单位。' },
-  { id: 'adv-france-1', name: '自由法国装甲师', faction: Faction.FRANCE, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 8, atk: 10, def: 8, hp: 12, desc: '【高级】为光复祖国而战的精锐装甲力量。', keywords: [Keyword.BLITZ, Keyword.HEAVY_ARMOR], exclusiveName: '光复山河', exclusiveDesc: '自身在场时，己方所有法国单位词条效果翻倍，残血状态下获得无敌1回合。' },
-];
+export function getAdvancedCardsData(): any[] {
+  return [
+    { id: 'adv-soviet-1', name: i18n.t('cards.adv_1.name'), faction: Faction.SOVIET, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 7, atk: 10, def: 7, hp: 12, desc: i18n.t('cards.adv_1.desc'), keywords: [Keyword.GUARD, Keyword.AMBUSH, Keyword.HEAVY_ARMOR], exclusiveName: i18n.t('cards.adv_1.exclusiveName'), exclusiveDesc: i18n.t('cards.adv_1.exclusiveDesc') },
+    { id: 'adv-german-1', name: i18n.t('cards.adv_2.name'), faction: Faction.GERMANY, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 10, atk: 14, def: 12, hp: 18, desc: i18n.t('cards.adv_2.desc'), keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD, Keyword.BLITZ], exclusiveName: i18n.t('cards.adv_2.exclusiveName'), exclusiveDesc: i18n.t('cards.adv_2.exclusiveDesc') },
+    { id: 'adv-usa-1', name: i18n.t('cards.adv_3.name'), faction: Faction.USA, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 6, atk: 8, def: 5, hp: 8, desc: i18n.t('cards.adv_3.desc'), keywords: [Keyword.BLITZ, Keyword.AMBUSH], exclusiveName: i18n.t('cards.adv_3.exclusiveName'), exclusiveDesc: i18n.t('cards.adv_3.exclusiveDesc') },
+    { id: 'adv-uk-1', name: i18n.t('cards.adv_4.name'), faction: Faction.UK, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 9, def: 4, hp: 7, desc: i18n.t('cards.adv_4.desc'), keywords: [Keyword.BLITZ, Keyword.AMBUSH], exclusiveName: i18n.t('cards.adv_4.exclusiveName'), exclusiveDesc: i18n.t('cards.adv_4.exclusiveDesc') },
+    { id: 'adv-france-1', name: i18n.t('cards.adv_5.name'), faction: Faction.FRANCE, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 8, atk: 10, def: 8, hp: 12, desc: i18n.t('cards.adv_5.desc'), keywords: [Keyword.BLITZ, Keyword.HEAVY_ARMOR], exclusiveName: i18n.t('cards.adv_5.exclusiveName'), exclusiveDesc: i18n.t('cards.adv_5.exclusiveDesc') }
+  ];
+}
 
-export const ADVANCED_ORDERS_DATA = [
+export function getAdvancedOrdersData(): any[] {
+  return [
   {
     id: 'adv-order-soviet', name: i18n.t('cards.order_41.name'), faction: Faction.SOVIET, type: CardType.ORDER, cost: 6, desc: i18n.t('cards.order_41.desc'),
     effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.attack += 5; u.hp += 5; u.maxHp += 5; }); }
@@ -183,8 +193,9 @@ export const ADVANCED_ORDERS_DATA = [
       enemy.takeHqDamage(12); 
       game.onVfx?.('damage', '-12', hqId);
     }
-  },
-];
+  }
+  ];
+}
 
 // --- 真实历史背景指令卡 ---
 export function createGenericOrders(faction: Faction): OrderCard[] {
@@ -438,6 +449,9 @@ export function buildDeck(faction: Faction, customCounts?: Record<string, number
     unlockedIds = JSON.parse(localStorage.getItem('unlockedCards') || '[]');
   } catch(e) {}
 
+  const ADVANCED_CARDS_DATA = getAdvancedCardsData();
+  const ADVANCED_ORDERS_DATA = getAdvancedOrdersData();
+  const ENVIRONMENT_CARDS_DATA = getEnvironmentCardsData();
   const myAdvancedUnits = ADVANCED_CARDS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id));
   const myAdvancedOrders = ADVANCED_ORDERS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id));
 
@@ -539,103 +553,105 @@ export function buildDeck(faction: Faction, customCounts?: Record<string, number
 }
 
 // --- 战役模式数据 ---
-export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
-  {
-    id: 'campaign-normandy',
-    name: i18n.t('cards.order_69.name'),
-    description: i18n.t('cards.order_69.desc'),
-    playerFaction: Faction.USA,
-    aiFaction: Faction.GERMANY,
-    maxTurns: 15,
-    rewardCardId: 'adv-usa-1',
-    setupBoard: (game: Game) => {
-      // 史诗级削弱：德军前线部署 2 个暗堡 (原为3个)
-      for(let i=0; i<2; i++) {
-        const bunker: UnitCard = {
-          id: `bunker-${i}`, name: i18n.t('cards.order_70.name'), description: i18n.t('cards.order_70.desc'),
-          type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: Faction.GERMANY,
-          deployCost: 0, attack: 0, defense: 5, hp: 10, maxHp: 10, moveCost: 0,
-          keywords: [Keyword.GUARD], // 移除重甲，削弱血防，移除攻击力
-          hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'frontline'
+export function getCampaignScenarios(): CampaignScenario[] {
+  return [
+    {
+      id: 'campaign-normandy',
+      name: i18n.t('cards.order_69.name'),
+      description: i18n.t('cards.order_69.desc'),
+      playerFaction: Faction.USA,
+      aiFaction: Faction.GERMANY,
+      maxTurns: 15,
+      rewardCardId: 'adv-usa-1',
+      setupBoard: (game: Game) => {
+        // 史诗级削弱：德军前线部署 2 个暗堡 (原为3个)
+        for(let i=0; i<2; i++) {
+          const bunker: UnitCard = {
+            id: `bunker-${i}`, name: i18n.t('cards.order_70.name'), description: i18n.t('cards.order_70.desc'),
+            type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: Faction.GERMANY,
+            deployCost: 0, attack: 0, defense: 5, hp: 10, maxHp: 10, moveCost: 0,
+            keywords: [Keyword.GUARD], // 移除重甲，削弱血防，移除攻击力
+            hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'frontline'
+          };
+          game.player2.board.push(bunker);
+        }
+        game.player2.hqHp = 30; // 德军指挥部血量从 40 下调至 30
+        game.player1.cp = 2;    // 玩家获得抢滩登陆支援：初始自带 2 点 CP
+      }
+    },
+    {
+      id: 'campaign-stalingrad',
+      name: i18n.t('cards.order_71.name'),
+      description: i18n.t('cards.order_71.desc'),
+      playerFaction: Faction.SOVIET,
+      aiFaction: Faction.GERMANY,
+      maxTurns: 20,
+      rewardCardId: 'adv-soviet-1',
+      setupBoard: (game: Game) => {
+        game.activeEnvironment = getEnvironmentCardsData().find(e => e.name === '城市巷战' || e.name === i18n.t('cards.order_44.name')) as EnvironmentCard;
+        // 史诗级削弱：移除开局两辆贴脸的四号坦克，改为两支在支援战线的普通步兵
+        for(let i=0; i<2; i++) {
+           const infantry: UnitCard = {
+             id: `inf-${i}`, name: i18n.t('cards.order_72.name'), description: i18n.t('cards.order_72.desc'),
+             type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: Faction.GERMANY,
+             deployCost: 0, attack: 4, defense: 4, hp: 5, maxHp: 5, moveCost: 1,
+             keywords: [],
+             hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'support'
+           };
+           game.player2.board.push(infantry);
+        }
+        game.player2.hqHp = 25; // 恢复正常血量 25 (原为 30)
+        game.player1.cp = 2;    // 玩家获得政委支援：初始自带 2 点 CP
+      }
+    },
+    {
+      id: 'campaign-kursk',
+      name: i18n.t('cards.order_73.name'),
+      description: i18n.t('cards.order_73.desc'),
+      playerFaction: Faction.SOVIET,
+      aiFaction: Faction.GERMANY,
+      maxTurns: 15,
+      rewardCardId: 'adv-german-1', // Actually it's unlocked for player, maybe they play as Germany? Let's keep Soviet and give them German tank? No, let's make player Germany for this one.
+      setupBoard: (game: Game) => {
+        // 双方初始10CP，但这只是当前回合的CP，为了让后续回合也保持10CP上限，需要修改 maxCp
+        game.player1.maxCp = 10;
+        game.player1.cp = 10;
+        game.player2.maxCp = 10;
+        game.player2.cp = 10;
+        // 移除步兵，只保留装甲（简化的特殊规则）
+        game.activeEnvironment = {
+            name: i18n.t('cards.order_74.name'), description: i18n.t('cards.order_74.desc'), type: CardType.ENVIRONMENT, deployCost: 0, faction: Faction.GERMANY, id: 'env-kursk',
+            onPlay: (g: Game) => {},
+            onTurnStart: (g: Game) => {
+                g.player1.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.hp -= 5);
+                g.player2.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.hp -= 5);
+                g.player1.board = g.player1.board.filter((u: UnitCard) => u.hp > 0);
+                g.player2.board = g.player2.board.filter((u: UnitCard) => u.hp > 0);
+            }
         };
-        game.player2.board.push(bunker);
       }
-      game.player2.hqHp = 30; // 德军指挥部血量从 40 下调至 30
-      game.player1.cp = 2;    // 玩家获得抢滩登陆支援：初始自带 2 点 CP
-    }
-  },
-  {
-    id: 'campaign-stalingrad',
-    name: i18n.t('cards.order_71.name'),
-    description: i18n.t('cards.order_71.desc'),
-    playerFaction: Faction.SOVIET,
-    aiFaction: Faction.GERMANY,
-    maxTurns: 20,
-    rewardCardId: 'adv-soviet-1',
-    setupBoard: (game: Game) => {
-      game.activeEnvironment = ENVIRONMENT_CARDS_DATA.find(e => e.name === '城市巷战') as EnvironmentCard;
-      // 史诗级削弱：移除开局两辆贴脸的四号坦克，改为两支在支援战线的普通步兵
-      for(let i=0; i<2; i++) {
-         const infantry: UnitCard = {
-           id: `inf-${i}`, name: i18n.t('cards.order_72.name'), description: i18n.t('cards.order_72.desc'),
-           type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: Faction.GERMANY,
-           deployCost: 0, attack: 4, defense: 4, hp: 5, maxHp: 5, moveCost: 1,
-           keywords: [],
-           hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'support'
-         };
-         game.player2.board.push(infantry);
+    },
+    {
+      id: 'campaign-britain',
+      name: i18n.t('cards.order_75.name'),
+      description: i18n.t('cards.order_75.desc'),
+      playerFaction: Faction.UK,
+      aiFaction: Faction.GERMANY,
+      maxTurns: 15,
+      rewardCardId: 'adv-uk-1',
+      setupBoard: (game: Game) => {
+        game.activeEnvironment = {
+            name: i18n.t('cards.order_76.name'), description: i18n.t('cards.order_76.desc'), type: CardType.ENVIRONMENT, deployCost: 0, faction: Faction.UK, id: 'env-britain',
+            onPlay: (g: Game) => {},
+            onTurnStart: (g: Game) => {}
+        };
+        // 为所有场上空军+2攻
+        game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.AIR_FORCE).forEach((u: UnitCard) => u.attack += 2);
+        game.player2.board.filter((u: UnitCard) => u.category === UnitCategory.AIR_FORCE).forEach((u: UnitCard) => u.attack += 2);
       }
-      game.player2.hqHp = 25; // 恢复正常血量 25 (原为 30)
-      game.player1.cp = 2;    // 玩家获得政委支援：初始自带 2 点 CP
     }
-  },
-  {
-    id: 'campaign-kursk',
-    name: i18n.t('cards.order_73.name'),
-    description: i18n.t('cards.order_73.desc'),
-    playerFaction: Faction.SOVIET,
-    aiFaction: Faction.GERMANY,
-    maxTurns: 15,
-    rewardCardId: 'adv-german-1', // Actually it's unlocked for player, maybe they play as Germany? Let's keep Soviet and give them German tank? No, let's make player Germany for this one.
-    setupBoard: (game: Game) => {
-      // 双方初始10CP，但这只是当前回合的CP，为了让后续回合也保持10CP上限，需要修改 maxCp
-      game.player1.maxCp = 10;
-      game.player1.cp = 10;
-      game.player2.maxCp = 10;
-      game.player2.cp = 10;
-      // 移除步兵，只保留装甲（简化的特殊规则）
-      game.activeEnvironment = {
-          name: i18n.t('cards.order_74.name'), description: i18n.t('cards.order_74.desc'), type: CardType.ENVIRONMENT, deployCost: 0, faction: Faction.GERMANY, id: 'env-kursk',
-          onPlay: (g: Game) => {},
-          onTurnStart: (g: Game) => {
-              g.player1.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.hp -= 5);
-              g.player2.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.hp -= 5);
-              g.player1.board = g.player1.board.filter((u: UnitCard) => u.hp > 0);
-              g.player2.board = g.player2.board.filter((u: UnitCard) => u.hp > 0);
-          }
-      };
-    }
-  },
-  {
-    id: 'campaign-britain',
-    name: i18n.t('cards.order_75.name'),
-    description: i18n.t('cards.order_75.desc'),
-    playerFaction: Faction.UK,
-    aiFaction: Faction.GERMANY,
-    maxTurns: 15,
-    rewardCardId: 'adv-uk-1',
-    setupBoard: (game: Game) => {
-      game.activeEnvironment = {
-          name: i18n.t('cards.order_76.name'), description: i18n.t('cards.order_76.desc'), type: CardType.ENVIRONMENT, deployCost: 0, faction: Faction.UK, id: 'env-britain',
-          onPlay: (g: Game) => {},
-          onTurnStart: (g: Game) => {}
-      };
-      // 为所有场上空军+2攻
-      game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.AIR_FORCE).forEach((u: UnitCard) => u.attack += 2);
-      game.player2.board.filter((u: UnitCard) => u.category === UnitCategory.AIR_FORCE).forEach((u: UnitCard) => u.attack += 2);
-    }
-  }
-];
+  ];
+}
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -707,7 +723,7 @@ export default function App() {
     let p1Fac = playerFaction;
     let p2Fac = aiFaction;
     const isCampaign = gameMode === 'campaign' && selectedCampaign;
-    const scenario = isCampaign ? CAMPAIGN_SCENARIOS.find(c => c.id === selectedCampaign) : null;
+    const scenario = isCampaign ? getCampaignScenarios().find(c => c.id === selectedCampaign) : null;
 
     if (isCampaign && scenario) {
       p1Fac = scenario.playerFaction;
@@ -717,7 +733,7 @@ export default function App() {
     }
 
     const p1 = new Player("指挥官 (我方)", p1Fac, buildDeck(p1Fac));
-    p1.commander = COMMANDERS_DATA.find(c => c.faction === p1Fac) || null;
+    p1.commander = getCommandersData().find(c => c.faction === p1Fac) || null;
     
     let p2Deck = buildDeck(p2Fac);
     if (gameMode === 'multiplayer' && isHost && (window as any).guestDeckCounts) {
@@ -725,7 +741,7 @@ export default function App() {
     }
     
     const p2 = new Player(gameMode === 'ai' || isCampaign ? "AI 指挥官 (敌方)" : "敌方指挥官", p2Fac, p2Deck);
-    p2.commander = COMMANDERS_DATA.find(c => c.faction === p2Fac) || null;
+    p2.commander = getCommandersData().find(c => c.faction === p2Fac) || null;
     const newGame = new Game(p1, p2);
 
     if (isCampaign && scenario) {
@@ -795,10 +811,10 @@ export default function App() {
         
         // 客机收到游戏开始指令，初始化本地 Game 对象用于渲染
         const p1 = new Player("指挥官 (我方)", data.p2Faction as Faction, buildDeck(data.p2Faction as Faction));
-        p1.commander = COMMANDERS_DATA.find(c => c.faction === data.p2Faction) || null;
+        p1.commander = getCommandersData().find(c => c.faction === data.p2Faction) || null;
         
         const p2 = new Player("敌方指挥官", data.p1Faction as Faction, []);
-        p2.commander = COMMANDERS_DATA.find(c => c.faction === data.p1Faction) || null;
+        p2.commander = getCommandersData().find(c => c.faction === data.p1Faction) || null;
         
         const newGame = new Game(p1, p2);
         setGame(newGame);
@@ -1092,7 +1108,7 @@ export default function App() {
             <div className="flex flex-col gap-4 w-full">
               <h2 className="text-2xl font-bold mb-4 text-center">{t('menu.selectCampaign')}</h2>
               <div className="grid grid-cols-2 gap-6">
-                {CAMPAIGN_SCENARIOS.map(sc => (
+                {getCampaignScenarios().map(sc => (
                   <button key={sc.id} onClick={() => setSelectedCampaign(sc.id)} className={`p-6 rounded-xl text-left transition-all flex flex-col gap-3 ${selectedCampaign === sc.id ? 'bg-red-900/80 border-2 border-red-500 shadow-[0_0_15px_red] scale-105' : 'bg-gray-800 border-2 border-gray-700 hover:bg-gray-700'}`}>
                     <h3 className="text-2xl font-black text-amber-500">{sc.name}</h3>
                     <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">{sc.description}</p>
@@ -1979,7 +1995,7 @@ export default function App() {
         const isVictory = p2.hqHp <= 0 && !isDefeat;
         
         if (isVictory && gameMode === 'campaign' && selectedCampaign) {
-           const scenario = CAMPAIGN_SCENARIOS.find(c => c.id === selectedCampaign);
+           const scenario = getCampaignScenarios().find(c => c.id === selectedCampaign);
            if (scenario && scenario.rewardCardId) {
               let unlockedIds: string[] = [];
               try { unlockedIds = JSON.parse(localStorage.getItem('unlockedCards') || '[]'); } catch(e) {}

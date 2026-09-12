@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     getSovietUnits, getGermanUnits, getUSAUnits, getUKUnits, getFranceUnits,
     createSovietOrders, createGermanOrders, createUSAOrders, createUKOrders, createFranceOrders, createGenericOrders,
-    ADVANCED_CARDS_DATA, ADVANCED_ORDERS_DATA, ENVIRONMENT_CARDS_DATA 
+    getAdvancedCardsData, getAdvancedOrdersData, getEnvironmentCardsData 
 } from '../App';
 import { useTranslation } from 'react-i18next';
 
@@ -46,6 +46,11 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
       case Faction.FRANCE: units = getFranceUnits(); orders = createFranceOrders(); break;
     }
     
+    // Refresh ADVANCED and ENVIRONMENT data to trigger translation getters
+    const ADVANCED_CARDS_DATA = getAdvancedCardsData();
+    const ADVANCED_ORDERS_DATA = getAdvancedOrdersData();
+    const ENVIRONMENT_CARDS_DATA = getEnvironmentCardsData();
+    
     // Add IDs to units/orders if they don't have them
     units = units.map(u => ({ ...u, id: `${faction}-unit-${u.name}`, type: CardType.UNIT, category: u.cat, deployCost: u.cost, attack: u.atk, defense: u.def, hp: u.hp, maxHp: u.hp, moveCost: 1, keywords: u.keywords || [] }));
     
@@ -69,7 +74,7 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
     } else {
         setDeck([]);
     }
-  }, [faction, unlockedIds, savedDecks]);
+  }, [faction, unlockedIds, savedDecks, t]);
 
   const addCard = (card: any) => {
     if (deck.length >= 60) {
