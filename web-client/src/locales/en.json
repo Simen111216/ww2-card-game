@@ -93,5 +93,426 @@
     "hp": "HP",
     "advanced": "Advanced",
     "env": "Env Card"
+  },
+  "cards": {
+    "unit_1": {
+      "name": "Conscript",
+      "desc": "Basic infantry in massive numbers, equipped with Mosin-Nagant rifles.",
+      "exclusiveName": "Human Wave",
+      "exclusiveDesc": "For every Conscript on the field, all friendly low-cost units gain +1 ATK (max 3 stacks per turn). Upon death, summons a free 1-cost Conscript token with no abilities."
+    },
+    "unit_2": {
+      "name": "Guards Rifle Division",
+      "desc": "Battle-hardened elite infantry with an unbreakable will to fight.",
+      "exclusiveName": "Stand Fast",
+      "exclusiveDesc": "When HP is below 50%, gains 30% damage reduction and cannot be priority targeted by enemy ambush units. If adjacent to friendly Soviet units, the Guard effect expands to the entire friendly frontline."
+    },
+    "unit_3": {
+      "name": "Commissar",
+      "desc": "\"Not one step back!\" Boosts troop morale.",
+      "exclusiveName": "Supervise",
+      "exclusiveDesc": "All friendly Soviet infantry gain +2 ATK and suffer no negative effects upon death. Once per turn, allows a low-HP friendly infantry unit to act immediately."
+    },
+    "unit_4": {
+      "name": "T-34/76 Medium Tank",
+      "desc": "A perfect combination of sloped armor and mobility; the backbone of Soviet armor.",
+      "exclusiveName": "Mass Production",
+      "exclusiveDesc": "Refunds 2 CP when destroyed. For every T-34 series tank on the field, all friendly medium armor units gain a slight boost to movement and attack speed."
+    },
+    "unit_5": {
+      "name": "T-34/85 Medium Tank",
+      "desc": "An upgraded T-34 equipped with an 85mm gun, capable of countering German heavy armor.",
+      "exclusiveName": "Assault Upgrade",
+      "exclusiveDesc": "Inherits 'Mass Production' effect, and additionally deals 20% armor-piercing damage to enemy heavy armor."
+    },
+    "unit_6": {
+      "name": "IS-2 Heavy Tank",
+      "desc": "A steel behemoth armed with a 122mm main gun, built specifically to destroy German heavy armor.",
+      "exclusiveName": "Berlin Vanguard",
+      "exclusiveDesc": "Damage against enemy structures and heavy armor is increased by 50%. Gains a shield on the turn it is deployed."
+    },
+    "unit_7": {
+      "name": "SU-85 Self-Propelled Gun",
+      "desc": "Powerful anti-tank firepower capable of piercing armor from a long distance.",
+      "exclusiveName": "Armor Hunter",
+      "exclusiveDesc": "When Ambush is triggered, prioritizes enemy armor units, dealing critical damage to medium and heavy tanks."
+    },
+    "unit_8": {
+      "name": "IL-2 Sturmovik",
+      "desc": "The \"Flying Tank\", an absolute weapon for ground attack.",
+      "exclusiveName": "Black Death",
+      "exclusiveDesc": "Damage against ground units is doubled. Takes 40% less damage from ground attacks."
+    },
+    "unit_9": {
+      "name": "Katyusha Rocket Launcher",
+      "desc": "Unleashes a terrifying howl during salvos, providing immense area-of-effect firepower.",
+      "exclusiveName": "Sea of Fire",
+      "exclusiveDesc": "Deals AoE damage. Inflicts continuous burn damage to the entire enemy frontline, ignoring light armor."
+    },
+    "unit_10": {
+      "name": "KV-1 Heavy Tank",
+      "desc": "A mobile fortress in the early stages of the war; German anti-tank guns are useless against it.",
+      "exclusiveName": "Steel Bastion",
+      "exclusiveDesc": "Taunts all enemy attacking units upon deployment. Takes half damage from long-range artillery."
+    },
+    "unit_11": {
+      "name": "Volkssturm",
+      "desc": "Late-war militia. Lacking training but equipped with Panzerfaust anti-tank weapons.",
+      "exclusiveName": "Last Stand",
+      "exclusiveDesc": "Low-cost sacrificial unit. Can be actively sacrificed to grant a high-tier friendly unit a massive stat boost for the turn."
+    },
+    "unit_12": {
+      "name": "Wehrmacht Infantry",
+      "desc": "Highly trained regular army with excellent tactical skills.",
+      "exclusiveName": "Elite Doctrine",
+      "exclusiveDesc": "While on the field, all friendly units gain 100% hit rate with no misses."
+    },
+    "unit_13": {
+      "name": "Waffen-SS Panzergrenadier",
+      "desc": "Fanatical elite infantry that rapidly assaults alongside armored units.",
+      "exclusiveName": "Combined Arms",
+      "exclusiveDesc": "When on the field with friendly German armor units, both gain significantly increased attack and movement speed. Restores a small amount of HP upon scoring a kill."
+    },
+    "unit_14": {
+      "name": "Panzer IV Medium Tank",
+      "desc": "The absolute backbone of the German armored forces, active on all fronts.",
+      "exclusiveName": "Battlefield Core",
+      "exclusiveDesc": "Has no stat weaknesses. While on the field, steadily boosts the ATK and DEF of all friendly medium armor units."
+    },
+    "unit_15": {
+      "name": "Panther Medium Tank",
+      "desc": "Boasts excellent firepower and frontal armor with outstanding performance.",
+      "exclusiveName": "Precision Piercing",
+      "exclusiveDesc": "Attacks ignore 50% of enemy heavy armor damage reduction. Naturally counters Soviet and British/French heavy tanks."
+    },
+    "unit_16": {
+      "name": "Tiger Heavy Tank",
+      "desc": "The nightmare of the Allies, famous for its thick armor and 88mm main gun.",
+      "exclusiveName": "Land Dominator",
+      "exclusiveDesc": "Taunts all enemy units upon deployment. Single-instance damage taken cannot exceed 30% of its max HP."
+    },
+    "unit_17": {
+      "name": "Sd.Kfz. 251 Halftrack",
+      "desc": "An armored vehicle for rapid infantry deployment.",
+      "exclusiveName": "Mobile Resupply",
+      "exclusiveDesc": "Restores HP to adjacent friendly units every turn after deployment, and increases the advance speed of the friendly frontline."
+    },
+    "unit_18": {
+      "name": "88mm Flak Gun",
+      "desc": "Not just for anti-air, but a deadly anti-tank weapon.",
+      "exclusiveName": "Dual-Purpose Lethality",
+      "exclusiveDesc": "In AA mode, instantly destroys enemy low/mid-cost aircraft. In AT mode, can pierce all medium armor."
+    },
+    "unit_19": {
+      "name": "Bf-109 Fighter",
+      "desc": "The mainstay fighter of the Luftwaffe, key to air superiority.",
+      "exclusiveName": "Air Superiority",
+      "exclusiveDesc": "Prioritizes enemy air units. Can act again this turn after destroying an aircraft."
+    },
+    "unit_20": {
+      "name": "Ju-87 Stuka",
+      "desc": "Dive bomber with a terrifying siren, capable of pinpoint strikes on ground targets.",
+      "exclusiveName": "Screaming Dive",
+      "exclusiveDesc": "Dive attacks trigger critical hits and reduce the ATK of all enemy units on the next turn upon a successful hit."
+    },
+    "unit_21": {
+      "name": "G.I.",
+      "desc": "American soldiers equipped with M1 Garands, boasting ample firepower.",
+      "exclusiveName": "Abundant Logistics",
+      "exclusiveDesc": "When all friendly G.I.s are destroyed, there is a chance they will freely respawn."
+    },
+    "unit_22": {
+      "name": "Rangers",
+      "desc": "Elite assault infantry specializing in behind-enemy-lines operations.",
+      "exclusiveName": "Jungle Blade",
+      "exclusiveDesc": "Upon successful ambush, ignores enemy Guard effects and instantly kills enemy low-cost core units."
+    },
+    "unit_23": {
+      "name": "M4 Sherman",
+      "desc": "A mass-produced medium tank known for its strong reliability.",
+      "exclusiveName": "Industrial Torrent",
+      "exclusiveDesc": "Low cost and fast production. For every Sherman on the field, the damage of all friendly units permanently increases slightly."
+    },
+    "unit_24": {
+      "name": "M26 Pershing",
+      "desc": "A heavy tank deployed late in the war, capable of facing Tigers and Panthers.",
+      "exclusiveName": "Late-War Ace",
+      "exclusiveDesc": "Clears all friendly negative effects upon deployment. Deals extra true damage to high-tier German armor units."
+    },
+    "unit_25": {
+      "name": "M7 Priest SPG",
+      "desc": "Self-propelled artillery providing supporting fire for armored units.",
+      "exclusiveName": "Sustained Suppression",
+      "exclusiveDesc": "Automatically deals minor AoE damage to the enemy backline every turn, continuously suppressing enemy damage dealers and support units."
+    },
+    "unit_26": {
+      "name": "P-51 Mustang",
+      "desc": "An outstanding escort fighter.",
+      "exclusiveName": "Global Escort",
+      "exclusiveDesc": "While on the field, all friendly air units gain increased damage reduction and cannot be targeted by enemy ambush or raid units."
+    },
+    "unit_27": {
+      "name": "B-17 Flying Fortress",
+      "desc": "A strategic heavy bomber with an extremely sturdy fuselage and dense defensive firepower.",
+      "exclusiveName": "Strategic Bombing",
+      "exclusiveDesc": "Attacks ignore enemy ground defenses and deal direct damage to the enemy HQ. Area bombing clears out clustered enemy backline units."
+    },
+    "unit_28": {
+      "name": "Tommy",
+      "desc": "Resilient British infantry.",
+      "exclusiveName": "British Defense Line",
+      "exclusiveDesc": "All friendly units in the same row gain 15% damage reduction, creating a sturdy frontline at a low cost."
+    },
+    "unit_29": {
+      "name": "Red Devils Paratroopers",
+      "desc": "Elite airborne troops ready to drop behind enemy lines at any time.",
+      "exclusiveName": "Airborne Raid",
+      "exclusiveDesc": "Can ignore enemy frontline Guards and directly attack enemy backline damage dealers and artillery."
+    },
+    "unit_30": {
+      "name": "Crusader Cruiser Tank",
+      "desc": "An extremely fast cruiser tank active in the North African campaign.",
+      "exclusiveName": "Mobile Guerrilla",
+      "exclusiveDesc": "Can retreat to avoid damage after attacking. Movement speed drastically increases at low HP, excelling at hit-and-run tactics."
+    },
+    "unit_31": {
+      "name": "Churchill Infantry Tank",
+      "desc": "Features extremely thick armor but advances slowly.",
+      "exclusiveName": "Indestructible",
+      "exclusiveDesc": "Immune to sustained and burn damage. Its ultra-thick armor is perfect for soaking damage and steady advancement."
+    },
+    "unit_32": {
+      "name": "25-Pounder Howitzer",
+      "desc": "The iconic light field artillery of the British Army.",
+      "exclusiveName": "Precision Bombardment",
+      "exclusiveDesc": "Attacks can lock onto low-HP enemy units to finish them off, while slightly degrading enemy armor."
+    },
+    "unit_33": {
+      "name": "Spitfire Fighter",
+      "desc": "The legend of the Battle of Britain.",
+      "exclusiveName": "Guardian of Britain",
+      "exclusiveDesc": "Gains a massive stat boost when fighting the Luftwaffe. Grants a temporary shield after shooting down an enemy aircraft."
+    },
+    "unit_34": {
+      "name": "Lancaster Bomber",
+      "desc": "The workhorse of RAF Bomber Command, featuring a massive payload.",
+      "exclusiveName": "Deep Strike",
+      "exclusiveDesc": "Features a massive bombing radius that hits both enemy frontline and backline simultaneously, excelling at suppressing clustered enemies."
+    },
+    "unit_35": {
+      "name": "Foreign Legion",
+      "desc": "Elite soldiers of the Foreign Legion.",
+      "exclusiveName": "Desperate Stand",
+      "exclusiveDesc": "The fewer friendly units on the field, the higher its damage reduction and ATK. Extremely resilient in desperate situations."
+    },
+    "unit_36": {
+      "name": "SOMUA S35 Cavalry Tank",
+      "desc": "An excellent tank balancing mobility and armor.",
+      "exclusiveName": "Rapid Penetration",
+      "exclusiveDesc": "On the turn it is deployed, ignores enemy terrain and blockers, and can directly charge into the enemy half of the field."
+    },
+    "unit_37": {
+      "name": "B1 Heavy Tank",
+      "desc": "One of the strongest European tanks before the war.",
+      "exclusiveName": "Dual Firepower",
+      "exclusiveDesc": "A single attack can strike two enemy units simultaneously, combining heavy armor with dual-line damage."
+    },
+    "unit_38": {
+      "name": "Free French Partisans",
+      "desc": "Resistance forces conducting sabotage behind enemy lines.",
+      "exclusiveName": "Behind-Lines Harassment",
+      "exclusiveDesc": "Cannot be targeted while stealthed. Attacks reduce enemy attack and movement speed, continuously tying down enemy forces."
+    },
+    "unit_39": {
+      "name": "25-Pounder Howitzer",
+      "desc": "French field artillery.",
+      "exclusiveName": "Static Bombardment",
+      "exclusiveDesc": "While stationary, damage and range continuously increase. The longer it holds the line, the stronger its output."
+    },
+    "unit_40": {
+      "name": "Spitfire Fighter",
+      "desc": "Free French Air Force fighter.",
+      "exclusiveName": "Eagle of the Resistance",
+      "exclusiveDesc": "Damage is massively increased when fighting alongside friendly partisan units."
+    },
+    "order_41": {
+      "name": "Zhukov's Resolve",
+      "desc": "[High Command] The Supreme Command orders a general offensive! All friendly units gain +5 ATK and +5 HP."
+    },
+    "order_42": {
+      "name": "Guderian's Armored Spearhead",
+      "desc": "[High Command] Break the limits! All friendly units regain action status, gain +3 ATK, and acquire Heavy Armor."
+    },
+    "order_43": {
+      "name": "Manhattan Project",
+      "desc": "[High Command] The ultimate weapon! Deals 12 devastating damage directly to the enemy HQ."
+    },
+    "order_44": {
+      "name": "Harsh Winter",
+      "desc": "Environment Card: At the start of each turn, all frontline units take 1 damage."
+    },
+    "order_45": {
+      "name": "Rasputitsa (Mud Season)",
+      "desc": "Environment Card: The CP cost for all armored units to move to the frontline is increased by 1."
+    },
+    "order_46": {
+      "name": "Urban Warfare",
+      "desc": "Environment Card: At the start of each turn, all infantry units gain +1 ATK."
+    },
+    "order_47": {
+      "name": "Tactical Resupply",
+      "desc": "Draw 2 cards and restore 3 HP to the HQ."
+    },
+    "order_48": {
+      "name": "Suppressing Fire",
+      "desc": "Deal 2 damage to all enemy units in the support line."
+    },
+    "order_49": {
+      "name": "Combat Engineering: Minefield",
+      "desc": "Tactical Deployment: Deploy an Anti-Tank Mine in the support line (deals extreme ambush damage)."
+    },
+    "order_50": {
+      "name": "Anti-Tank Mine",
+      "desc": "A concealed anti-tank weapon that deals devastating damage upon triggering an ambush."
+    },
+    "order_51": {
+      "name": "Combat Engineering: Sandbags",
+      "desc": "Tactical Deployment: Deploy a Sandbag Bunker in the support line (features Guard and high HP)."
+    },
+    "order_52": {
+      "name": "Sandbag Bunker",
+      "desc": "A sturdy defensive fortification that draws enemy fire."
+    },
+    "order_53": {
+      "name": "Field Hospital",
+      "desc": "Emergency Aid! Restore 8 HP to the HQ."
+    },
+    "order_54": {
+      "name": "Ura Charge",
+      "desc": "All-out counterattack! All friendly units on the field gain +2 ATK and +1 HP."
+    },
+    "order_55": {
+      "name": "Katyusha Barrage",
+      "desc": "Artillery coverage! Deal 3 damage to all enemy units."
+    },
+    "order_56": {
+      "name": "Field First Aid",
+      "desc": "Emergency Aid! Restore 8 HP to the HQ."
+    },
+    "order_57": {
+      "name": "Blitzkrieg",
+      "desc": "Armored Assault! Draw 2 cards, restore action status to all friendly units, and gain 2 CP."
+    },
+    "order_58": {
+      "name": "V-1 Flying Bomb",
+      "desc": "Early cruise missile. Deal 4 damage to the enemy HQ. If the enemy has air units on the field, there is a 50% chance it is intercepted (deals no damage)."
+    },
+    "order_59": {
+      "name": "V-2 Rocket",
+      "desc": "Strategic Strike! Ignore the frontline and deal 6 damage directly to the enemy HQ."
+    },
+    "order_60": {
+      "name": "Medical Airdrop",
+      "desc": "Emergency Aid! Restore 8 HP to the HQ."
+    },
+    "order_61": {
+      "name": "B-17 Carpet Bombing",
+      "desc": "Air Strike! Deal 4 damage to all enemy units in the support line."
+    },
+    "order_62": {
+      "name": "Logistical Superiority",
+      "desc": "Mighty industrial capacity! Draw 3 cards and gain 3 CP."
+    },
+    "order_63": {
+      "name": "Red Cross",
+      "desc": "Emergency Aid! Restore 8 HP to the HQ."
+    },
+    "order_64": {
+      "name": "Radar Early Warning",
+      "desc": "Early Deployment! Draw 2 cards and all friendly units gain +1 DEF."
+    },
+    "order_65": {
+      "name": "Royal Navy Support",
+      "desc": "Naval Bombardment! Deal 4 damage to all enemy units."
+    },
+    "order_66": {
+      "name": "Free French Medical Team",
+      "desc": "Emergency Aid! Restore 8 HP to the HQ."
+    },
+    "order_67": {
+      "name": "Maginot Line",
+      "desc": "Heavily Fortified! Restore 5 HP to the HQ, and all friendly units gain Heavy Armor (+2 DEF)."
+    },
+    "order_68": {
+      "name": "Resistance Movement",
+      "desc": "Behind-Enemy-Lines Sabotage! Deal 2 damage to 3 random enemy units."
+    },
+    "order_69": {
+      "name": "Normandy Landings (Omaha Beach)",
+      "desc": "June 6, 1944. The Allies land in Normandy. The Germans have deployed sturdy bunkers on the cliffs.\nObjective: Break through the Atlantic Wall and destroy the German HQ within 15 turns!\nReward: Unlock Advanced Card [101st Airborne Division]"
+    },
+    "order_70": {
+      "name": "Atlantic Wall Bunker",
+      "desc": "A sturdy concrete fortification that cannot attack."
+    },
+    "order_71": {
+      "name": "Battle of Stalingrad",
+      "desc": "Winter 1942. The German 6th Army launches a massive offensive. The city is reduced to rubble, and the environment is extremely harsh.\nObjective: Destroy the German HQ within 20 turns.\nReward: Unlock Advanced Card [Stalingrad Guards Division]"
+    },
+    "order_72": {
+      "name": "Wehrmacht Infantry",
+      "desc": "German infantry advancing into the ruins."
+    },
+    "order_73": {
+      "name": "Battle of Kursk (Clash of Steel)",
+      "desc": "Summer 1943. The largest tank battle in history. Both HQs will receive a large amount of initial CP, but only armored units can be fully utilized.\nObjective: Destroy the enemy HQ within 15 turns.\nReward: Unlock Advanced Card [King Tiger Heavy Tank]"
+    },
+    "order_74": {
+      "name": "Torrent of Steel",
+      "desc": "Environment Card: All infantry units immediately take 5 damage upon deployment."
+    },
+    "order_75": {
+      "name": "Battle of Britain",
+      "desc": "Autumn 1940. The Luftwaffe conducts massive bombing raids on the British mainland; the RAF rises to fight back. Fight for air superiority!\nObjective: Defend your HQ and destroy the enemy within 15 turns.\nReward: Unlock Advanced Card [SAS]"
+    },
+    "order_76": {
+      "name": "Struggle for Air Superiority",
+      "desc": "Environment Card: All air units gain +2 ATK."
+    },
+    "commander_77": {
+      "name": "Georgy Zhukov",
+      "passiveName": "Scorched Earth",
+      "passiveDesc": "At the start of each turn, restore 1 HP to the HQ.",
+      "activeName": "General Offensive",
+      "activeDesc": "Cost: 6 CP. All friendly units on the field gain +1 ATK and +1 HP."
+    },
+    "commander_78": {
+      "name": "Erwin Rommel",
+      "passiveName": "Armored Vanguard",
+      "passiveDesc": "At the start of each turn, gain 1 additional CP.",
+      "activeName": "Lightning Strike",
+      "activeDesc": "Cost: 5 CP. All friendly armored units gain [Blitz]."
+    },
+    "commander_79": {
+      "name": "George S. Patton",
+      "passiveName": "Blood and Guts",
+      "passiveDesc": "All your infantry units gain +1 ATK upon deployment.",
+      "activeName": "Carpet Bombing",
+      "activeDesc": "Cost: 7 CP. Deal 2 damage to all enemy units on the field."
+    },
+    "commander_80": {
+      "name": "Bernard Montgomery",
+      "passiveName": "Steady Advance",
+      "passiveDesc": "At the start of each turn, if you have a unit on the frontline, restore 2 HP to the HQ.",
+      "activeName": "Logistical Prep",
+      "activeDesc": "Cost: 3 CP. Draw 2 cards."
+    },
+    "commander_81": {
+      "name": "Charles de Gaulle",
+      "passiveName": "Unyielding Resistance",
+      "passiveDesc": "When HQ HP is below 10, draw 1 additional card at the start of each turn.",
+      "activeName": "National Mobilization",
+      "activeDesc": "Cost: 4 CP. Restore 5 HP to the HQ."
+    }
   }
 }

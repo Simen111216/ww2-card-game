@@ -10,47 +10,48 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { networkManager, type NetworkAction } from './engine/NetworkManager';
 import type { Commander, EnvironmentCard, CampaignScenario } from './engine/types';
 import { useTranslation } from 'react-i18next';
+import i18n from './i18n';
 import './index.css';
 
 // --- 指挥官系统库 ---
 export const COMMANDERS_DATA: Commander[] = [
   {
-    id: 'cmd-zhukov', name: '格奥尔基·朱可夫', faction: Faction.SOVIET,
-    passiveName: '坚壁清野', passiveDesc: '每回合开始时，总部恢复 1 点血量。',
-    activeName: '总攻令', activeDesc: '消耗 6 CP，我方场上所有单位攻击力+1，血量+1。',
+    id: 'cmd-zhukov', name: i18n.t('cards.commander_77.name'), faction: Faction.SOVIET,
+    passiveName: i18n.t('cards.commander_77.passiveName'), passiveDesc: i18n.t('cards.commander_77.passiveDesc'),
+    activeName: i18n.t('cards.commander_77.activeName'), activeDesc: i18n.t('cards.commander_77.activeDesc'),
     activeCost: 6, activeCooldown: 0,
     onTurnStart: (game, player) => { player.hqHp = Math.min(25, player.hqHp + 1); },
     useActive: (game, player) => { player.board.forEach((u: UnitCard) => { u.attack += 1; u.hp += 1; u.maxHp += 1; }); }
   },
   {
-    id: 'cmd-rommel', name: '埃尔温·隆美尔', faction: Faction.GERMANY,
-    passiveName: '装甲先锋', passiveDesc: '每回合开始时，获得 1 点额外 CP。',
-    activeName: '闪电突击', activeDesc: '消耗 5 CP，我方所有装甲单位获得【闪击】。',
+    id: 'cmd-rommel', name: i18n.t('cards.commander_78.name'), faction: Faction.GERMANY,
+    passiveName: i18n.t('cards.commander_78.passiveName'), passiveDesc: i18n.t('cards.commander_78.passiveDesc'),
+    activeName: i18n.t('cards.commander_78.activeName'), activeDesc: i18n.t('cards.commander_78.activeDesc'),
     activeCost: 5, activeCooldown: 0,
     onTurnStart: (game, player) => { player.cp += 1; },
     useActive: (game, player) => { player.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => { if(!u.keywords.includes(Keyword.BLITZ)) u.keywords.push(Keyword.BLITZ); u.hasAttackedThisTurn = false; }); }
   },
   {
-    id: 'cmd-patton', name: '乔治·巴顿', faction: Faction.USA,
-    passiveName: '血胆将军', passiveDesc: '你的所有步兵在部署时攻击力+1。',
-    activeName: '地毯式轰炸', activeDesc: '消耗 7 CP，对敌方全场单位造成 2 点伤害。',
+    id: 'cmd-patton', name: i18n.t('cards.commander_79.name'), faction: Faction.USA,
+    passiveName: i18n.t('cards.commander_79.passiveName'), passiveDesc: i18n.t('cards.commander_79.passiveDesc'),
+    activeName: i18n.t('cards.commander_79.activeName'), activeDesc: i18n.t('cards.commander_79.activeDesc'),
     activeCost: 7, activeCooldown: 0,
     onTurnStart: (game, player) => {}, // 被动在playCard时生效或者全局生效，这里简化为只影响已部署的，我们在每次更新时处理，或者写死在部署逻辑。这里用被动加成？我们改为每回合给新部署的加？太复杂。改回每回合开始时所有步兵攻击力+1？不行。改成每回合开始时，总部受伤害减免？
     // 重写被动：每回合开始时，随机使一个我方单位攻击力+1。
     useActive: (game, player) => { const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1; enemy.board.forEach((u: UnitCard) => u.hp -= 2); enemy.board = enemy.board.filter((u: UnitCard) => u.hp > 0); }
   },
   {
-    id: 'cmd-monty', name: '伯纳德·蒙哥马利', faction: Faction.UK,
-    passiveName: '稳扎稳打', passiveDesc: '每回合开始时，若前线有我方单位，总部恢复 2 点血量。',
-    activeName: '后勤筹备', activeDesc: '消耗 3 CP，抽 2 张牌。',
+    id: 'cmd-monty', name: i18n.t('cards.commander_80.name'), faction: Faction.UK,
+    passiveName: i18n.t('cards.commander_80.passiveName'), passiveDesc: i18n.t('cards.commander_80.passiveDesc'),
+    activeName: i18n.t('cards.commander_80.activeName'), activeDesc: i18n.t('cards.commander_80.activeDesc'),
     activeCost: 3, activeCooldown: 0,
     onTurnStart: (game, player) => { if(player.board.some((u: UnitCard) => u.line === 'frontline')) player.hqHp = Math.min(25, player.hqHp + 2); },
     useActive: (game, player) => { player.drawCard(2); }
   },
   {
-    id: 'cmd-degaulle', name: '夏尔·戴高乐', faction: Faction.FRANCE,
-    passiveName: '不屈抵抗', passiveDesc: '当总部血量低于 10 时，每回合开始额外抽 1 张牌。',
-    activeName: '全国动员', activeDesc: '消耗 4 CP，总部恢复 5 点血量。',
+    id: 'cmd-degaulle', name: i18n.t('cards.commander_81.name'), faction: Faction.FRANCE,
+    passiveName: i18n.t('cards.commander_81.passiveName'), passiveDesc: i18n.t('cards.commander_81.passiveDesc'),
+    activeName: i18n.t('cards.commander_81.activeName'), activeDesc: i18n.t('cards.commander_81.activeDesc'),
     activeCost: 4, activeCooldown: 0,
     onTurnStart: (game, player) => { if(player.hqHp < 10) player.drawCard(1); },
     useActive: (game, player) => { player.hqHp = Math.min(25, player.hqHp + 5); }
@@ -63,7 +64,7 @@ COMMANDERS_DATA[2].onTurnStart = (game, player) => { if(player.board.length > 0)
 // --- 环境卡数据 ---
 export const ENVIRONMENT_CARDS_DATA: Omit<EnvironmentCard, 'id' | 'faction'>[] = [
   {
-    name: '凛冬严寒', description: '环境卡：每回合开始时，所有前线单位受到 1 点伤害。', type: CardType.ENVIRONMENT, deployCost: 4,
+    name: i18n.t('cards.order_44.name'), description: i18n.t('cards.order_44.desc'), type: CardType.ENVIRONMENT, deployCost: 4,
     onPlay: (game) => {},
     onTurnStart: (game) => {
       game.player1.board.filter((u: UnitCard) => u.line === 'frontline').forEach((u: UnitCard) => u.hp -= 1);
@@ -73,7 +74,7 @@ export const ENVIRONMENT_CARDS_DATA: Omit<EnvironmentCard, 'id' | 'faction'>[] =
     }
   },
   {
-    name: '泥泞泥土 (Rasputitsa)', description: '环境卡：所有装甲单位移动到前线的 CP 消耗增加 1 点。', type: CardType.ENVIRONMENT, deployCost: 3,
+    name: i18n.t('cards.order_45.name'), description: i18n.t('cards.order_45.desc'), type: CardType.ENVIRONMENT, deployCost: 3,
     onPlay: (game) => {
       game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => u.moveCost += 1);
       game.player2.board.filter((u: UnitCard) => u.category === UnitCategory.ARMOR).forEach((u: UnitCard) => u.moveCost += 1);
@@ -81,7 +82,7 @@ export const ENVIRONMENT_CARDS_DATA: Omit<EnvironmentCard, 'id' | 'faction'>[] =
     onTurnStart: (game) => {}
   },
   {
-    name: '城市巷战', description: '环境卡：每回合开始时，所有步兵单位攻击力+1。', type: CardType.ENVIRONMENT, deployCost: 3,
+    name: i18n.t('cards.order_46.name'), description: i18n.t('cards.order_46.desc'), type: CardType.ENVIRONMENT, deployCost: 3,
     onPlay: (game) => {},
     onTurnStart: (game) => {
       game.player1.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.attack += 1);
@@ -93,66 +94,66 @@ export const ENVIRONMENT_CARDS_DATA: Omit<EnvironmentCard, 'id' | 'faction'>[] =
 // --- 真实历史单位库 ---
 export function getSovietUnits(): any[] {
   return [
-    { name: '动员兵', cat: UnitCategory.INFANTRY, cost: 1, atk: 2, def: 1, hp: 3, desc: '数量庞大的基础步兵，装备莫辛-纳甘步枪。', keywords: [], exclusiveName: '人海', exclusiveDesc: '每场上存在1张己方动员兵，所有己方低费单位攻击力+1，单回合最多叠加3层；该单位阵亡时，可免费召唤1个1费无词条动员兵衍生物。' },
-    { name: '近卫步兵师', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 3, hp: 6, desc: '身经百战的精锐步兵，战斗意志坚强。', keywords: [Keyword.GUARD], exclusiveName: '死守', exclusiveDesc: '自身血量低于50%时，获得免伤30%，且无法被敌方伏击单位优先锁定；相邻存在己方苏联单位时，守护效果范围扩大至全体友军前排。' },
-    { name: '政委', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 2, hp: 4, desc: '"绝不后退一步！" 提升部队士气。', keywords: [Keyword.BLITZ], exclusiveName: '督战', exclusiveDesc: '己方所有苏联步兵单位攻击力+2，阵亡时不会触发负面效果；每回合可让1个残血友军步兵单位立即行动一次。' },
-    { name: 'T-34/76 中型坦克', cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 8, desc: '倾斜装甲与机动性的完美结合，苏联装甲主力。', keywords: [Keyword.BLITZ], exclusiveName: '量产铁军', exclusiveDesc: '被击毁后返还2点费用；场上每有一辆T-34系列坦克，己方所有中型装甲单位移速、攻速小幅提升。' },
-    { name: 'T-34/85 中型坦克', cat: UnitCategory.ARMOR, cost: 6, atk: 7, def: 6, hp: 9, desc: '换装了85mm火炮的改进型T-34，足以对抗德军重甲。', keywords: [Keyword.BLITZ], exclusiveName: '攻坚改良', exclusiveDesc: '继承量产铁军效果，同时对敌方重甲单位造成20%破甲伤害。' },
-    { name: 'IS-2 重型坦克', cat: UnitCategory.ARMOR, cost: 8, atk: 10, def: 8, hp: 12, desc: '搭载122mm主炮的钢铁巨兽，专为摧毁德军重甲而生。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '柏林先锋', exclusiveDesc: '对敌方建筑、重甲单位伤害提升50%，登场回合自身获得护盾。' },
-    { name: 'SU-85 自行火炮', cat: UnitCategory.ARTILLERY, cost: 6, atk: 8, def: 4, hp: 6, desc: '强大的反坦克火力，能够在远距离击穿装甲。', keywords: [Keyword.AMBUSH], exclusiveName: '猎甲', exclusiveDesc: '伏击触发时，优先锁定敌方装甲单位，对中型、重型坦克造成暴击伤害。' },
-    { name: 'IL-2 攻击机', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 5, desc: '"飞行坦克"，对地攻击的绝对利器。', keywords: [Keyword.BLITZ], exclusiveName: '黑死神', exclusiveDesc: '对地单位伤害翻倍，被地面单位攻击时减免40%伤害。' },
-    { name: '喀秋莎火箭车', cat: UnitCategory.ARTILLERY, cost: 5, atk: 7, def: 1, hp: 4, desc: '齐射时发出恐怖的呼啸声，火力覆盖面极广。', keywords: [], exclusiveName: '火海覆盖', exclusiveDesc: '攻击为范围群伤，对敌方全体前排单位造成持续灼烧伤害，无视小幅护甲。' },
-    { name: 'KV-1 重型坦克', cat: UnitCategory.ARMOR, cost: 7, atk: 6, def: 9, hp: 14, desc: '战争初期的移动堡垒，德军的反坦克炮对其毫无作用。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD], exclusiveName: '钢铁壁垒', exclusiveDesc: '登场后嘲讽敌方所有攻击单位，自身受到的远程炮火伤害减半。' }
+    { name: i18n.t('cards.unit_1.name'), cat: UnitCategory.INFANTRY, cost: 1, atk: 2, def: 1, hp: 3, desc: i18n.t('cards.unit_1.desc'), keywords: [], exclusiveName: i18n.t('cards.unit_1.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_1.exclusiveDesc') },
+    { name: i18n.t('cards.unit_2.name'), cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 3, hp: 6, desc: i18n.t('cards.unit_2.desc'), keywords: [Keyword.GUARD], exclusiveName: i18n.t('cards.unit_2.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_2.exclusiveDesc') },
+    { name: i18n.t('cards.unit_3.name'), cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 2, hp: 4, desc: i18n.t('cards.unit_3.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_3.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_3.exclusiveDesc') },
+    { name: i18n.t('cards.unit_4.name'), cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 8, desc: i18n.t('cards.unit_4.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_4.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_4.exclusiveDesc') },
+    { name: i18n.t('cards.unit_5.name'), cat: UnitCategory.ARMOR, cost: 6, atk: 7, def: 6, hp: 9, desc: i18n.t('cards.unit_5.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_5.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_5.exclusiveDesc') },
+    { name: i18n.t('cards.unit_6.name'), cat: UnitCategory.ARMOR, cost: 8, atk: 10, def: 8, hp: 12, desc: i18n.t('cards.unit_6.desc'), keywords: [Keyword.HEAVY_ARMOR], exclusiveName: i18n.t('cards.unit_6.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_6.exclusiveDesc') },
+    { name: i18n.t('cards.unit_7.name'), cat: UnitCategory.ARTILLERY, cost: 6, atk: 8, def: 4, hp: 6, desc: i18n.t('cards.unit_7.desc'), keywords: [Keyword.AMBUSH], exclusiveName: i18n.t('cards.unit_7.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_7.exclusiveDesc') },
+    { name: i18n.t('cards.unit_8.name'), cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 5, desc: i18n.t('cards.unit_8.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_8.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_8.exclusiveDesc') },
+    { name: i18n.t('cards.unit_9.name'), cat: UnitCategory.ARTILLERY, cost: 5, atk: 7, def: 1, hp: 4, desc: i18n.t('cards.unit_9.desc'), keywords: [], exclusiveName: i18n.t('cards.unit_9.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_9.exclusiveDesc') },
+    { name: i18n.t('cards.unit_10.name'), cat: UnitCategory.ARMOR, cost: 7, atk: 6, def: 9, hp: 14, desc: i18n.t('cards.unit_10.desc'), keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD], exclusiveName: i18n.t('cards.unit_10.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_10.exclusiveDesc') }
   ];
 }
 
 export function getGermanUnits(): any[] {
   return [
-    { name: '国民突击队', cat: UnitCategory.INFANTRY, cost: 1, atk: 2, def: 1, hp: 2, desc: '战争后期的民兵武装，缺乏训练但装备铁拳反坦克炮。', keywords: [], exclusiveName: '决死', exclusiveDesc: '低费牺牲单位，主动献祭可让己方一个高阶单位本回合全属性增幅。' },
-    { name: '国防军步兵', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 4, hp: 5, desc: '训练有素的正规军，战术素养极高。', keywords: [], exclusiveName: '精锐操典', exclusiveDesc: '自身在场时，己方所有单位攻击命中率100%，无落空判定。' },
-    { name: '党卫军装甲掷弹兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 4, hp: 6, desc: '狂热的精锐步兵，跟随装甲部队快速突击。', keywords: [Keyword.BLITZ], exclusiveName: '步坦协同', exclusiveDesc: '自身与己方德国装甲单位同场时，双方攻速、移速大幅提升，击杀单位后可小幅回复血量。' },
-    { name: '四号中型坦克', cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 7, desc: '德军装甲部队的绝对中坚，活跃于各个战场。', keywords: [Keyword.BLITZ], exclusiveName: '战场中坚', exclusiveDesc: '无属性短板，在场时稳定提升己方所有中型装甲单位攻防。' },
-    { name: '豹式中型坦克', cat: UnitCategory.ARMOR, cost: 7, atk: 8, def: 7, hp: 9, desc: '拥有极佳的火炮与正面装甲，性能优异。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '精准破甲', exclusiveDesc: '攻击无视敌方50%重甲减免，对苏联、英法重型坦克拥有天然克制效果。' },
-    { name: '虎式重型坦克', cat: UnitCategory.ARMOR, cost: 9, atk: 12, def: 10, hp: 10, desc: '盟军的梦魇，以其厚重的装甲和88mm主炮闻名。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD], exclusiveName: '陆上霸主', exclusiveDesc: '登场嘲讽全场敌方单位，单次受到伤害不超过自身血量30%。' },
-    { name: 'Sdkfz 251 半履带车', cat: UnitCategory.ARMOR, cost: 4, atk: 3, def: 4, hp: 6, desc: '搭载步兵快速机动的装甲车辆。', keywords: [Keyword.BLITZ], exclusiveName: '机动补给', exclusiveDesc: '登场后每回合为相邻友军单位回复血量，同时提升己方前排推进速度。' },
-    { name: '88毫米高射炮', cat: UnitCategory.ARTILLERY, cost: 6, atk: 10, def: 2, hp: 5, desc: '不仅能防空，更是致命的反坦克武器。', keywords: [Keyword.ANTI_AIR, Keyword.GUARD], exclusiveName: '两用绝杀', exclusiveDesc: '防空状态可秒杀敌方低、中费空军，对地状态可击穿所有中型装甲。' },
-    { name: 'Bf-109 战斗机', cat: UnitCategory.AIR_FORCE, cost: 6, atk: 8, def: 3, hp: 4, desc: '德国空军的主力战斗机，争夺制空权的关键。', keywords: [Keyword.BLITZ], exclusiveName: '制空先锋', exclusiveDesc: '优先攻击敌方空军单位，击杀空军后本回合可再次行动。' },
-    { name: 'Ju-87 斯图卡', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 10, def: 2, hp: 4, desc: '伴随恐怖尖啸声的俯冲轰炸机，能精确打击地面目标。', keywords: [Keyword.BLITZ], exclusiveName: '尖啸俯冲', exclusiveDesc: '俯冲攻击触发暴击，命中后降低敌方全体单位下一回合攻击力。' }
+    { name: i18n.t('cards.unit_11.name'), cat: UnitCategory.INFANTRY, cost: 1, atk: 2, def: 1, hp: 2, desc: i18n.t('cards.unit_11.desc'), keywords: [], exclusiveName: i18n.t('cards.unit_11.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_11.exclusiveDesc') },
+    { name: i18n.t('cards.unit_12.name'), cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 4, hp: 5, desc: i18n.t('cards.unit_12.desc'), keywords: [], exclusiveName: i18n.t('cards.unit_12.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_12.exclusiveDesc') },
+    { name: i18n.t('cards.unit_13.name'), cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 4, hp: 6, desc: i18n.t('cards.unit_13.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_13.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_13.exclusiveDesc') },
+    { name: i18n.t('cards.unit_14.name'), cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 7, desc: i18n.t('cards.unit_14.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_14.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_14.exclusiveDesc') },
+    { name: i18n.t('cards.unit_15.name'), cat: UnitCategory.ARMOR, cost: 7, atk: 8, def: 7, hp: 9, desc: i18n.t('cards.unit_15.desc'), keywords: [Keyword.HEAVY_ARMOR], exclusiveName: i18n.t('cards.unit_15.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_15.exclusiveDesc') },
+    { name: i18n.t('cards.unit_16.name'), cat: UnitCategory.ARMOR, cost: 9, atk: 12, def: 10, hp: 10, desc: i18n.t('cards.unit_16.desc'), keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD], exclusiveName: i18n.t('cards.unit_16.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_16.exclusiveDesc') },
+    { name: i18n.t('cards.unit_17.name'), cat: UnitCategory.ARMOR, cost: 4, atk: 3, def: 4, hp: 6, desc: i18n.t('cards.unit_17.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_17.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_17.exclusiveDesc') },
+    { name: i18n.t('cards.unit_18.name'), cat: UnitCategory.ARTILLERY, cost: 6, atk: 10, def: 2, hp: 5, desc: i18n.t('cards.unit_18.desc'), keywords: [Keyword.ANTI_AIR, Keyword.GUARD], exclusiveName: i18n.t('cards.unit_18.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_18.exclusiveDesc') },
+    { name: i18n.t('cards.unit_19.name'), cat: UnitCategory.AIR_FORCE, cost: 6, atk: 8, def: 3, hp: 4, desc: i18n.t('cards.unit_19.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_19.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_19.exclusiveDesc') },
+    { name: i18n.t('cards.unit_20.name'), cat: UnitCategory.AIR_FORCE, cost: 7, atk: 10, def: 2, hp: 4, desc: i18n.t('cards.unit_20.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_20.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_20.exclusiveDesc') }
   ];
 }
 
 export function getUSAUnits(): any[] {
   return [
-    { name: '大兵(G.I.)', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 2, hp: 4, desc: '装备M1加兰德的美国大兵，火力充足。', keywords: [], exclusiveName: '后勤充沛', exclusiveDesc: '所有己方GI大兵阵亡后，有概率免费重生。' },
-    { name: '游骑兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 3, hp: 5, desc: '精锐的突击步兵，擅长敌后作战。', keywords: [Keyword.AMBUSH], exclusiveName: '丛林利刃', exclusiveDesc: '伏击成功后无视敌方守护效果，直接秒杀敌方低费核心单位。' },
-    { name: 'M4 谢尔曼', cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 8, desc: '产量极大的中型坦克，可靠性强。', keywords: [Keyword.BLITZ], exclusiveName: '工业洪流', exclusiveDesc: '费用低、产出快，场上每多一辆谢尔曼，己方全体单位伤害永久小幅递增。' },
-    { name: 'M26 潘兴', cat: UnitCategory.ARMOR, cost: 8, atk: 9, def: 8, hp: 10, desc: '战争后期投入战场的重型坦克，足以对抗虎豹。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '后期王牌', exclusiveDesc: '登场后清除己方所有负面效果，对德国高阶装甲单位造成额外真实伤害。' },
-    { name: 'M7 牧师自行火炮', cat: UnitCategory.ARTILLERY, cost: 5, atk: 7, def: 3, hp: 5, desc: '为装甲部队提供伴随火力的自行火炮。', keywords: [], exclusiveName: '持续压制', exclusiveDesc: '每回合自动对敌方后排造成小额范围伤害，持续压制敌方输出与补给单位。' },
-    { name: 'P-51 野马', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 8, def: 3, hp: 5, desc: '优秀的护航战斗机。', keywords: [Keyword.BLITZ], exclusiveName: '全域护航', exclusiveDesc: '自身在场时，己方所有空军单位免伤提升，且不会被敌方伏击、突袭单位锁定。' },
-    { name: 'B-17 飞行堡垒', cat: UnitCategory.AIR_FORCE, cost: 9, atk: 10, def: 5, hp: 12, desc: '重型战略轰炸机，拥有极其坚固的机身和密集的自卫火力。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '战略轰炸', exclusiveDesc: '攻击无视敌方地面防御，直接对敌方基地血量造成伤害，范围轰炸清空敌方后排集群。' }
+    { name: i18n.t('cards.unit_21.name'), cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 2, hp: 4, desc: i18n.t('cards.unit_21.desc'), keywords: [], exclusiveName: i18n.t('cards.unit_21.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_21.exclusiveDesc') },
+    { name: i18n.t('cards.unit_22.name'), cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 3, hp: 5, desc: i18n.t('cards.unit_22.desc'), keywords: [Keyword.AMBUSH], exclusiveName: i18n.t('cards.unit_22.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_22.exclusiveDesc') },
+    { name: i18n.t('cards.unit_23.name'), cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 8, desc: i18n.t('cards.unit_23.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_23.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_23.exclusiveDesc') },
+    { name: i18n.t('cards.unit_24.name'), cat: UnitCategory.ARMOR, cost: 8, atk: 9, def: 8, hp: 10, desc: i18n.t('cards.unit_24.desc'), keywords: [Keyword.HEAVY_ARMOR], exclusiveName: i18n.t('cards.unit_24.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_24.exclusiveDesc') },
+    { name: i18n.t('cards.unit_25.name'), cat: UnitCategory.ARTILLERY, cost: 5, atk: 7, def: 3, hp: 5, desc: i18n.t('cards.unit_25.desc'), keywords: [], exclusiveName: i18n.t('cards.unit_25.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_25.exclusiveDesc') },
+    { name: i18n.t('cards.unit_26.name'), cat: UnitCategory.AIR_FORCE, cost: 7, atk: 8, def: 3, hp: 5, desc: i18n.t('cards.unit_26.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_26.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_26.exclusiveDesc') },
+    { name: i18n.t('cards.unit_27.name'), cat: UnitCategory.AIR_FORCE, cost: 9, atk: 10, def: 5, hp: 12, desc: i18n.t('cards.unit_27.desc'), keywords: [Keyword.HEAVY_ARMOR], exclusiveName: i18n.t('cards.unit_27.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_27.exclusiveDesc') }
   ];
 }
 
 export function getUKUnits(): any[] {
   return [
-    { name: '汤米步兵', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 3, hp: 5, desc: '坚韧的英国步兵。', keywords: [Keyword.GUARD], exclusiveName: '英伦防线', exclusiveDesc: '自身所在排友军全部获得15%免伤，低成本构建坚固前排防线。' },
-    { name: '红魔伞兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 2, hp: 4, desc: '精锐的空降部队，随时准备空降敌后。', keywords: [Keyword.BLITZ], exclusiveName: '空降奇袭', exclusiveDesc: '可无视敌方前排守护，直接攻击敌方后排输出、炮兵单位。' },
-    { name: '十字军巡航坦克', cat: UnitCategory.ARMOR, cost: 4, atk: 5, def: 3, hp: 6, desc: '速度极快的巡航坦克，活跃于北非战场。', keywords: [Keyword.BLITZ], exclusiveName: '机动游击', exclusiveDesc: '攻击后可后撤规避伤害，残血时移速大幅提升，擅长拉扯消耗。' },
-    { name: '丘吉尔步兵坦克', cat: UnitCategory.ARMOR, cost: 6, atk: 5, def: 8, hp: 10, desc: '装甲极其厚重，推进缓慢。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '坚不可摧', exclusiveDesc: '受到的持续伤害、灼烧伤害全部无效，超厚护甲擅长持续抗伤、稳步推进。' },
-    { name: '25磅榴弹炮', cat: UnitCategory.ARTILLERY, cost: 5, atk: 6, def: 2, hp: 5, desc: '英军标志性的轻型野战火炮。', keywords: [], exclusiveName: '精准炮击', exclusiveDesc: '攻击可精准锁定敌方残血单位，直接收割残血目标，同时小幅破坏敌方护甲。' },
-    { name: '喷火战斗机', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 4, desc: '不列颠空战的传奇。', keywords: [Keyword.BLITZ], exclusiveName: '英伦守护', exclusiveDesc: '对战敌方德国空军时全属性增幅，击落敌机后获得临时护盾。' },
-    { name: '兰开斯特轰炸机', cat: UnitCategory.AIR_FORCE, cost: 8, atk: 9, def: 4, hp: 10, desc: '皇家空军轰炸机司令部的主力，载弹量极大。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '纵深打击', exclusiveDesc: '轰炸范围极大，可同时打击敌方前排、后排所有单位，擅长清场压制集群敌军。' }
+    { name: i18n.t('cards.unit_28.name'), cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 3, hp: 5, desc: i18n.t('cards.unit_28.desc'), keywords: [Keyword.GUARD], exclusiveName: i18n.t('cards.unit_28.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_28.exclusiveDesc') },
+    { name: i18n.t('cards.unit_29.name'), cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 2, hp: 4, desc: i18n.t('cards.unit_29.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_29.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_29.exclusiveDesc') },
+    { name: i18n.t('cards.unit_30.name'), cat: UnitCategory.ARMOR, cost: 4, atk: 5, def: 3, hp: 6, desc: i18n.t('cards.unit_30.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_30.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_30.exclusiveDesc') },
+    { name: i18n.t('cards.unit_31.name'), cat: UnitCategory.ARMOR, cost: 6, atk: 5, def: 8, hp: 10, desc: i18n.t('cards.unit_31.desc'), keywords: [Keyword.HEAVY_ARMOR], exclusiveName: i18n.t('cards.unit_31.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_31.exclusiveDesc') },
+    { name: i18n.t('cards.unit_32.name'), cat: UnitCategory.ARTILLERY, cost: 5, atk: 6, def: 2, hp: 5, desc: i18n.t('cards.unit_32.desc'), keywords: [], exclusiveName: i18n.t('cards.unit_32.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_32.exclusiveDesc') },
+    { name: i18n.t('cards.unit_33.name'), cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 4, desc: i18n.t('cards.unit_33.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_33.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_33.exclusiveDesc') },
+    { name: i18n.t('cards.unit_34.name'), cat: UnitCategory.AIR_FORCE, cost: 8, atk: 9, def: 4, hp: 10, desc: i18n.t('cards.unit_34.desc'), keywords: [Keyword.HEAVY_ARMOR], exclusiveName: i18n.t('cards.unit_34.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_34.exclusiveDesc') }
   ];
 }
 
 export function getFranceUnits(): any[] {
   return [
-    { name: '外籍军团', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 3, hp: 6, desc: '精锐的外籍军团士兵。', keywords: [Keyword.GUARD], exclusiveName: '绝境坚守', exclusiveDesc: '场上己方单位越少，自身免伤、攻击力越高，残场抗压能力极强。' },
-    { name: 'S35 骑兵坦克', cat: UnitCategory.ARMOR, cost: 4, atk: 5, def: 5, hp: 7, desc: '机动性与装甲兼顾的优秀坦克。', keywords: [Keyword.BLITZ], exclusiveName: '快速穿插', exclusiveDesc: '登场回合无视敌方地形、阻挡，可直接突进敌方半场。' },
-    { name: 'B1 重型坦克', cat: UnitCategory.ARMOR, cost: 6, atk: 7, def: 7, hp: 9, desc: '战前欧洲最强坦克之一。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '双线火力', exclusiveDesc: '单次攻击可同时打击两个敌方单位，重甲兼顾双线输出。' },
-    { name: '自由法国游击队', cat: UnitCategory.INFANTRY, cost: 2, atk: 4, def: 1, hp: 3, desc: '在敌后进行破坏活动的抵抗力量。', keywords: [Keyword.AMBUSH], exclusiveName: '敌后袭扰', exclusiveDesc: '潜伏状态不会被敌方锁定，攻击后降低敌方单位攻速、移速，持续拉扯牵制敌军。' },
-    { name: '25磅榴弹炮', cat: UnitCategory.ARTILLERY, cost: 5, atk: 6, def: 2, hp: 5, desc: '法军野战火炮。', keywords: [], exclusiveName: '固守炮击', exclusiveDesc: '自身不移动时，伤害、射程持续提升，越坚守战场输出越强。' },
-    { name: '喷火战斗机', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 4, desc: '自由法国空军战机。', keywords: [Keyword.BLITZ], exclusiveName: '复国雄鹰', exclusiveDesc: '配合己方游击单位作战时，伤害大幅增幅。' }
+    { name: i18n.t('cards.unit_35.name'), cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 3, hp: 6, desc: i18n.t('cards.unit_35.desc'), keywords: [Keyword.GUARD], exclusiveName: i18n.t('cards.unit_35.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_35.exclusiveDesc') },
+    { name: i18n.t('cards.unit_36.name'), cat: UnitCategory.ARMOR, cost: 4, atk: 5, def: 5, hp: 7, desc: i18n.t('cards.unit_36.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_36.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_36.exclusiveDesc') },
+    { name: i18n.t('cards.unit_37.name'), cat: UnitCategory.ARMOR, cost: 6, atk: 7, def: 7, hp: 9, desc: i18n.t('cards.unit_37.desc'), keywords: [Keyword.HEAVY_ARMOR], exclusiveName: i18n.t('cards.unit_37.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_37.exclusiveDesc') },
+    { name: i18n.t('cards.unit_38.name'), cat: UnitCategory.INFANTRY, cost: 2, atk: 4, def: 1, hp: 3, desc: i18n.t('cards.unit_38.desc'), keywords: [Keyword.AMBUSH], exclusiveName: i18n.t('cards.unit_38.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_38.exclusiveDesc') },
+    { name: i18n.t('cards.unit_39.name'), cat: UnitCategory.ARTILLERY, cost: 5, atk: 6, def: 2, hp: 5, desc: i18n.t('cards.unit_39.desc'), keywords: [], exclusiveName: i18n.t('cards.unit_39.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_39.exclusiveDesc') },
+    { name: i18n.t('cards.unit_40.name'), cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 4, desc: i18n.t('cards.unit_40.desc'), keywords: [Keyword.BLITZ], exclusiveName: i18n.t('cards.unit_40.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_40.exclusiveDesc') }
   ];
 }
 
@@ -167,15 +168,15 @@ export const ADVANCED_CARDS_DATA = [
 
 export const ADVANCED_ORDERS_DATA = [
   {
-    id: 'adv-order-soviet', name: '朱可夫的决断', faction: Faction.SOVIET, type: CardType.ORDER, cost: 6, desc: '【高级指令】最高统帅部下达总攻命令！我方全军攻击力+5，血量+5。',
+    id: 'adv-order-soviet', name: i18n.t('cards.order_41.name'), faction: Faction.SOVIET, type: CardType.ORDER, cost: 6, desc: i18n.t('cards.order_41.desc'),
     effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.attack += 5; u.hp += 5; u.maxHp += 5; }); }
   },
   {
-    id: 'adv-order-german', name: '古德里安的装甲矛头', faction: Faction.GERMANY, type: CardType.ORDER, cost: 6, desc: '【高级指令】突破极限！我方所有单位恢复行动，攻击力+3，并获得重甲。',
+    id: 'adv-order-german', name: i18n.t('cards.order_42.name'), faction: Faction.GERMANY, type: CardType.ORDER, cost: 6, desc: i18n.t('cards.order_42.desc'),
     effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.attack += 3; u.hasAttackedThisTurn = false; u.hasMovedThisTurn = false; if(!u.keywords.includes(Keyword.HEAVY_ARMOR)) u.keywords.push(Keyword.HEAVY_ARMOR); }); }
   },
   {
-    id: 'adv-order-manhattan', name: '曼哈顿计划', faction: Faction.USA, type: CardType.ORDER, cost: 10, desc: '【高级指令】终极武器！对敌方总部直接造成 12 点毁灭性伤害。',
+    id: 'adv-order-manhattan', name: i18n.t('cards.order_43.name'), faction: Faction.USA, type: CardType.ORDER, cost: 10, desc: i18n.t('cards.order_43.desc'),
     effect: (game: Game) => { 
       const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1; 
       const hqId = enemy === game.player2 ? 'p2-hq' : 'p1-hq';
@@ -189,7 +190,7 @@ export const ADVANCED_ORDERS_DATA = [
 export function createGenericOrders(faction: Faction): OrderCard[] {
   return [
     {
-      id: `${faction}-order-1`, name: '战术补给', description: '抽2张牌，恢复总部3点血。',
+      id: `${faction}-order-1`, name: i18n.t('cards.order_47.name'), description: i18n.t('cards.order_47.desc'),
       type: CardType.ORDER, faction: faction, deployCost: 3,
       effect: (game: Game) => {
         const p = game.currentPlayer;
@@ -197,7 +198,7 @@ export function createGenericOrders(faction: Faction): OrderCard[] {
       }
     },
     {
-      id: `${faction}-order-2`, name: '火力压制', description: '对敌方所有支援战线单位造成2点伤害。',
+      id: `${faction}-order-2`, name: i18n.t('cards.order_48.name'), description: i18n.t('cards.order_48.desc'),
       type: CardType.ORDER, faction: faction, deployCost: 4,
       effect: (game: Game) => {
         const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1;
@@ -208,11 +209,11 @@ export function createGenericOrders(faction: Faction): OrderCard[] {
       }
     },
     {
-      id: `${faction}-order-mine`, name: '工兵作业：地雷', description: '战术部署：在支援战线部署一个反坦克地雷（具备极高伏击伤害）。',
+      id: `${faction}-order-mine`, name: i18n.t('cards.order_49.name'), description: i18n.t('cards.order_49.desc'),
       type: CardType.ORDER, faction: faction, deployCost: 2,
       effect: (game: Game) => {
         const mine: UnitCard = {
-          id: `${faction}-mine-${Math.random().toString(36).substring(7)}`, name: '反坦克地雷', description: '隐蔽的反坦克武器，伏击触发后造成毁灭性伤害。',
+          id: `${faction}-mine-${Math.random().toString(36).substring(7)}`, name: i18n.t('cards.order_50.name'), description: i18n.t('cards.order_50.desc'),
           type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: faction,
           deployCost: 2, attack: 15, defense: 1, hp: 1, maxHp: 1, moveCost: 0,
           keywords: [Keyword.AMBUSH],
@@ -222,11 +223,11 @@ export function createGenericOrders(faction: Faction): OrderCard[] {
       }
     },
     {
-      id: `${faction}-order-sandbag`, name: '工兵作业：掩体', description: '战术部署：在支援战线部署一个沙袋掩体（具备守护和高血量）。',
+      id: `${faction}-order-sandbag`, name: i18n.t('cards.order_51.name'), description: i18n.t('cards.order_51.desc'),
       type: CardType.ORDER, faction: faction, deployCost: 2,
       effect: (game: Game) => {
         const sandbag: UnitCard = {
-          id: `${faction}-sandbag-${Math.random().toString(36).substring(7)}`, name: '沙袋掩体', description: '坚固的防御工事，吸引敌方火力。',
+          id: `${faction}-sandbag-${Math.random().toString(36).substring(7)}`, name: i18n.t('cards.order_52.name'), description: i18n.t('cards.order_52.desc'),
           type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: faction,
           deployCost: 2, attack: 0, defense: 3, hp: 8, maxHp: 8, moveCost: 0,
           keywords: [Keyword.GUARD],
@@ -241,19 +242,19 @@ export function createGenericOrders(faction: Faction): OrderCard[] {
 export function createSovietOrders(): OrderCard[] {
   return [
     {
-      id: 'soviet-order-heal', name: '战地医院', description: '紧急救治！总部恢复 8 点血量。',
+      id: 'soviet-order-heal', name: i18n.t('cards.order_53.name'), description: i18n.t('cards.order_53.desc'),
       type: CardType.ORDER, faction: Faction.SOVIET, deployCost: 3,
       effect: (game: Game) => { game.currentPlayer.hqHp = Math.min(25, game.currentPlayer.hqHp + 8); }
     },
     {
-      id: 'soviet-order-ura', name: '乌拉冲锋', description: '全线反击！我方所有场上单位攻击力+2，血量+1。',
+      id: 'soviet-order-ura', name: i18n.t('cards.order_54.name'), description: i18n.t('cards.order_54.desc'),
       type: CardType.ORDER, faction: Faction.SOVIET, deployCost: 3,
       effect: (game: Game) => {
         game.currentPlayer.board.forEach(u => { u.attack += 2; u.hp += 1; u.maxHp += 1; });
       }
     },
     {
-      id: 'soviet-order-katyusha', name: '喀秋莎洗地', description: '炮火覆盖！对敌方所有单位造成 3 点伤害。',
+      id: 'soviet-order-katyusha', name: i18n.t('cards.order_55.name'), description: i18n.t('cards.order_55.desc'),
       type: CardType.ORDER, faction: Faction.SOVIET, deployCost: 4,
       effect: (game: Game) => {
         const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1;
@@ -267,12 +268,12 @@ export function createSovietOrders(): OrderCard[] {
 export function createGermanOrders(): OrderCard[] {
   return [
     {
-      id: 'german-order-heal', name: '野战急救', description: '紧急救治！总部恢复 8 点血量。',
+      id: 'german-order-heal', name: i18n.t('cards.order_56.name'), description: i18n.t('cards.order_56.desc'),
       type: CardType.ORDER, faction: Faction.GERMANY, deployCost: 3,
       effect: (game: Game) => { game.currentPlayer.hqHp = Math.min(25, game.currentPlayer.hqHp + 8); }
     },
     {
-      id: 'german-order-blitzkrieg', name: '闪电战', description: '装甲突袭！摸2张牌，恢复我方所有单位行动状态，并获得2点CP。',
+      id: 'german-order-blitzkrieg', name: i18n.t('cards.order_57.name'), description: i18n.t('cards.order_57.desc'),
       type: CardType.ORDER, faction: Faction.GERMANY, deployCost: 3,
       effect: (game: Game) => {
         const player = game.currentPlayer;
@@ -282,7 +283,7 @@ export function createGermanOrders(): OrderCard[] {
       }
     },
     {
-      id: 'german-order-v1', name: 'V1飞弹', description: '初期巡航导弹。对敌方总部造成 4 点伤害。若敌方场上有空军单位，则有 50% 概率被拦截（无伤害）。',
+      id: 'german-order-v1', name: i18n.t('cards.order_58.name'), description: i18n.t('cards.order_58.desc'),
       type: CardType.ORDER, faction: Faction.GERMANY, deployCost: 3,
       effect: (game: Game) => {
         const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1;
@@ -298,7 +299,7 @@ export function createGermanOrders(): OrderCard[] {
       }
     },
     {
-      id: 'german-order-v2', name: 'V2火箭', description: '战略打击！无视前线，直接对敌方总部造成 6 点伤害。',
+      id: 'german-order-v2', name: i18n.t('cards.order_59.name'), description: i18n.t('cards.order_59.desc'),
       type: CardType.ORDER, faction: Faction.GERMANY, deployCost: 5,
       effect: (game: Game) => {
         const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1;
@@ -313,12 +314,12 @@ export function createGermanOrders(): OrderCard[] {
 export function createUSAOrders(): OrderCard[] {
   return [
     {
-      id: 'usa-order-heal', name: '医疗物资空投', description: '紧急救治！总部恢复 8 点血量。',
+      id: 'usa-order-heal', name: i18n.t('cards.order_60.name'), description: i18n.t('cards.order_60.desc'),
       type: CardType.ORDER, faction: Faction.USA, deployCost: 3,
       effect: (game: Game) => { game.currentPlayer.hqHp = Math.min(25, game.currentPlayer.hqHp + 8); }
     },
     {
-      id: 'usa-order-carpet', name: 'B-17地毯轰炸', description: '空中打击！对敌方支援战线的所有单位造成 4 点伤害。',
+      id: 'usa-order-carpet', name: i18n.t('cards.order_61.name'), description: i18n.t('cards.order_61.desc'),
       type: CardType.ORDER, faction: Faction.USA, deployCost: 5,
       effect: (game: Game) => {
         const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1;
@@ -329,7 +330,7 @@ export function createUSAOrders(): OrderCard[] {
       }
     },
     {
-      id: 'usa-order-logistics', name: '后勤优势', description: '强大的工业能力！抽3张牌，并获得3点指挥点。',
+      id: 'usa-order-logistics', name: i18n.t('cards.order_62.name'), description: i18n.t('cards.order_62.desc'),
       type: CardType.ORDER, faction: Faction.USA, deployCost: 4,
       effect: (game: Game) => {
         const player = game.currentPlayer;
@@ -343,12 +344,12 @@ export function createUSAOrders(): OrderCard[] {
 export function createUKOrders(): OrderCard[] {
   return [
     {
-      id: 'uk-order-heal', name: '红十字会', description: '紧急救治！总部恢复 8 点血量。',
+      id: 'uk-order-heal', name: i18n.t('cards.order_63.name'), description: i18n.t('cards.order_63.desc'),
       type: CardType.ORDER, faction: Faction.UK, deployCost: 3,
       effect: (game: Game) => { game.currentPlayer.hqHp = Math.min(25, game.currentPlayer.hqHp + 8); }
     },
     {
-      id: 'uk-order-radar', name: '雷达预警', description: '提前部署！抽2张牌，我方所有单位防御力+1。',
+      id: 'uk-order-radar', name: i18n.t('cards.order_64.name'), description: i18n.t('cards.order_64.desc'),
       type: CardType.ORDER, faction: Faction.UK, deployCost: 3,
       effect: (game: Game) => {
         const player = game.currentPlayer;
@@ -357,7 +358,7 @@ export function createUKOrders(): OrderCard[] {
       }
     },
     {
-      id: 'uk-order-navy', name: '皇家海军支援', description: '舰炮轰击！对敌方所有单位造成 4 点伤害。',
+      id: 'uk-order-navy', name: i18n.t('cards.order_65.name'), description: i18n.t('cards.order_65.desc'),
       type: CardType.ORDER, faction: Faction.UK, deployCost: 5,
       effect: (game: Game) => {
         const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1;
@@ -373,12 +374,12 @@ export function createUKOrders(): OrderCard[] {
 export function createFranceOrders(): OrderCard[] {
   return [
     {
-      id: 'france-order-heal', name: '自由法国医疗队', description: '紧急救治！总部恢复 8 点血量。',
+      id: 'france-order-heal', name: i18n.t('cards.order_66.name'), description: i18n.t('cards.order_66.desc'),
       type: CardType.ORDER, faction: Faction.FRANCE, deployCost: 3,
       effect: (game: Game) => { game.currentPlayer.hqHp = Math.min(25, game.currentPlayer.hqHp + 8); }
     },
     {
-      id: 'france-order-maginot', name: '马奇诺防线', description: '坚固设防！总部恢复5点血量，我方所有单位获得重甲（防御力+2）。',
+      id: 'france-order-maginot', name: i18n.t('cards.order_67.name'), description: i18n.t('cards.order_67.desc'),
       type: CardType.ORDER, faction: Faction.FRANCE, deployCost: 4,
       effect: (game: Game) => {
         const player = game.currentPlayer;
@@ -392,7 +393,7 @@ export function createFranceOrders(): OrderCard[] {
       }
     },
     {
-      id: 'france-order-resistance', name: '抵抗运动', description: '敌后破坏！对敌方随机3个单位造成 2 点伤害。',
+      id: 'france-order-resistance', name: i18n.t('cards.order_68.name'), description: i18n.t('cards.order_68.desc'),
       type: CardType.ORDER, faction: Faction.FRANCE, deployCost: 3,
       effect: (game: Game) => {
         const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1;
@@ -541,8 +542,8 @@ export function buildDeck(faction: Faction, customCounts?: Record<string, number
 export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
   {
     id: 'campaign-normandy',
-    name: '诺曼底登陆 (奥马哈海滩)',
-    description: '1944年6月6日。盟军在诺曼底登陆。德军在悬崖上部署了坚固的暗堡。\n目标：在 15 回合内突破大西洋壁垒，摧毁德军指挥部！\n奖励：解锁高级卡牌【101空降师】',
+    name: i18n.t('cards.order_69.name'),
+    description: i18n.t('cards.order_69.desc'),
     playerFaction: Faction.USA,
     aiFaction: Faction.GERMANY,
     maxTurns: 15,
@@ -551,7 +552,7 @@ export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
       // 史诗级削弱：德军前线部署 2 个暗堡 (原为3个)
       for(let i=0; i<2; i++) {
         const bunker: UnitCard = {
-          id: `bunker-${i}`, name: '大西洋壁垒暗堡', description: '坚固的混凝土工事，无法攻击。',
+          id: `bunker-${i}`, name: i18n.t('cards.order_70.name'), description: i18n.t('cards.order_70.desc'),
           type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: Faction.GERMANY,
           deployCost: 0, attack: 0, defense: 5, hp: 10, maxHp: 10, moveCost: 0,
           keywords: [Keyword.GUARD], // 移除重甲，削弱血防，移除攻击力
@@ -565,8 +566,8 @@ export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
   },
   {
     id: 'campaign-stalingrad',
-    name: '斯大林格勒保卫战',
-    description: '1942年冬。德军第6集团军大举进攻。城市化为废墟，环境极其恶劣。\n目标：在 20 回合内击溃德军指挥部。\n奖励：解锁高级卡牌【斯大林格勒近卫师】',
+    name: i18n.t('cards.order_71.name'),
+    description: i18n.t('cards.order_71.desc'),
     playerFaction: Faction.SOVIET,
     aiFaction: Faction.GERMANY,
     maxTurns: 20,
@@ -576,7 +577,7 @@ export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
       // 史诗级削弱：移除开局两辆贴脸的四号坦克，改为两支在支援战线的普通步兵
       for(let i=0; i<2; i++) {
          const infantry: UnitCard = {
-           id: `inf-${i}`, name: '国防军步兵', description: '进入废墟的德军步兵。',
+           id: `inf-${i}`, name: i18n.t('cards.order_72.name'), description: i18n.t('cards.order_72.desc'),
            type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: Faction.GERMANY,
            deployCost: 0, attack: 4, defense: 4, hp: 5, maxHp: 5, moveCost: 1,
            keywords: [],
@@ -590,8 +591,8 @@ export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
   },
   {
     id: 'campaign-kursk',
-    name: '库尔斯克会战 (钢铁对决)',
-    description: '1943年夏。史上最大规模的坦克会战。双方指挥部将获得大量初始指挥点，但只有装甲部队能发挥最大效用。\n目标：在 15 回合内击溃敌方指挥部。\n奖励：解锁高级卡牌【虎王重型坦克】',
+    name: i18n.t('cards.order_73.name'),
+    description: i18n.t('cards.order_73.desc'),
     playerFaction: Faction.SOVIET,
     aiFaction: Faction.GERMANY,
     maxTurns: 15,
@@ -604,7 +605,7 @@ export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
       game.player2.cp = 10;
       // 移除步兵，只保留装甲（简化的特殊规则）
       game.activeEnvironment = {
-          name: '钢铁洪流', description: '环境卡：所有步兵单位入场时立即受到 5 点伤害。', type: CardType.ENVIRONMENT, deployCost: 0, faction: Faction.GERMANY, id: 'env-kursk',
+          name: i18n.t('cards.order_74.name'), description: i18n.t('cards.order_74.desc'), type: CardType.ENVIRONMENT, deployCost: 0, faction: Faction.GERMANY, id: 'env-kursk',
           onPlay: (g: Game) => {},
           onTurnStart: (g: Game) => {
               g.player1.board.filter((u: UnitCard) => u.category === UnitCategory.INFANTRY).forEach((u: UnitCard) => u.hp -= 5);
@@ -617,15 +618,15 @@ export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
   },
   {
     id: 'campaign-britain',
-    name: '不列颠空战',
-    description: '1940年秋。德国空军对英国本土进行大规模轰炸，皇家空军奋起反击。争夺制空权！\n目标：在 15 回合内守住指挥部并击溃敌方。\n奖励：解锁高级卡牌【SAS 特种空勤团】',
+    name: i18n.t('cards.order_75.name'),
+    description: i18n.t('cards.order_75.desc'),
     playerFaction: Faction.UK,
     aiFaction: Faction.GERMANY,
     maxTurns: 15,
     rewardCardId: 'adv-uk-1',
     setupBoard: (game: Game) => {
       game.activeEnvironment = {
-          name: '制空权争夺', description: '环境卡：所有空军单位攻击力+2。', type: CardType.ENVIRONMENT, deployCost: 0, faction: Faction.UK, id: 'env-britain',
+          name: i18n.t('cards.order_76.name'), description: i18n.t('cards.order_76.desc'), type: CardType.ENVIRONMENT, deployCost: 0, faction: Faction.UK, id: 'env-britain',
           onPlay: (g: Game) => {},
           onTurnStart: (g: Game) => {}
       };
