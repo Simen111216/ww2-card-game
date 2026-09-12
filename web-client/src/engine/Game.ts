@@ -121,9 +121,6 @@ export class Game {
            console.log(`[未命中] 炮兵 ${attacker.name} 的攻击偏离了目标！`);
            this.addLog(attackerOwner.name, `[${attacker.name}] 的炮击偏离了目标（未命中）。`, 'attack');
            attacker.hasAttackedThisTurn = true;
-           if (this.onVfx) {
-               this.onVfx('armor', '未命中', defender.id);
-           }
            return true; // 攻击动作已消耗，但未造成伤害
        }
     }
@@ -223,12 +220,6 @@ export class Game {
            console.log(`[未命中] 炮兵 ${attacker.name} 对总部的攻击偏离了目标！`);
            this.addLog(this.currentPlayer.name, `[${attacker.name}] 对敌方指挥部的炮击偏离了目标（未命中）。`, 'attack');
            attacker.hasAttackedThisTurn = true;
-           if (this.onVfx) {
-               // 传参需要根据玩家推断总部的ID，这里用一个通用标记，或者由外部调用者处理
-               // 但由于在 Game.ts 内部无法直接得知对方是 p1 还是 p2 的 DOM id，这里用特殊的 'hq-miss'
-               // 不过我们只需返回 true（代表攻击动作执行完毕），外部 App.tsx 中的 executeAttack 发现没掉血会自动忽略
-               // 为确保能飘出“未命中”文字，我们在 App.tsx 里做特判，或者在这里传特殊的标识
-           }
            return true; 
        }
     }

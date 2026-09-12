@@ -175,7 +175,12 @@ export const ADVANCED_ORDERS_DATA = [
   },
   {
     id: 'adv-order-manhattan', name: '曼哈顿计划', faction: Faction.USA, type: CardType.ORDER, cost: 10, desc: '【高级指令】终极武器！对敌方总部直接造成 12 点毁灭性伤害。',
-    effect: (game: Game) => { const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1; enemy.takeHqDamage(12); }
+    effect: (game: Game) => { 
+      const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1; 
+      const hqId = enemy === game.player2 ? 'p2-hq' : 'p1-hq';
+      enemy.takeHqDamage(12); 
+      game.onVfx?.('damage', '-12', hqId);
+    }
   },
 ];
 
@@ -281,10 +286,13 @@ export function createGermanOrders(): OrderCard[] {
       effect: (game: Game) => {
         const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1;
         const hasAirForce = enemy.board.some(u => u.category === UnitCategory.AIR_FORCE);
+        const hqId = enemy === game.player2 ? 'p2-hq' : 'p1-hq';
         if (hasAirForce && Math.random() < 0.5) {
           game.addLog(enemy.name, `敌方战斗机成功拦截了 V1飞弹！`, 'system');
+          game.onVfx?.('armor', '被拦截', hqId);
         } else {
           enemy.takeHqDamage(4);
+          game.onVfx?.('damage', '-4', hqId);
         }
       }
     },
@@ -293,7 +301,9 @@ export function createGermanOrders(): OrderCard[] {
       type: CardType.ORDER, faction: Faction.GERMANY, deployCost: 5,
       effect: (game: Game) => {
         const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1;
+        const hqId = enemy === game.player2 ? 'p2-hq' : 'p1-hq';
         enemy.takeHqDamage(6);
+        game.onVfx?.('damage', '-6', hqId);
       }
     }
   ];
@@ -471,7 +481,8 @@ export function buildDeck(faction: Faction, customCounts?: Record<string, number
           deck.push({
             id: `${adv.id}-${i}`, name: adv.name, description: adv.desc, type: CardType.UNIT, category: adv.cat, faction: adv.faction,
             deployCost: adv.cost, attack: adv.atk, defense: adv.def, hp: adv.hp, maxHp: adv.hp, moveCost: 1, keywords: adv.keywords || [],
-            hasMovedThisTurn: false, hasAttackedThisTurn: false, line: 'support', isAdvanced: true
+            hasMovedThisTurn: false, hasAttackedThisTurn: false, line: 'support', isAdvanced: true,
+            exclusiveName: adv.exclusiveName, exclusiveDesc: adv.exclusiveDesc
           } as UnitCard);
        } else {
           deck.push({ ...adv, id: `${adv.id}-${i}`, isAdvanced: true, deployCost: adv.cost });
@@ -516,7 +527,9 @@ export function buildDeck(faction: Faction, customCounts?: Record<string, number
         keywords: u.keywords || [],
         hasMovedThisTurn: false,
         hasAttackedThisTurn: false,
-        line: 'support' // 初始进入支援战线
+        line: 'support', // 初始进入支援战线
+        exclusiveName: u.exclusiveName,
+        exclusiveDesc: u.exclusiveDesc
       } as UnitCard);
     }
   }
@@ -873,6 +886,17 @@ export default function App() {
     };
 
   }, [gameMode, game, gamePhase]);
+
+  useEffect(() => {
+    if (game) {
+      game.onVfx = (type, text, targetId) => {
+        spawnTransientVfx(type, text, targetId);
+        if (gameMode === 'multiplayer' && networkManager.isHost) {
+           networkManager.send({ type: 'SPAWN_TRANSIENT_VFX', vfxType: type, text, targetId, isP1: true });
+        }
+      };
+    }
+  }, [game, gameMode]);
 
   // 客机同步状态逻辑 (Fallback for the first sync or missed updates)
   useEffect(() => {
@@ -1237,13 +1261,13 @@ export default function App() {
       await new Promise(r => setTimeout(r, 600));
     }
 
-    if (cardId.includes('katyusha') || cardId.includes('carpet')) {
+    if (cardId.includes('katyusha') || cardId.includes('carpet')) {        
       setOrderVfx({ type: 'explosions', area: isP1 ? 'p2-support' : 'p1-support' });
       setGlobalShake(20);
       setFlash('red');
-    } else if (cardId.includes('v2') || cardId.includes('manhattan')) {
-      setOrderVfx({ type: 'nuke', area: isP1 ? 'p2-hq' : 'p1-hq' });
-      setGlobalShake(50);
+    } else if (cardId.includes('v2') || cardId.includes('manhattan') || cardId.includes('v1')) {    
+      setOrderVfx({ type: 'nuke', area: isP1 ? 'p2-hq' : 'p1-hq' });       
+      setGlobalShake(cardId.includes('v1') ? 30 : 50);
       setFlash('white');
     } else if (cardId.includes('ura') || cardId.includes('blitzkrieg') || cardId.includes('radar') || cardId.includes('maginot') || cardId.includes('adv-order')) {
       setOrderVfx({ type: 'buff', area: isP1 ? 'p1-board' : 'p2-board' });
@@ -1906,12 +1930,21 @@ export default function App() {
 
         <div className="flex justify-center -mb-4 overflow-visible pb-4 pt-2 px-4 h-48">
           <AnimatePresence>
-            {p1.hand.map((card, i) => (
-              <motion.div key={card.id} layout initial={{ y: 300, opacity: 0, scale: 0.5 }} animate={{ y: 0, opacity: hiddenHandIndex === i ? 0 : 1, scale: 0.85 }} exit={{ y: -200, opacity: 0, scale: 0 }} transition={{ duration: 0.3 }}
-                drag={game.currentPlayer === p1 && p1.cp >= card.deployCost} dragSnapToOrigin onDragEnd={(e, info) => handleDragEnd(e, info, i, card)} whileDrag={{ scale: 1, zIndex: 50 }}
-                className={`relative origin-bottom -mx-2 ${game.currentPlayer === p1 && p1.cp >= card.deployCost ? 'cursor-grab active:cursor-grabbing hover:-translate-y-8 hover:z-40 transition-transform' : 'cursor-not-allowed'}`}
+            {p1.hand.map((card, i) => {
+              const mid = (p1.hand.length - 1) / 2;
+              const angle = (i - mid) * 8;
+              const yOffset = Math.abs(i - mid) * 12;
+              return (
+              <motion.div key={card.id} layout 
+                initial={{ y: 300, opacity: 0, scale: 0.5 }} 
+                animate={{ y: yOffset, rotate: angle, opacity: hiddenHandIndex === i ? 0 : 1, scale: 0.85 }} 
+                exit={{ y: -200, opacity: 0, scale: 0 }} 
+                transition={{ duration: 0.3 }}
+                whileHover={{ y: -30, rotate: 0, scale: 0.95, zIndex: 40 }}
+                drag={game.currentPlayer === p1 && p1.cp >= card.deployCost} dragSnapToOrigin onDragEnd={(e, info) => handleDragEnd(e, info, i, card)} whileDrag={{ scale: 1, zIndex: 50, rotate: 0 }}
+                className={`relative origin-bottom -mx-3 ${game.currentPlayer === p1 && p1.cp >= card.deployCost ? 'cursor-grab active:cursor-grabbing' : 'cursor-not-allowed'}`}
               ><CardComponent card={card} canPlay={game.currentPlayer === p1 && p1.cp >= card.deployCost} /></motion.div>
-            ))}
+            )})}
           </AnimatePresence>
         </div>
       </motion.div>

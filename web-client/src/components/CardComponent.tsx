@@ -35,7 +35,7 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
       id={`card-${card.id}`}
       onClick={canPlay ? onClick : undefined}
       className={`
-        relative w-40 h-56 rounded-lg shadow-lg overflow-hidden border-4 transition-transform duration-200
+        relative w-40 h-64 rounded-lg shadow-lg overflow-hidden border-4 transition-transform duration-200
         ${bgColor}
         ${canPlay ? 'cursor-pointer hover:-translate-y-4 hover:shadow-xl' : 'opacity-75 cursor-not-allowed'}
         ${isSelected ? 'ring-4 ring-yellow-400 -translate-y-4' : 'border-gray-800'}
@@ -77,20 +77,31 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
       )}
 
       {/* 卡牌描述 / 词条解析 */}
-      <div className="p-2 text-xs flex-grow bg-white/10 text-gray-200 overflow-hidden flex flex-col justify-center">
+      <div className="p-2 text-[9px] flex-grow bg-white/10 text-gray-200 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-track]:bg-transparent flex flex-col justify-start gap-1 leading-tight">
         {isUnit ? (
-          unitCard.keywords.length > 0 ? (
-            <div className="flex flex-col gap-1 text-left w-full">
-              {unitCard.keywords.map((kw, i) => (
-                <div key={i} className="leading-tight">
-                  <span className="font-bold text-purple-300">【{kw}】</span>
-                  <span className="text-gray-300 text-[10px] ml-0.5">{keywordDescriptions[kw]}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <span className="text-gray-500 italic text-center w-full">（无特殊词条）</span>
-          )
+          <>
+            {/* 专属词条（如果有） */}
+            {unitCard.exclusiveName && (
+              <div className="border-b border-gray-600/50 pb-1 mb-1">
+                <span className="font-bold text-yellow-400">◆ {unitCard.exclusiveName}</span>
+                <p className="text-gray-300 mt-0.5">{unitCard.exclusiveDesc}</p>
+              </div>
+            )}
+            
+            {/* 基础词条 */}
+            {unitCard.keywords.length > 0 ? (
+              <div className="flex flex-col gap-1 text-left w-full">
+                {unitCard.keywords.map((kw, i) => (
+                  <div key={i} className="flex">
+                    <span className="font-bold text-purple-300 shrink-0">【{kw}】</span>
+                    <span className="text-gray-400 ml-0.5">{keywordDescriptions[kw]}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              !unitCard.exclusiveName && <span className="text-gray-500 italic text-center w-full">（无特殊词条）</span>
+            )}
+          </>
         ) : (
           <span className="text-center w-full">{card.description}</span>
         )}
@@ -98,7 +109,7 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
 
       {/* 属性栏 (仅单位卡显示) */}
       {unitCard && (
-        <div className="absolute bottom-0 left-0 w-full h-8 bg-black/80 flex justify-between items-center px-2 text-sm font-bold border-t-2 border-gray-800">
+        <div className="w-full h-6 shrink-0 bg-black/80 flex justify-between items-center px-2 text-[11px] font-bold border-t-2 border-gray-800">
           <div className="text-red-400 flex items-center" title="攻击力">
             ⚔ {unitCard.attack}
           </div>

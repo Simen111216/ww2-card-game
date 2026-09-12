@@ -20,6 +20,9 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
   const [unlockedIds, setUnlockedIds] = useState<string[]>([]);
   const [savedDecks, setSavedDecks] = useState<Record<string, Record<string, number>>>({}); // faction -> { templateId: count }
 
+  const [filterType, setFilterType] = useState<CardType | 'all'>('all');
+  const [filterCost, setFilterCost] = useState<number | 'all'>('all');
+
   useEffect(() => {
     try {
       const ids = JSON.parse(localStorage.getItem('unlockedCards') || '[]');
@@ -133,11 +136,39 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
       <div className="flex flex-1 gap-6 min-h-0">
         {/* 左侧：可用卡牌库 */}
         <div className="flex-1 bg-gray-900 rounded-xl border-2 border-gray-700 flex flex-col overflow-hidden">
-            <div className="p-4 bg-gray-800 border-b border-gray-700 font-bold text-lg text-gray-300">
-                可用卡牌库 (点击添加)
+            <div className="p-4 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
+                <div className="font-bold text-lg text-gray-300">可用卡牌库 (点击添加)</div>
+                <div className="flex gap-3">
+                   <select value={filterType} onChange={e => setFilterType(e.target.value as any)} className="bg-gray-700 text-white px-2 py-1 rounded border border-gray-600 outline-none focus:border-amber-500">
+                      <option value="all">所有类型</option>
+                      <option value={CardType.UNIT}>单位卡</option>
+                      <option value={CardType.ORDER}>指令卡</option>
+                      <option value={CardType.ENVIRONMENT}>环境卡</option>
+                   </select>
+                   <select value={filterCost} onChange={e => setFilterCost(e.target.value === 'all' ? 'all' : Number(e.target.value))} className="bg-gray-700 text-white px-2 py-1 rounded border border-gray-600 outline-none focus:border-amber-500">
+                      <option value="all">所有费用</option>
+                      <option value={1}>1费</option>
+                      <option value={2}>2费</option>
+                      <option value={3}>3费</option>
+                      <option value={4}>4费</option>
+                      <option value={5}>5费</option>
+                      <option value={6}>6费</option>
+                      <option value={7}>7费及以上</option>
+                   </select>
+                </div>
             </div>
             <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 content-start">
-                {availableCards.map((card, i) => (
+                {availableCards.filter(card => {
+                    if (filterType !== 'all' && card.type !== filterType) return false;
+                    if (filterCost !== 'all') {
+                        if (filterCost === 7) {
+                            if (card.deployCost < 7) return false;
+                        } else {
+                            if (card.deployCost !== filterCost) return false;
+                        }
+                    }
+                    return true;
+                }).map((card, i) => (
                     <div key={i} onClick={() => addCard(card)} className="cursor-pointer transform hover:scale-105 transition-transform hover:shadow-[0_0_15px_rgba(251,191,36,0.5)] rounded-lg">
                         <CardComponent card={{...card, hp: card.hp || card.def, maxHp: card.hp || card.def} as any} canPlay={false} onClick={() => {}} />
                     </div>
