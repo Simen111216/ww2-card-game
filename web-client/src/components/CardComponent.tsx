@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { CardType, Faction } from '../engine/types';
 import type { BaseCard, UnitCard } from '../engine/types';
 
@@ -26,6 +27,7 @@ const keywordDescriptions: Record<string, string> = {
 };
 
 export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, canPlay = true }) => {
+  const { t } = useTranslation();
   const isUnit = card.type === CardType.UNIT;
   const unitCard = isUnit ? (card as UnitCard) : null;
   const bgColor = factionColors[card.faction] || 'bg-gray-600';
@@ -50,16 +52,16 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
       {/* 卡牌类型标识 - 右上角 */}
       <div className="absolute top-2 right-2 text-xs font-bold uppercase opacity-80 z-10 flex gap-1">
         {card.isAdvanced && (
-           <span className="bg-amber-600 text-white px-1 rounded shadow-lg border border-amber-400">高级</span>
+           <span className="bg-amber-600 text-white px-1 rounded shadow-lg border border-amber-400">{t('card.advanced')}</span>
         )}
         <span className="bg-black/50 px-1 rounded">
-          {card.type === CardType.UNIT ? (unitCard?.category || '单位') : '指令'}
+          {card.type === CardType.UNIT ? (unitCard?.category ? t(`card.category.${unitCard.category}`) : t('card.unit')) : t('card.order')}
         </span>
       </div>
 
       {/* 图片/插图占位 */}
       <div className="w-full h-24 bg-gray-900/50 mt-4 border-b-2 border-t-2 border-gray-800 flex items-center justify-center">
-        <span className="text-gray-400 text-sm italic">Image Placeholder</span>
+        <span className="text-gray-400 text-sm italic">{t('card.imagePlaceholder')}</span>
       </div>
 
       {/* 卡牌名称 */}
@@ -93,13 +95,13 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
               <div className="flex flex-col gap-1 text-left w-full">
                 {unitCard.keywords.map((kw, i) => (
                   <div key={i} className="flex">
-                    <span className="font-bold text-purple-300 shrink-0">【{kw}】</span>
-                    <span className="text-gray-400 ml-0.5">{keywordDescriptions[kw]}</span>
+                    <span className="font-bold text-purple-300 shrink-0">【{t(`card.keywords.${kw}`)}】</span>
+                    <span className="text-gray-400 ml-0.5">{t(`card.keywordDesc.${kw}`)}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              !unitCard.exclusiveName && <span className="text-gray-500 italic text-center w-full">（无特殊词条）</span>
+              !unitCard.exclusiveName && <span className="text-gray-500 italic text-center w-full">{t('card.noSpecialTrait')}</span>
             )}
           </>
         ) : (
@@ -110,13 +112,13 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
       {/* 属性栏 (仅单位卡显示) */}
       {unitCard && (
         <div className="w-full h-6 shrink-0 bg-black/80 flex justify-between items-center px-2 text-[11px] font-bold border-t-2 border-gray-800">
-          <div className="text-red-400 flex items-center" title="攻击力">
+          <div className="text-red-400 flex items-center" title={t('card.attack')}>
             ⚔ {unitCard.attack}
           </div>
-          <div className="text-blue-400 flex items-center" title="防御力">
+          <div className="text-blue-400 flex items-center" title={t('card.defense')}>
             🛡 {unitCard.defense}
           </div>
-          <div className="text-green-400 flex items-center" title="血量">
+          <div className="text-green-400 flex items-center" title={t('card.hp')}>
             ❤ {unitCard.hp}
           </div>
         </div>

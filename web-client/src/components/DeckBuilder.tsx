@@ -8,12 +8,14 @@ import {
     createSovietOrders, createGermanOrders, createUSAOrders, createUKOrders, createFranceOrders, createGenericOrders,
     ADVANCED_CARDS_DATA, ADVANCED_ORDERS_DATA, ENVIRONMENT_CARDS_DATA 
 } from '../App';
+import { useTranslation } from 'react-i18next';
 
 interface DeckBuilderProps {
   onClose: () => void;
 }
 
 export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
+  const { t } = useTranslation();
   const [faction, setFaction] = useState<Faction>(Faction.SOVIET);
   const [deck, setDeck] = useState<any[]>([]); // Array of card templates
   const [availableCards, setAvailableCards] = useState<any[]>([]);
@@ -71,13 +73,13 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
 
   const addCard = (card: any) => {
     if (deck.length >= 60) {
-        alert("卡组最多包含 60 张卡牌！");
+        alert(t('deckBuilder.maxCardsLimit'));
         return;
     }
     if (card.isAdvanced) {
         const advCount = deck.filter(c => c.isAdvanced).length;
         if (advCount >= 2) {
-            alert("高级卡牌最多只能携带 2 张！");
+            alert(t('deckBuilder.maxAdvancedLimit'));
             return;
         }
     }
@@ -92,7 +94,7 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
 
   const saveDeck = () => {
     if (deck.length !== 60) {
-        if (!window.confirm(`当前卡组只有 ${deck.length} 张牌（标准为 60 张），确定要保存吗？不足的牌将会在游戏中由系统随机补全。`)) {
+        if (!window.confirm(`${t('deckBuilder.confirmSavePart1')}${deck.length}${t('deckBuilder.confirmSavePart2')}`)) {
             return;
         }
     }
@@ -104,11 +106,11 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
     const newSavedDecks = { ...savedDecks, [faction]: counts };
     setSavedDecks(newSavedDecks);
     localStorage.setItem('customDecks', JSON.stringify(newSavedDecks));
-    alert("卡组保存成功！");
+    alert(t('deckBuilder.saveSuccess'));
   };
 
   const clearDeck = () => {
-    if (window.confirm("确定要清空当前卡组吗？")) {
+    if (window.confirm(t('deckBuilder.confirmClear'))) {
         setDeck([]);
     }
   };
@@ -117,7 +119,7 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
     <div className="fixed inset-0 bg-black/90 z-[300] flex flex-col p-6 overflow-hidden">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-amber-500 flex items-center gap-3">
-          🛠️ 自定义卡组 (Deck Builder)
+          {t('deckBuilder.title')}
         </h2>
         <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl font-bold">&times;</button>
       </div>
@@ -137,23 +139,23 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
         {/* 左侧：可用卡牌库 */}
         <div className="flex-1 bg-gray-900 rounded-xl border-2 border-gray-700 flex flex-col overflow-hidden">
             <div className="p-4 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
-                <div className="font-bold text-lg text-gray-300">可用卡牌库 (点击添加)</div>
+                <div className="font-bold text-lg text-gray-300">{t('deckBuilder.availableCards')}</div>
                 <div className="flex gap-3">
                    <select value={filterType} onChange={e => setFilterType(e.target.value as any)} className="bg-gray-700 text-white px-2 py-1 rounded border border-gray-600 outline-none focus:border-amber-500">
-                      <option value="all">所有类型</option>
-                      <option value={CardType.UNIT}>单位卡</option>
-                      <option value={CardType.ORDER}>指令卡</option>
-                      <option value={CardType.ENVIRONMENT}>环境卡</option>
+                      <option value="all">{t('deckBuilder.allTypes')}</option>
+                      <option value={CardType.UNIT}>{t('deckBuilder.unitCard')}</option>
+                      <option value={CardType.ORDER}>{t('deckBuilder.orderCard')}</option>
+                      <option value={CardType.ENVIRONMENT}>{t('deckBuilder.envCard')}</option>
                    </select>
                    <select value={filterCost} onChange={e => setFilterCost(e.target.value === 'all' ? 'all' : Number(e.target.value))} className="bg-gray-700 text-white px-2 py-1 rounded border border-gray-600 outline-none focus:border-amber-500">
-                      <option value="all">所有费用</option>
-                      <option value={1}>1费</option>
-                      <option value={2}>2费</option>
-                      <option value={3}>3费</option>
-                      <option value={4}>4费</option>
-                      <option value={5}>5费</option>
-                      <option value={6}>6费</option>
-                      <option value={7}>7费及以上</option>
+                      <option value="all">{t('deckBuilder.allCosts')}</option>
+                      <option value={1}>1{t('deckBuilder.cost')}</option>
+                      <option value={2}>2{t('deckBuilder.cost')}</option>
+                      <option value={3}>3{t('deckBuilder.cost')}</option>
+                      <option value={4}>4{t('deckBuilder.cost')}</option>
+                      <option value={5}>5{t('deckBuilder.cost')}</option>
+                      <option value={6}>6{t('deckBuilder.cost')}</option>
+                      <option value={7}>7{t('deckBuilder.andAbove')}</option>
                    </select>
                 </div>
             </div>
@@ -179,10 +181,10 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
         {/* 右侧：当前卡组 */}
         <div className="w-1/3 bg-gray-900 rounded-xl border-2 border-gray-700 flex flex-col overflow-hidden">
             <div className="p-4 bg-gray-800 border-b border-gray-700 font-bold text-lg flex justify-between items-center">
-                <span className={deck.length === 60 ? 'text-green-400' : 'text-amber-400'}>当前卡组: {deck.length} / 60</span>
+                <span className={deck.length === 60 ? 'text-green-400' : 'text-amber-400'}>{t('deckBuilder.currentDeck', { count: deck.length })}</span>
                 <div className="flex gap-2">
-                    <button onClick={clearDeck} className="text-sm bg-red-600 hover:bg-red-500 px-3 py-1 rounded">清空</button>
-                    <button onClick={saveDeck} className="text-sm bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded">保存</button>
+                    <button onClick={clearDeck} className="text-sm bg-red-600 hover:bg-red-500 px-3 py-1 rounded">{t('deckBuilder.clear')}</button>
+                    <button onClick={saveDeck} className="text-sm bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded">{t('deckBuilder.save')}</button>
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
@@ -190,15 +192,15 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
                     <div key={i} onClick={() => removeCard(i)} className="bg-gray-800 p-2 rounded flex justify-between items-center cursor-pointer hover:bg-red-900/50 group border border-gray-700">
                         <div className="flex items-center gap-2">
                             <span className={`text-xs font-bold px-2 py-1 rounded ${card.type === CardType.UNIT ? 'bg-blue-900 text-blue-200' : card.type === CardType.ORDER ? 'bg-purple-900 text-purple-200' : 'bg-green-900 text-green-200'}`}>
-                                {card.type === CardType.UNIT ? '单位' : card.type === CardType.ORDER ? '指令' : '环境'}
+                                {card.type === CardType.UNIT ? t('deckBuilder.unit') : card.type === CardType.ORDER ? t('deckBuilder.order') : t('deckBuilder.env')}
                             </span>
                             <span className={`font-bold ${card.isAdvanced ? 'text-amber-400' : 'text-gray-200'}`}>{card.name}</span>
                         </div>
-                        <span className="text-xs text-gray-500 group-hover:text-red-400 font-bold">移除</span>
+                        <span className="text-xs text-gray-500 group-hover:text-red-400 font-bold">{t('deckBuilder.remove')}</span>
                     </div>
                 ))}
                 {deck.length === 0 && (
-                    <div className="text-center text-gray-500 mt-10">卡组为空，请从左侧选择卡牌添加。</div>
+                    <div className="text-center text-gray-500 mt-10">{t('deckBuilder.emptyDeckMsg')}</div>
                 )}
             </div>
         </div>

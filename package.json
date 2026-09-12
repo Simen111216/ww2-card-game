@@ -6,7 +6,10 @@
   "scripts": {
     "start": "ts-node src/index.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "i18next": "^26.4.2",
+    "react-i18next": "^17.0.13"
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "ts-node": "^10.9.1",

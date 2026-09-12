@@ -9,6 +9,7 @@ import { DeckBuilder } from './components/DeckBuilder';
 import { motion, AnimatePresence } from 'framer-motion';
 import { networkManager, type NetworkAction } from './engine/NetworkManager';
 import type { Commander, EnvironmentCard, CampaignScenario } from './engine/types';
+import { useTranslation } from 'react-i18next';
 import './index.css';
 
 // --- 指挥官系统库 ---
@@ -636,6 +637,7 @@ export const CAMPAIGN_SCENARIOS: CampaignScenario[] = [
 ];
 
 export default function App() {
+  const { t, i18n } = useTranslation();
   const [gamePhase, setGamePhase] = useState<'lobby' | 'playing'>('lobby');
   const [playerFaction, setPlayerFaction] = useState<Faction>(Faction.SOVIET);
   const [aiFaction, setAiFaction] = useState<Faction>(Faction.GERMANY);
@@ -1048,49 +1050,55 @@ export default function App() {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/black-linen.png')] relative">
         
+        {/* 语言切换按钮 */}
+        <div className="absolute top-8 left-8 flex gap-2">
+          <button onClick={() => i18n.changeLanguage('zh')} className={`px-3 py-1 rounded ${i18n.language === 'zh' ? 'bg-blue-600' : 'bg-gray-700'}`}>中文</button>
+          <button onClick={() => i18n.changeLanguage('en')} className={`px-3 py-1 rounded ${i18n.language === 'en' ? 'bg-blue-600' : 'bg-gray-700'}`}>EN</button>
+        </div>
+
         {/* 游戏教程按钮 */}
         <div className="absolute top-8 right-8 flex flex-col gap-3">
           <button 
             onClick={() => setShowTutorial(true)}
             className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transition-colors border-2 border-blue-400"
           >
-            📖 游戏教程
+            {t('menu.tutorial')}
           </button>
           <button 
             onClick={() => setShowAcademy(true)}
             className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transition-colors border-2 border-amber-400"
           >
-            🏛️ 历史军校 (解锁卡牌)
+            {t('menu.academy')}
           </button>
           <button 
             onClick={() => setShowDeckBuilder(true)}
             className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transition-colors border-2 border-purple-400"
           >
-            🛠️ 自定义卡组 (Deck Builder)
+            {t('menu.deckBuilder')}
           </button>
         </div>
 
-        <h1 className="text-6xl font-black mb-8 tracking-widest text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.8)]">二战卡牌风云</h1>
+        <h1 className="text-6xl font-black mb-8 tracking-widest text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.8)]">{t('menu.title')}</h1>
         
         <div className="flex gap-4 mb-8">
-          <button onClick={() => setGameMode('ai')} className={`px-8 py-2 rounded font-bold transition-all ${gameMode === 'ai' ? 'bg-amber-600 text-white border-2 border-amber-400' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'}`}>单人 (VS AI)</button>
-          <button onClick={() => setGameMode('campaign')} className={`px-8 py-2 rounded font-bold transition-all ${gameMode === 'campaign' ? 'bg-amber-600 text-white border-2 border-amber-400' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'}`}>历史战役 (PVE)</button>
-          <button onClick={() => setGameMode('multiplayer')} className={`px-8 py-2 rounded font-bold transition-all ${gameMode === 'multiplayer' ? 'bg-amber-600 text-white border-2 border-amber-400' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'}`}>联机对战</button>
+          <button onClick={() => setGameMode('ai')} className={`px-8 py-2 rounded font-bold transition-all ${gameMode === 'ai' ? 'bg-amber-600 text-white border-2 border-amber-400' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'}`}>{t('menu.singlePlayer')}</button>
+          <button onClick={() => setGameMode('campaign')} className={`px-8 py-2 rounded font-bold transition-all ${gameMode === 'campaign' ? 'bg-amber-600 text-white border-2 border-amber-400' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'}`}>{t('menu.campaign')}</button>
+          <button onClick={() => setGameMode('multiplayer')} className={`px-8 py-2 rounded font-bold transition-all ${gameMode === 'multiplayer' ? 'bg-amber-600 text-white border-2 border-amber-400' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'}`}>{t('menu.multiplayer')}</button>
         </div>
 
         <div className="flex gap-16 bg-black/50 p-12 rounded-2xl border-4 border-gray-700 shadow-2xl relative w-full max-w-5xl justify-center">
           {gameMode === 'campaign' ? (
             <div className="flex flex-col gap-4 w-full">
-              <h2 className="text-2xl font-bold mb-4 text-center">选择历史战役</h2>
+              <h2 className="text-2xl font-bold mb-4 text-center">{t('menu.selectCampaign')}</h2>
               <div className="grid grid-cols-2 gap-6">
                 {CAMPAIGN_SCENARIOS.map(sc => (
                   <button key={sc.id} onClick={() => setSelectedCampaign(sc.id)} className={`p-6 rounded-xl text-left transition-all flex flex-col gap-3 ${selectedCampaign === sc.id ? 'bg-red-900/80 border-2 border-red-500 shadow-[0_0_15px_red] scale-105' : 'bg-gray-800 border-2 border-gray-700 hover:bg-gray-700'}`}>
                     <h3 className="text-2xl font-black text-amber-500">{sc.name}</h3>
                     <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">{sc.description}</p>
                     <div className="mt-auto pt-4 border-t border-gray-600 flex justify-between text-xs font-bold text-gray-400">
-                       <span>我方: {sc.playerFaction}</span>
-                       <span>敌方: {sc.aiFaction}</span>
-                       <span>限时: {sc.maxTurns} 回合</span>
+                       <span>{t('menu.ally')}{sc.playerFaction}</span>
+                       <span>{t('menu.enemy')}{sc.aiFaction}</span>
+                       <span>{t('menu.timeLimit')}{sc.maxTurns}{t('menu.turns')}</span>
                     </div>
                   </button>
                 ))}
@@ -1099,7 +1107,7 @@ export default function App() {
           ) : (
             <>
               <div className="flex flex-col items-center">
-                <h2 className="text-2xl font-bold mb-4">选择您的阵营</h2>
+                <h2 className="text-2xl font-bold mb-4">{t('menu.selectFaction')}</h2>
                 <div className="flex flex-col gap-3">
                   {Object.values(Faction).map(f => (
                     <button 
@@ -1113,7 +1121,7 @@ export default function App() {
               </div>
               
               <div className="flex flex-col items-center">
-                <h2 className="text-2xl font-bold mb-4">{gameMode === 'ai' ? '选择敌方阵营' : '联机大厅'}</h2>
+                <h2 className="text-2xl font-bold mb-4">{gameMode === 'ai' ? t('menu.selectEnemyFaction') : t('menu.multiplayerLobby')}</h2>
                 {gameMode === 'ai' ? (
                   <div className="flex flex-col gap-3">
                     {Object.values(Faction).map(f => (
@@ -1128,28 +1136,28 @@ export default function App() {
                 ) : (
                   <div className="w-64 bg-gray-800 p-6 rounded-lg border border-gray-600 flex flex-col gap-4">
                     <div className="flex gap-2">
-                      <button onClick={() => { setIsHost(true); networkManager.initHost(); }} className={`flex-1 py-2 text-sm rounded font-bold ${isHost ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>创建房间</button>
-                      <button onClick={() => setIsHost(false)} className={`flex-1 py-2 text-sm rounded font-bold ${!isHost ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>加入房间</button>
+                      <button onClick={() => { setIsHost(true); networkManager.initHost(); }} className={`flex-1 py-2 text-sm rounded font-bold ${isHost ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>{t('menu.createRoom')}</button>
+                      <button onClick={() => setIsHost(false)} className={`flex-1 py-2 text-sm rounded font-bold ${!isHost ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>{t('menu.joinRoom')}</button>
                     </div>
                     
                     {isHost ? (
                       <div className="text-center text-gray-300 text-sm p-4 bg-black/40 rounded border border-gray-700 min-h-[100px] flex items-center justify-center break-all">
-                        {connectionStatus || "点击上方按钮生成房间码"}
+                        {connectionStatus || t('menu.generateCodePrompt')}
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2">
                         <input 
                           type="text" 
-                          placeholder="输入主机房间码" 
+                          placeholder={t('menu.enterCodePrompt')} 
                           value={roomId}
                           onChange={e => setRoomId(e.target.value)}
                           className="bg-black/50 border border-gray-500 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
                         />
                         <button 
-                          onClick={() => { networkManager.initClient(roomId); setConnectionStatus('正在连接...'); }}
+                          onClick={() => { networkManager.initClient(roomId); setConnectionStatus(t('menu.connecting')); }}
                           className="bg-green-600 hover:bg-green-500 text-white py-2 rounded text-sm font-bold transition-colors"
                         >
-                          连接主机
+                          {t('menu.connectHost')}
                         </button>
                         <div className="text-center text-xs text-gray-400 mt-2">{connectionStatus}</div>
                       </div>
@@ -1163,7 +1171,7 @@ export default function App() {
 
         {(gameMode === 'ai' || gameMode === 'campaign' || (gameMode === 'multiplayer' && isHost && connectionStatus.startsWith('已连接！'))) && (
           <button onClick={startGame} className="mt-12 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-4 px-16 rounded-xl border-b-4 border-yellow-800 text-3xl transition-transform hover:-translate-y-1 active:translate-y-1 active:border-b-0">
-            进入战场
+            {t('menu.enterBattlefield')}
           </button>
         )}
 
