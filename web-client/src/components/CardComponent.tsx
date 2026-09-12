@@ -17,6 +17,14 @@ const factionColors: Record<Faction, string> = {
   [Faction.GERMANY]: 'bg-gray-700 border-gray-900',
 };
 
+const keywordDescriptions: Record<string, string> = {
+  '闪击': '部署当回合即可攻击',
+  '守护': '敌方必须先攻击此单位',
+  '伏击': '受击前先造成反击伤害',
+  '重甲': '受到的所有伤害 -1',
+  '防空': '对空军造成额外伤害'
+};
+
 export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, canPlay = true }) => {
   const isUnit = card.type === CardType.UNIT;
   const unitCard = isUnit ? (card as UnitCard) : null;
@@ -68,20 +76,24 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
         </div>
       )}
 
-      {/* 词条展示区 (仅单位卡) */}
-      {unitCard && unitCard.keywords.length > 0 && (
-        <div className="flex flex-wrap gap-1 px-2 py-1 bg-black/40 justify-center">
-          {unitCard.keywords.map((kw, i) => (
-            <span key={i} className="text-[10px] bg-purple-900/80 text-purple-200 px-1.5 rounded border border-purple-700 font-bold shadow">
-              {kw}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* 卡牌描述 */}
-      <div className="p-2 text-xs flex-grow bg-white/10 text-gray-200 text-center overflow-hidden flex flex-col justify-center">
-        {card.description}
+      {/* 卡牌描述 / 词条解析 */}
+      <div className="p-2 text-xs flex-grow bg-white/10 text-gray-200 overflow-hidden flex flex-col justify-center">
+        {isUnit ? (
+          unitCard.keywords.length > 0 ? (
+            <div className="flex flex-col gap-1 text-left w-full">
+              {unitCard.keywords.map((kw, i) => (
+                <div key={i} className="leading-tight">
+                  <span className="font-bold text-purple-300">【{kw}】</span>
+                  <span className="text-gray-300 text-[10px] ml-0.5">{keywordDescriptions[kw]}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-gray-500 italic text-center w-full">（无特殊词条）</span>
+          )
+        ) : (
+          <span className="text-center w-full">{card.description}</span>
+        )}
       </div>
 
       {/* 属性栏 (仅单位卡显示) */}
