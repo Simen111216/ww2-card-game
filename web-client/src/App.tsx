@@ -92,74 +92,76 @@ export const ENVIRONMENT_CARDS_DATA: Omit<EnvironmentCard, 'id' | 'faction'>[] =
 // --- 真实历史单位库 ---
 export function getSovietUnits(): any[] {
   return [
-    { name: '动员兵', cat: UnitCategory.INFANTRY, cost: 1, atk: 2, def: 1, hp: 3, desc: '数量庞大的基础步兵，装备莫辛-纳甘步枪。', keywords: [] },
-    { name: '近卫步兵师', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 3, hp: 6, desc: '身经百战的精锐步兵，战斗意志坚强。', keywords: [Keyword.GUARD] },
-    { name: '政委', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 2, hp: 4, desc: '"绝不后退一步！" 提升部队士气。', keywords: [Keyword.BLITZ] },
-    { name: 'T-34/76 中型坦克', cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 8, desc: '倾斜装甲与机动性的完美结合，苏联装甲主力。', keywords: [Keyword.BLITZ] },
-    { name: 'T-34/85 中型坦克', cat: UnitCategory.ARMOR, cost: 6, atk: 7, def: 6, hp: 9, desc: '换装了85mm火炮的改进型T-34，足以对抗德军重甲。', keywords: [Keyword.BLITZ] },
-    { name: 'IS-2 重型坦克', cat: UnitCategory.ARMOR, cost: 8, atk: 10, def: 8, hp: 12, desc: '搭载122mm主炮的钢铁巨兽，专为摧毁德军重甲而生。', keywords: [Keyword.HEAVY_ARMOR] },
-    { name: 'SU-85 自行火炮', cat: UnitCategory.ARTILLERY, cost: 6, atk: 8, def: 4, hp: 6, desc: '强大的反坦克火力，能够在远距离击穿装甲。', keywords: [Keyword.AMBUSH] },
-    { name: 'IL-2 攻击机', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 5, desc: '"飞行坦克"，对地攻击的绝对利器。', keywords: [Keyword.BLITZ] },
-    { name: '喀秋莎火箭车', cat: UnitCategory.ARTILLERY, cost: 5, atk: 7, def: 1, hp: 4, desc: '齐射时发出恐怖的呼啸声，火力覆盖面极广。', keywords: [] },
-    { name: 'KV-1 重型坦克', cat: UnitCategory.ARMOR, cost: 7, atk: 6, def: 9, hp: 14, desc: '战争初期的移动堡垒，德军的反坦克炮对其毫无作用。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD] }
+    { name: '动员兵', cat: UnitCategory.INFANTRY, cost: 1, atk: 2, def: 1, hp: 3, desc: '数量庞大的基础步兵，装备莫辛-纳甘步枪。', keywords: [], exclusiveName: '人海', exclusiveDesc: '每场上存在1张己方动员兵，所有己方低费单位攻击力+1，单回合最多叠加3层；该单位阵亡时，可免费召唤1个1费无词条动员兵衍生物。' },
+    { name: '近卫步兵师', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 3, hp: 6, desc: '身经百战的精锐步兵，战斗意志坚强。', keywords: [Keyword.GUARD], exclusiveName: '死守', exclusiveDesc: '自身血量低于50%时，获得免伤30%，且无法被敌方伏击单位优先锁定；相邻存在己方苏联单位时，守护效果范围扩大至全体友军前排。' },
+    { name: '政委', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 2, hp: 4, desc: '"绝不后退一步！" 提升部队士气。', keywords: [Keyword.BLITZ], exclusiveName: '督战', exclusiveDesc: '己方所有苏联步兵单位攻击力+2，阵亡时不会触发负面效果；每回合可让1个残血友军步兵单位立即行动一次。' },
+    { name: 'T-34/76 中型坦克', cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 8, desc: '倾斜装甲与机动性的完美结合，苏联装甲主力。', keywords: [Keyword.BLITZ], exclusiveName: '量产铁军', exclusiveDesc: '被击毁后返还2点费用；场上每有一辆T-34系列坦克，己方所有中型装甲单位移速、攻速小幅提升。' },
+    { name: 'T-34/85 中型坦克', cat: UnitCategory.ARMOR, cost: 6, atk: 7, def: 6, hp: 9, desc: '换装了85mm火炮的改进型T-34，足以对抗德军重甲。', keywords: [Keyword.BLITZ], exclusiveName: '攻坚改良', exclusiveDesc: '继承量产铁军效果，同时对敌方重甲单位造成20%破甲伤害。' },
+    { name: 'IS-2 重型坦克', cat: UnitCategory.ARMOR, cost: 8, atk: 10, def: 8, hp: 12, desc: '搭载122mm主炮的钢铁巨兽，专为摧毁德军重甲而生。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '柏林先锋', exclusiveDesc: '对敌方建筑、重甲单位伤害提升50%，登场回合自身获得护盾。' },
+    { name: 'SU-85 自行火炮', cat: UnitCategory.ARTILLERY, cost: 6, atk: 8, def: 4, hp: 6, desc: '强大的反坦克火力，能够在远距离击穿装甲。', keywords: [Keyword.AMBUSH], exclusiveName: '猎甲', exclusiveDesc: '伏击触发时，优先锁定敌方装甲单位，对中型、重型坦克造成暴击伤害。' },
+    { name: 'IL-2 攻击机', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 5, desc: '"飞行坦克"，对地攻击的绝对利器。', keywords: [Keyword.BLITZ], exclusiveName: '黑死神', exclusiveDesc: '对地单位伤害翻倍，被地面单位攻击时减免40%伤害。' },
+    { name: '喀秋莎火箭车', cat: UnitCategory.ARTILLERY, cost: 5, atk: 7, def: 1, hp: 4, desc: '齐射时发出恐怖的呼啸声，火力覆盖面极广。', keywords: [], exclusiveName: '火海覆盖', exclusiveDesc: '攻击为范围群伤，对敌方全体前排单位造成持续灼烧伤害，无视小幅护甲。' },
+    { name: 'KV-1 重型坦克', cat: UnitCategory.ARMOR, cost: 7, atk: 6, def: 9, hp: 14, desc: '战争初期的移动堡垒，德军的反坦克炮对其毫无作用。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD], exclusiveName: '钢铁壁垒', exclusiveDesc: '登场后嘲讽敌方所有攻击单位，自身受到的远程炮火伤害减半。' }
   ];
 }
 
 export function getGermanUnits(): any[] {
   return [
-    { name: '国民突击队', cat: UnitCategory.INFANTRY, cost: 1, atk: 2, def: 1, hp: 2, desc: '战争后期的民兵武装，缺乏训练但装备铁拳反坦克炮。', keywords: [] },
-    { name: '国防军步兵', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 4, hp: 5, desc: '训练有素的正规军，战术素养极高。', keywords: [] },
-    { name: '党卫军装甲掷弹兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 4, hp: 6, desc: '狂热的精锐步兵，跟随装甲部队快速突击。', keywords: [Keyword.BLITZ] },
-    { name: '四号中型坦克', cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 7, desc: '德军装甲部队的绝对中坚，活跃于各个战场。', keywords: [Keyword.BLITZ] },
-    { name: '豹式中型坦克', cat: UnitCategory.ARMOR, cost: 7, atk: 8, def: 7, hp: 9, desc: '拥有极佳的火炮与正面装甲，性能优异。', keywords: [Keyword.HEAVY_ARMOR] },
-    { name: '虎式重型坦克', cat: UnitCategory.ARMOR, cost: 9, atk: 12, def: 10, hp: 10, desc: '盟军的梦魇，以其厚重的装甲和88mm主炮闻名。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD] },
-    { name: 'Sdkfz 251 半履带车', cat: UnitCategory.ARMOR, cost: 4, atk: 3, def: 4, hp: 6, desc: '搭载步兵快速机动的装甲车辆。', keywords: [Keyword.BLITZ] },
-    { name: '88毫米高射炮', cat: UnitCategory.ARTILLERY, cost: 6, atk: 10, def: 2, hp: 5, desc: '不仅能防空，更是致命的反坦克武器。', keywords: [Keyword.ANTI_AIR, Keyword.GUARD] },
-    { name: 'Bf-109 战斗机', cat: UnitCategory.AIR_FORCE, cost: 6, atk: 8, def: 3, hp: 4, desc: '德国空军的主力战斗机，争夺制空权的关键。', keywords: [Keyword.BLITZ] },
-    { name: 'Ju-87 斯图卡', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 10, def: 2, hp: 4, desc: '伴随恐怖尖啸声的俯冲轰炸机，能精确打击地面目标。', keywords: [Keyword.BLITZ] }
+    { name: '国民突击队', cat: UnitCategory.INFANTRY, cost: 1, atk: 2, def: 1, hp: 2, desc: '战争后期的民兵武装，缺乏训练但装备铁拳反坦克炮。', keywords: [], exclusiveName: '决死', exclusiveDesc: '低费牺牲单位，主动献祭可让己方一个高阶单位本回合全属性增幅。' },
+    { name: '国防军步兵', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 4, hp: 5, desc: '训练有素的正规军，战术素养极高。', keywords: [], exclusiveName: '精锐操典', exclusiveDesc: '自身在场时，己方所有单位攻击命中率100%，无落空判定。' },
+    { name: '党卫军装甲掷弹兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 4, hp: 6, desc: '狂热的精锐步兵，跟随装甲部队快速突击。', keywords: [Keyword.BLITZ], exclusiveName: '步坦协同', exclusiveDesc: '自身与己方德国装甲单位同场时，双方攻速、移速大幅提升，击杀单位后可小幅回复血量。' },
+    { name: '四号中型坦克', cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 7, desc: '德军装甲部队的绝对中坚，活跃于各个战场。', keywords: [Keyword.BLITZ], exclusiveName: '战场中坚', exclusiveDesc: '无属性短板，在场时稳定提升己方所有中型装甲单位攻防。' },
+    { name: '豹式中型坦克', cat: UnitCategory.ARMOR, cost: 7, atk: 8, def: 7, hp: 9, desc: '拥有极佳的火炮与正面装甲，性能优异。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '精准破甲', exclusiveDesc: '攻击无视敌方50%重甲减免，对苏联、英法重型坦克拥有天然克制效果。' },
+    { name: '虎式重型坦克', cat: UnitCategory.ARMOR, cost: 9, atk: 12, def: 10, hp: 10, desc: '盟军的梦魇，以其厚重的装甲和88mm主炮闻名。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD], exclusiveName: '陆上霸主', exclusiveDesc: '登场嘲讽全场敌方单位，单次受到伤害不超过自身血量30%。' },
+    { name: 'Sdkfz 251 半履带车', cat: UnitCategory.ARMOR, cost: 4, atk: 3, def: 4, hp: 6, desc: '搭载步兵快速机动的装甲车辆。', keywords: [Keyword.BLITZ], exclusiveName: '机动补给', exclusiveDesc: '登场后每回合为相邻友军单位回复血量，同时提升己方前排推进速度。' },
+    { name: '88毫米高射炮', cat: UnitCategory.ARTILLERY, cost: 6, atk: 10, def: 2, hp: 5, desc: '不仅能防空，更是致命的反坦克武器。', keywords: [Keyword.ANTI_AIR, Keyword.GUARD], exclusiveName: '两用绝杀', exclusiveDesc: '防空状态可秒杀敌方低、中费空军，对地状态可击穿所有中型装甲。' },
+    { name: 'Bf-109 战斗机', cat: UnitCategory.AIR_FORCE, cost: 6, atk: 8, def: 3, hp: 4, desc: '德国空军的主力战斗机，争夺制空权的关键。', keywords: [Keyword.BLITZ], exclusiveName: '制空先锋', exclusiveDesc: '优先攻击敌方空军单位，击杀空军后本回合可再次行动。' },
+    { name: 'Ju-87 斯图卡', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 10, def: 2, hp: 4, desc: '伴随恐怖尖啸声的俯冲轰炸机，能精确打击地面目标。', keywords: [Keyword.BLITZ], exclusiveName: '尖啸俯冲', exclusiveDesc: '俯冲攻击触发暴击，命中后降低敌方全体单位下一回合攻击力。' }
   ];
 }
 
 export function getUSAUnits(): any[] {
   return [
-    { name: '大兵(G.I.)', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 2, hp: 4, desc: '装备M1加兰德的美国大兵，火力充足。', keywords: [] },
-    { name: '游骑兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 3, hp: 5, desc: '精锐的突击步兵，擅长敌后作战。', keywords: [Keyword.AMBUSH] },
-    { name: 'M4 谢尔曼', cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 8, desc: '产量极大的中型坦克，可靠性强。', keywords: [Keyword.BLITZ] },
-    { name: 'M26 潘兴', cat: UnitCategory.ARMOR, cost: 8, atk: 9, def: 8, hp: 10, desc: '战争后期投入战场的重型坦克，足以对抗虎豹。', keywords: [Keyword.HEAVY_ARMOR] },
-    { name: 'M7 牧师自行火炮', cat: UnitCategory.ARTILLERY, cost: 5, atk: 7, def: 3, hp: 5, desc: '为装甲部队提供伴随火力的自行火炮。', keywords: [] },
-    { name: 'P-51 野马', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 8, def: 3, hp: 5, desc: '优秀的护航战斗机。', keywords: [Keyword.BLITZ] },
-    { name: 'B-17 飞行堡垒', cat: UnitCategory.AIR_FORCE, cost: 9, atk: 10, def: 5, hp: 12, desc: '重型战略轰炸机，拥有极其坚固的机身和密集的自卫火力。', keywords: [Keyword.HEAVY_ARMOR] }
+    { name: '大兵(G.I.)', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 2, hp: 4, desc: '装备M1加兰德的美国大兵，火力充足。', keywords: [], exclusiveName: '后勤充沛', exclusiveDesc: '所有己方GI大兵阵亡后，有概率免费重生。' },
+    { name: '游骑兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 3, hp: 5, desc: '精锐的突击步兵，擅长敌后作战。', keywords: [Keyword.AMBUSH], exclusiveName: '丛林利刃', exclusiveDesc: '伏击成功后无视敌方守护效果，直接秒杀敌方低费核心单位。' },
+    { name: 'M4 谢尔曼', cat: UnitCategory.ARMOR, cost: 5, atk: 6, def: 5, hp: 8, desc: '产量极大的中型坦克，可靠性强。', keywords: [Keyword.BLITZ], exclusiveName: '工业洪流', exclusiveDesc: '费用低、产出快，场上每多一辆谢尔曼，己方全体单位伤害永久小幅递增。' },
+    { name: 'M26 潘兴', cat: UnitCategory.ARMOR, cost: 8, atk: 9, def: 8, hp: 10, desc: '战争后期投入战场的重型坦克，足以对抗虎豹。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '后期王牌', exclusiveDesc: '登场后清除己方所有负面效果，对德国高阶装甲单位造成额外真实伤害。' },
+    { name: 'M7 牧师自行火炮', cat: UnitCategory.ARTILLERY, cost: 5, atk: 7, def: 3, hp: 5, desc: '为装甲部队提供伴随火力的自行火炮。', keywords: [], exclusiveName: '持续压制', exclusiveDesc: '每回合自动对敌方后排造成小额范围伤害，持续压制敌方输出与补给单位。' },
+    { name: 'P-51 野马', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 8, def: 3, hp: 5, desc: '优秀的护航战斗机。', keywords: [Keyword.BLITZ], exclusiveName: '全域护航', exclusiveDesc: '自身在场时，己方所有空军单位免伤提升，且不会被敌方伏击、突袭单位锁定。' },
+    { name: 'B-17 飞行堡垒', cat: UnitCategory.AIR_FORCE, cost: 9, atk: 10, def: 5, hp: 12, desc: '重型战略轰炸机，拥有极其坚固的机身和密集的自卫火力。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '战略轰炸', exclusiveDesc: '攻击无视敌方地面防御，直接对敌方基地血量造成伤害，范围轰炸清空敌方后排集群。' }
   ];
 }
 
 export function getUKUnits(): any[] {
   return [
-    { name: '汤米步兵', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 3, hp: 5, desc: '坚韧的英国步兵。', keywords: [Keyword.GUARD] },
-    { name: '红魔伞兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 2, hp: 4, desc: '精锐的空降部队，随时准备空降敌后。', keywords: [Keyword.BLITZ] },
-    { name: '十字军巡航坦克', cat: UnitCategory.ARMOR, cost: 4, atk: 5, def: 3, hp: 6, desc: '速度极快的巡航坦克，活跃于北非战场。', keywords: [Keyword.BLITZ] },
-    { name: '丘吉尔步兵坦克', cat: UnitCategory.ARMOR, cost: 6, atk: 5, def: 8, hp: 10, desc: '装甲极其厚重，推进缓慢。', keywords: [Keyword.HEAVY_ARMOR] },
-    { name: '25磅榴弹炮', cat: UnitCategory.ARTILLERY, cost: 5, atk: 6, def: 2, hp: 5, desc: '英军标志性的轻型野战火炮。', keywords: [] },
-    { name: '喷火战斗机', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 4, desc: '不列颠空战的传奇。', keywords: [Keyword.BLITZ] },
-    { name: '兰开斯特轰炸机', cat: UnitCategory.AIR_FORCE, cost: 8, atk: 9, def: 4, hp: 10, desc: '皇家空军轰炸机司令部的主力，载弹量极大。', keywords: [Keyword.HEAVY_ARMOR] }
+    { name: '汤米步兵', cat: UnitCategory.INFANTRY, cost: 2, atk: 3, def: 3, hp: 5, desc: '坚韧的英国步兵。', keywords: [Keyword.GUARD], exclusiveName: '英伦防线', exclusiveDesc: '自身所在排友军全部获得15%免伤，低成本构建坚固前排防线。' },
+    { name: '红魔伞兵', cat: UnitCategory.INFANTRY, cost: 4, atk: 5, def: 2, hp: 4, desc: '精锐的空降部队，随时准备空降敌后。', keywords: [Keyword.BLITZ], exclusiveName: '空降奇袭', exclusiveDesc: '可无视敌方前排守护，直接攻击敌方后排输出、炮兵单位。' },
+    { name: '十字军巡航坦克', cat: UnitCategory.ARMOR, cost: 4, atk: 5, def: 3, hp: 6, desc: '速度极快的巡航坦克，活跃于北非战场。', keywords: [Keyword.BLITZ], exclusiveName: '机动游击', exclusiveDesc: '攻击后可后撤规避伤害，残血时移速大幅提升，擅长拉扯消耗。' },
+    { name: '丘吉尔步兵坦克', cat: UnitCategory.ARMOR, cost: 6, atk: 5, def: 8, hp: 10, desc: '装甲极其厚重，推进缓慢。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '坚不可摧', exclusiveDesc: '受到的持续伤害、灼烧伤害全部无效，超厚护甲擅长持续抗伤、稳步推进。' },
+    { name: '25磅榴弹炮', cat: UnitCategory.ARTILLERY, cost: 5, atk: 6, def: 2, hp: 5, desc: '英军标志性的轻型野战火炮。', keywords: [], exclusiveName: '精准炮击', exclusiveDesc: '攻击可精准锁定敌方残血单位，直接收割残血目标，同时小幅破坏敌方护甲。' },
+    { name: '喷火战斗机', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 4, desc: '不列颠空战的传奇。', keywords: [Keyword.BLITZ], exclusiveName: '英伦守护', exclusiveDesc: '对战敌方德国空军时全属性增幅，击落敌机后获得临时护盾。' },
+    { name: '兰开斯特轰炸机', cat: UnitCategory.AIR_FORCE, cost: 8, atk: 9, def: 4, hp: 10, desc: '皇家空军轰炸机司令部的主力，载弹量极大。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '纵深打击', exclusiveDesc: '轰炸范围极大，可同时打击敌方前排、后排所有单位，擅长清场压制集群敌军。' }
   ];
 }
 
 export function getFranceUnits(): any[] {
   return [
-    { name: '外籍军团', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 3, hp: 6, desc: '精锐的外籍军团士兵。', keywords: [Keyword.GUARD] },
-    { name: 'S35 骑兵坦克', cat: UnitCategory.ARMOR, cost: 4, atk: 5, def: 5, hp: 7, desc: '机动性与装甲兼顾的优秀坦克。', keywords: [Keyword.BLITZ] },
-    { name: 'B1 重型坦克', cat: UnitCategory.ARMOR, cost: 6, atk: 7, def: 7, hp: 9, desc: '战前欧洲最强坦克之一。', keywords: [Keyword.HEAVY_ARMOR] },
-    { name: '自由法国游击队', cat: UnitCategory.INFANTRY, cost: 2, atk: 4, def: 1, hp: 3, desc: '在敌后进行破坏活动的抵抗力量。', keywords: [Keyword.AMBUSH] }
+    { name: '外籍军团', cat: UnitCategory.INFANTRY, cost: 3, atk: 4, def: 3, hp: 6, desc: '精锐的外籍军团士兵。', keywords: [Keyword.GUARD], exclusiveName: '绝境坚守', exclusiveDesc: '场上己方单位越少，自身免伤、攻击力越高，残场抗压能力极强。' },
+    { name: 'S35 骑兵坦克', cat: UnitCategory.ARMOR, cost: 4, atk: 5, def: 5, hp: 7, desc: '机动性与装甲兼顾的优秀坦克。', keywords: [Keyword.BLITZ], exclusiveName: '快速穿插', exclusiveDesc: '登场回合无视敌方地形、阻挡，可直接突进敌方半场。' },
+    { name: 'B1 重型坦克', cat: UnitCategory.ARMOR, cost: 6, atk: 7, def: 7, hp: 9, desc: '战前欧洲最强坦克之一。', keywords: [Keyword.HEAVY_ARMOR], exclusiveName: '双线火力', exclusiveDesc: '单次攻击可同时打击两个敌方单位，重甲兼顾双线输出。' },
+    { name: '自由法国游击队', cat: UnitCategory.INFANTRY, cost: 2, atk: 4, def: 1, hp: 3, desc: '在敌后进行破坏活动的抵抗力量。', keywords: [Keyword.AMBUSH], exclusiveName: '敌后袭扰', exclusiveDesc: '潜伏状态不会被敌方锁定，攻击后降低敌方单位攻速、移速，持续拉扯牵制敌军。' },
+    { name: '25磅榴弹炮', cat: UnitCategory.ARTILLERY, cost: 5, atk: 6, def: 2, hp: 5, desc: '法军野战火炮。', keywords: [], exclusiveName: '固守炮击', exclusiveDesc: '自身不移动时，伤害、射程持续提升，越坚守战场输出越强。' },
+    { name: '喷火战斗机', cat: UnitCategory.AIR_FORCE, cost: 7, atk: 9, def: 2, hp: 4, desc: '自由法国空军战机。', keywords: [Keyword.BLITZ], exclusiveName: '复国雄鹰', exclusiveDesc: '配合己方游击单位作战时，伤害大幅增幅。' }
   ];
 }
 
 // --- 高级隐藏单位库 (通过军校解锁) ---
 export const ADVANCED_CARDS_DATA = [
-  { id: 'adv-soviet-1', name: '斯大林格勒近卫师', faction: Faction.SOVIET, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 7, atk: 10, def: 7, hp: 12, desc: '【高级】经历过最残酷巷战的钢铁部队。', keywords: [Keyword.GUARD, Keyword.AMBUSH, Keyword.HEAVY_ARMOR] },
-  { id: 'adv-german-1', name: '虎王重型坦克', faction: Faction.GERMANY, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 10, atk: 14, def: 12, hp: 18, desc: '【高级】无敌的正面装甲，盟军装甲的终极噩梦。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD, Keyword.BLITZ] },
-  { id: 'adv-usa-1', name: '101空降师 "啸鹰"', faction: Faction.USA, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 6, atk: 8, def: 5, hp: 8, desc: '【高级】"从天而降，包围敌军"！', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
-  { id: 'adv-uk-1', name: 'SAS 特种空勤团', faction: Faction.UK, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 9, def: 4, hp: 7, desc: '【高级】"勇者必胜"，执行最高难度破坏任务。', keywords: [Keyword.BLITZ, Keyword.AMBUSH] },
-  { id: 'adv-france-1', name: '自由法国装甲师', faction: Faction.FRANCE, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 8, atk: 10, def: 8, hp: 12, desc: '【高级】为光复祖国而战的精锐装甲力量。', keywords: [Keyword.BLITZ, Keyword.HEAVY_ARMOR] },
+  { id: 'adv-soviet-1', name: '斯大林格勒近卫师', faction: Faction.SOVIET, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 7, atk: 10, def: 7, hp: 12, desc: '【高级】经历过最残酷巷战的钢铁部队。', keywords: [Keyword.GUARD, Keyword.AMBUSH, Keyword.HEAVY_ARMOR], exclusiveName: '浴血卫国', exclusiveDesc: '自身不会被秒杀，场上每阵亡一个己方单位，自身全属性永久提升，血量越低伤害越高。' },
+  { id: 'adv-german-1', name: '虎王重型坦克', faction: Faction.GERMANY, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 10, atk: 14, def: 12, hp: 18, desc: '【高级】无敌的正面装甲，盟军装甲的终极噩梦。', keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD, Keyword.BLITZ], exclusiveName: '帝国终焉', exclusiveDesc: '登场嘲讽全场、范围震慑敌方，降低所有敌军输出，阵亡后己方小幅掉费。' },
+  { id: 'adv-usa-1', name: '101空降师 "啸鹰"', faction: Faction.USA, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 6, atk: 8, def: 5, hp: 8, desc: '【高级】"从天而降，包围敌军"！', keywords: [Keyword.BLITZ, Keyword.AMBUSH], exclusiveName: '天降奇兵', exclusiveDesc: '登场可直接突袭敌方任意位置，无视所有防御词条，击杀单位后可再次触发闪击。' },
+  { id: 'adv-uk-1', name: 'SAS 特种空勤团', faction: Faction.UK, type: CardType.UNIT, cat: UnitCategory.INFANTRY, cost: 5, atk: 9, def: 4, hp: 7, desc: '【高级】"勇者必胜"，执行最高难度破坏任务。', keywords: [Keyword.BLITZ, Keyword.AMBUSH], exclusiveName: '暗夜绝杀', exclusiveDesc: '永久潜伏隐身状态，首次攻击必定暴击秒杀敌方高阶单位。' },
+  { id: 'adv-france-1', name: '自由法国装甲师', faction: Faction.FRANCE, type: CardType.UNIT, cat: UnitCategory.ARMOR, cost: 8, atk: 10, def: 8, hp: 12, desc: '【高级】为光复祖国而战的精锐装甲力量。', keywords: [Keyword.BLITZ, Keyword.HEAVY_ARMOR], exclusiveName: '光复山河', exclusiveDesc: '自身在场时，己方所有法国单位词条效果翻倍，残血状态下获得无敌1回合。' },
 ];
 
 export const ADVANCED_ORDERS_DATA = [
@@ -1304,8 +1306,13 @@ export default function App() {
 
       if (defDamage > 0) {
         spawnAndSyncVfx('damage', `-${defDamage}`, defId);
-      } else if (defDamage === 0 && typeof defender !== 'string' && defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
-        spawnAndSyncVfx('armor', '格挡', defId);
+      } else if (defDamage === 0) {
+        if (typeof defender !== 'string' && defender.keywords.includes(Keyword.HEAVY_ARMOR) && attacker.category !== UnitCategory.ARTILLERY) {
+           spawnAndSyncVfx('armor', '格挡', defId);
+        } else if (attacker.category === UnitCategory.ARTILLERY) {
+           // 炮兵造成的 0 伤害被视为“未命中” (落空)
+           spawnAndSyncVfx('armor', '未命中', defId);
+        }
       }
       
       if (atkDamage > 0) {

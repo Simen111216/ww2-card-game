@@ -53,6 +53,8 @@ export interface UnitCard extends BaseCard {
   line: 'support' | 'frontline'; // 所处战线
   kills?: number; // 击杀数
   rank?: number; // 军衔等级 (0:新兵, 1:老兵, 2:精锐, 3:王牌)
+  exclusiveName?: string; // 专属词条名称
+  exclusiveDesc?: string; // 专属词条描述
 }
 
 export interface OrderCard extends BaseCard {
