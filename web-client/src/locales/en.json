@@ -103,6 +103,36 @@
     "env": "Env Card"
   },
   "cards": {
+    "adv_1": {
+      "name": "Stalingrad Guards Division",
+      "desc": "Elite veterans forged in the ruins of Stalingrad.",
+      "exclusiveName": "Blood Defense",
+      "exclusiveDesc": "Cannot be one-shot. Gains permanent stats every time a friendly unit dies."
+    },
+    "adv_2": {
+      "name": "King Tiger (Tiger II)",
+      "desc": "The ultimate steel beast of the Third Reich, boasting unmatched firepower and armor.",
+      "exclusiveName": "Empire's End",
+      "exclusiveDesc": "Taunts all enemies upon deployment, intimidating and reducing all enemy output."
+    },
+    "adv_3": {
+      "name": "101st Airborne Division",
+      "desc": "Screaming Eagles. Highly decorated paratroopers dropped behind enemy lines.",
+      "exclusiveName": "Airborne Strike",
+      "exclusiveDesc": "Can directly ambush any enemy position, ignoring defensive keywords. Triggers Blitz again upon kill."
+    },
+    "adv_4": {
+      "name": "SAS Regiment",
+      "desc": "Who Dares Wins! Special forces executing perilous missions behind enemy lines.",
+      "exclusiveName": "Night Assassination",
+      "exclusiveDesc": "Permanently stealthed. The first attack is guaranteed to critically execute a high-tier enemy."
+    },
+    "adv_5": {
+      "name": "Free French Armored Division",
+      "desc": "The hope of a liberated France, fighting with high morale.",
+      "exclusiveName": "Reconquest",
+      "exclusiveDesc": "Doubles the effects of all French units while on the battlefield. Gains Invincibility for 1 turn at low HP."
+    },
     "unit_1": {
       "name": "Conscript",
       "desc": "Basic infantry in massive numbers, equipped with Mosin-Nagant rifles.",

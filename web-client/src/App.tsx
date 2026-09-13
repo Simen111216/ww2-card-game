@@ -1495,17 +1495,26 @@ export default function App() {
         const defender = p2.board[index];
         if (attacker && defender && !attacker.hasAttackedThisTurn) {
           if (attacker.category === UnitCategory.INFANTRY && defender.category === UnitCategory.AIR_FORCE) {
-            showToast(`步兵无法攻击空军！`);
+            showToast(t('game.infantryCannotAttackAir'));
             setSelectedBoardUnit(null);
             return;
           }
 
+          const hasAirborneStrike = attacker.exclusiveName === '空降奇袭' || attacker.exclusiveName === 'Airborne Strike' || attacker.exclusiveName === '天降奇兵';
+
           // 射程验证
-          if (attacker.category !== UnitCategory.ARTILLERY && attacker.category !== UnitCategory.AIR_FORCE) {
+          if (attacker.category !== UnitCategory.ARTILLERY && attacker.category !== UnitCategory.AIR_FORCE && !hasAirborneStrike) {
              if (attacker.line === 'support' && defender.line === 'support') {
                  showToast(t('game.meleeSupportLineTarget'));
                  return;
              }
+          }
+
+          // 守护验证：如果敌方场上有守护单位，且目标不是守护单位，则必须先攻击守护单位（除非有空降奇袭）
+          const guards = p2.board.filter(u => u.keywords.includes(Keyword.GUARD));
+          if (guards.length > 0 && !defender.keywords.includes(Keyword.GUARD) && !hasAirborneStrike) {
+              showToast(t('game.mustDestroyGuardUnitsFirst'));
+              return;
           }
 
           setSelectedBoardUnit(null);
@@ -1527,17 +1536,19 @@ export default function App() {
     if (selectedBoardUnit?.player === 'p1') {
       const attacker = p1.board[selectedBoardUnit.index];
       if (attacker && !attacker.hasAttackedThisTurn) {
+        const hasAirborneStrike = attacker.exclusiveName === '空降奇袭' || attacker.exclusiveName === 'Airborne Strike' || attacker.exclusiveName === '天降奇兵';
+
         // 射程验证
-        if (attacker.category !== UnitCategory.ARTILLERY && attacker.category !== UnitCategory.AIR_FORCE) {
+        if (attacker.category !== UnitCategory.ARTILLERY && attacker.category !== UnitCategory.AIR_FORCE && !hasAirborneStrike) {
            if (attacker.line === 'support') {
                showToast(t('game.mustEnterFrontlineToAttackHq'));
                return;
            }
         }
         
-        // 守护验证由 Game.ts 处理，这里如果失败给个提示
+        // 守护验证
         const guards = p2.board.filter(u => u.keywords.includes(Keyword.GUARD));
-        if (guards.length > 0) {
+        if (guards.length > 0 && !hasAirborneStrike) {
             showToast(t('game.mustDestroyGuardUnitsFirst'));
             return;
         }

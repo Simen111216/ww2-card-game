@@ -114,6 +114,13 @@ export class Game {
       return false;
     }
 
+    const hasAirborneStrike = attacker.exclusiveName === '空降奇袭' || attacker.exclusiveName === 'Airborne Strike' || attacker.exclusiveName === '天降奇兵';
+    const guards = defenderOwner.board.filter(u => u.keywords.includes(Keyword.GUARD));
+    if (guards.length > 0 && !defender.keywords.includes(Keyword.GUARD) && !hasAirborneStrike) {
+      console.log(`规则限制：敌方存在守护单位，必须先攻击守护单位！`);
+      return false;
+    }
+
     // 炮兵命中率机制：基础命中率 75%，每提升1级军衔增加 10% 命中率
     if (attacker.category === UnitCategory.ARTILLERY) {
        const hitRate = 0.75 + (attacker.rank || 0) * 0.10;
@@ -132,6 +139,12 @@ export class Game {
     if (defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
       atk = Math.max(0, atk - 2);
       console.log(`-> [重甲] 免疫了2点伤害，实际承受攻击力为 ${atk}`);
+    }
+
+    const isBloodDefense = defender.exclusiveName === '死守' || defender.exclusiveName === 'Blood Defense' || defender.exclusiveName === '浴血卫国';
+    if (isBloodDefense && defender.hp <= defender.maxHp / 2) {
+      atk = Math.floor(atk * 0.7);
+      console.log(`-> [死守] 血量低于50%，免伤30%，实际承受攻击力为 ${atk}`);
     }
 
     if (atk <= defender.defense) {
@@ -156,6 +169,13 @@ export class Game {
         counterAtk = Math.max(0, counterAtk - 2);
         console.log(`   -> [重甲] 攻击方免疫了2点反击伤害，实际反击力为 ${counterAtk}`);
       }
+
+      const isAttackerBloodDefense = attacker.exclusiveName === '死守' || attacker.exclusiveName === 'Blood Defense' || attacker.exclusiveName === '浴血卫国';
+      if (isAttackerBloodDefense && attacker.hp <= attacker.maxHp / 2) {
+        counterAtk = Math.floor(counterAtk * 0.7);
+        console.log(`   -> [死守] 攻击方血量低于50%，免伤30%，实际反击力为 ${counterAtk}`);
+      }
+
       if (counterAtk <= attacker.defense) {
         attacker.defense -= counterAtk;
       } else {
@@ -178,6 +198,17 @@ export class Game {
       this.destroyUnit(defenderOwner, defender);
       if (attacker.hp > 0) {
           this.promoteUnit(attacker, attackerOwner);
+          
+          const isAirborneStrike = attacker.exclusiveName === '空降奇袭' || attacker.exclusiveName === 'Airborne Strike' || attacker.exclusiveName === '天降奇兵';
+          const isAirPioneer = attacker.exclusiveName === '制空先锋' || attacker.exclusiveName === 'Air Superiority Pioneer' || attacker.exclusiveName === '制空先鋒';
+          
+          if (isAirborneStrike) {
+             attacker.hasAttackedThisTurn = false;
+             this.addLog(attackerOwner.name, `[${attacker.name}] 触发专属词条，击杀目标后可再次行动！`, 'skill');
+          } else if (isAirPioneer && defender.category === UnitCategory.AIR_FORCE) {
+             attacker.hasAttackedThisTurn = false;
+             this.addLog(attackerOwner.name, `[${attacker.name}] 触发专属词条，击落敌机后可再次行动！`, 'skill');
+          }
       }
     }
     
@@ -207,8 +238,10 @@ export class Game {
       return false;
     }
 
+    const hasAirborneStrike = attacker.exclusiveName === '空降奇袭' || attacker.exclusiveName === 'Airborne Strike' || attacker.exclusiveName === '天降奇兵';
+
     const guards = defenderPlayer.board.filter(u => u.keywords.includes(Keyword.GUARD));
-    if (guards.length > 0) {
+    if (guards.length > 0 && !hasAirborneStrike) {
       console.log("必须先消灭具有【守护】的单位，才能攻击总部！");
       return false;
     }
