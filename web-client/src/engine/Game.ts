@@ -1,5 +1,6 @@
 import { Player } from './Player';
 import { UnitCategory, Keyword, type UnitCard, type EnvironmentCard, type CombatLog } from './types';
+import { KeywordEngine } from './KeywordEngine';
 
 export class Game {
   public player1: Player;
@@ -54,6 +55,7 @@ export class Game {
     console.log(`\n=== 第 ${this.turnNumber} 回合 : ${this.currentPlayer.name} 的回合 ===`);
     this.addLog(this.currentPlayer.name, `回合开始。`, 'system');
     this.currentPlayer.startTurn(isFirstTurn);
+    KeywordEngine.onTurnStart(this, this.currentPlayer);
 
     // 触发环境卡的每回合效果
     if (this.activeEnvironment && this.activeEnvironment.onTurnStart) {
@@ -109,21 +111,17 @@ export class Game {
       return false;
     }
 
-    if (attacker.category === UnitCategory.INFANTRY && defender.category === UnitCategory.AIR_FORCE) {
-      console.log(`规则限制：步兵 [${attacker.name}] 无法攻击空军 [${defender.name}]！`);
-      return false;
-    }
-
-    const hasAirborneStrike = attacker.exclusiveName === '空降奇袭' || attacker.exclusiveName === 'Airborne Strike' || attacker.exclusiveName === '天降奇兵';
-    const guards = defenderOwner.board.filter(u => u.keywords.includes(Keyword.GUARD));
-    if (guards.length > 0 && !defender.keywords.includes(Keyword.GUARD) && !hasAirborneStrike) {
-      console.log(`规则限制：敌方存在守护单位，必须先攻击守护单位！`);
+    const targetCheck = KeywordEngine.canTarget(attacker, defender, this, defenderOwner);
+    if (!targetCheck.valid) {
+      console.log(`规则限制：${targetCheck.reason}`);
       return false;
     }
 
     // 炮兵命中率机制：基础命中率 75%，每提升1级军衔增加 10% 命中率
     if (attacker.category === UnitCategory.ARTILLERY) {
-       const hitRate = 0.75 + (attacker.rank || 0) * 0.10;
+       let hitRate = 0.75 + (attacker.rank || 0) * 0.10;
+       if (attackerOwner.board.some(u => u.exclusiveId === 'german_2')) hitRate = 1.0;
+       
        if (Math.random() > hitRate) {
            console.log(`[未命中] 炮兵 ${attacker.name} 的攻击偏离了目标！`);
            this.addLog(attackerOwner.name, `[${attacker.name}] 的炮击偏离了目标（未命中）。`, 'attack');
@@ -135,17 +133,8 @@ export class Game {
     console.log(`\n[战斗] ${attacker.name}(攻:${attacker.attack}) 攻击 ${defender.name}(防:${defender.defense}, 血:${defender.hp})`);
     this.addLog(attackerOwner.name, `[${attacker.name}] 攻击了 [${defender.name}]。`, 'attack');
     
-    let atk = attacker.attack;
-    if (defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
-      atk = Math.max(0, atk - 2);
-      console.log(`-> [重甲] 免疫了2点伤害，实际承受攻击力为 ${atk}`);
-    }
-
-    const isBloodDefense = defender.exclusiveName === '死守' || defender.exclusiveName === 'Blood Defense' || defender.exclusiveName === '浴血卫国';
-    if (isBloodDefense && defender.hp <= defender.maxHp / 2) {
-      atk = Math.floor(atk * 0.7);
-      console.log(`-> [死守] 血量低于50%，免伤30%，实际承受攻击力为 ${atk}`);
-    }
+    let atk = KeywordEngine.modifyAttackDamage(attacker, defender, attacker.attack, this);
+    atk = KeywordEngine.modifyDefenseDamageReduction(defender, attacker, atk, this);
 
     if (atk <= defender.defense) {
       defender.defense -= atk;
@@ -160,21 +149,15 @@ export class Game {
     }
 
     attacker.hasAttackedThisTurn = true;
+    
+    KeywordEngine.afterAttack(attacker, defender, this, defenderOwner);
 
     if (defender.hp > 0 && defender.keywords.includes(Keyword.AMBUSH)) {
       console.log(`-> [伏击] ${defender.name} 触发伏击，对 ${attacker.name} 造成反击！`);
       this.addLog(defenderOwner.name, `[${defender.name}] 触发伏击，反击了 [${attacker.name}]。`, 'attack');
-      let counterAtk = defender.attack;
-      if (attacker.keywords.includes(Keyword.HEAVY_ARMOR)) {
-        counterAtk = Math.max(0, counterAtk - 2);
-        console.log(`   -> [重甲] 攻击方免疫了2点反击伤害，实际反击力为 ${counterAtk}`);
-      }
-
-      const isAttackerBloodDefense = attacker.exclusiveName === '死守' || attacker.exclusiveName === 'Blood Defense' || attacker.exclusiveName === '浴血卫国';
-      if (isAttackerBloodDefense && attacker.hp <= attacker.maxHp / 2) {
-        counterAtk = Math.floor(counterAtk * 0.7);
-        console.log(`   -> [死守] 攻击方血量低于50%，免伤30%，实际反击力为 ${counterAtk}`);
-      }
+      
+      let counterAtk = KeywordEngine.modifyAttackDamage(defender, attacker, defender.attack, this);
+      counterAtk = KeywordEngine.modifyDefenseDamageReduction(attacker, defender, counterAtk, this);
 
       if (counterAtk <= attacker.defense) {
         attacker.defense -= counterAtk;
@@ -184,11 +167,13 @@ export class Game {
         attacker.defense = 0;
         this.addLog(defenderOwner.name, `[${defender.name}] 反击了 [${attacker.name}]，造成了 ${damageToHp} 点伤害。`, 'attack');
       }
-    if (attacker.hp <= 0) {
+      
+      if (attacker.hp <= 0) {
         console.log(`=> 伏击导致 ${attacker.name} 阵亡！`);
         this.addLog('系统', `[${attacker.name}] 阵亡。`, 'system');
         this.destroyUnit(attackerOwner, attacker);
         this.promoteUnit(defender, defenderOwner);
+        KeywordEngine.afterKill(defender, attacker, this, defenderOwner);
       }
     }
 
@@ -198,17 +183,7 @@ export class Game {
       this.destroyUnit(defenderOwner, defender);
       if (attacker.hp > 0) {
           this.promoteUnit(attacker, attackerOwner);
-          
-          const isAirborneStrike = attacker.exclusiveName === '空降奇袭' || attacker.exclusiveName === 'Airborne Strike' || attacker.exclusiveName === '天降奇兵';
-          const isAirPioneer = attacker.exclusiveName === '制空先锋' || attacker.exclusiveName === 'Air Superiority Pioneer' || attacker.exclusiveName === '制空先鋒';
-          
-          if (isAirborneStrike) {
-             attacker.hasAttackedThisTurn = false;
-             this.addLog(attackerOwner.name, `[${attacker.name}] 触发专属词条，击杀目标后可再次行动！`, 'skill');
-          } else if (isAirPioneer && defender.category === UnitCategory.AIR_FORCE) {
-             attacker.hasAttackedThisTurn = false;
-             this.addLog(attackerOwner.name, `[${attacker.name}] 触发专属词条，击落敌机后可再次行动！`, 'skill');
-          }
+          KeywordEngine.afterKill(attacker, defender, this, attackerOwner);
       }
     }
     
@@ -238,17 +213,17 @@ export class Game {
       return false;
     }
 
-    const hasAirborneStrike = attacker.exclusiveName === '空降奇袭' || attacker.exclusiveName === 'Airborne Strike' || attacker.exclusiveName === '天降奇兵';
-
-    const guards = defenderPlayer.board.filter(u => u.keywords.includes(Keyword.GUARD));
-    if (guards.length > 0 && !hasAirborneStrike) {
-      console.log("必须先消灭具有【守护】的单位，才能攻击总部！");
+    const targetCheck = KeywordEngine.canTarget(attacker, 'hq', this, defenderPlayer);
+    if (!targetCheck.valid) {
+      console.log(`规则限制：${targetCheck.reason}`);
       return false;
     }
 
     // 炮兵命中率机制：攻击总部同样适用
     if (attacker.category === UnitCategory.ARTILLERY) {
-       const hitRate = 0.75 + (attacker.rank || 0) * 0.10;
+       let hitRate = 0.75 + (attacker.rank || 0) * 0.10;
+       if (this.currentPlayer.board.some(u => u.exclusiveId === 'german_2')) hitRate = 1.0;
+
        if (Math.random() > hitRate) {
            console.log(`[未命中] 炮兵 ${attacker.name} 对总部的攻击偏离了目标！`);
            this.addLog(this.currentPlayer.name, `[${attacker.name}] 对敌方指挥部的炮击偏离了目标（未命中）。`, 'attack');
@@ -264,6 +239,9 @@ export class Game {
       damage = Math.floor(damage * 1.5);
     }
     
+    damage = KeywordEngine.modifyAttackDamage(attacker, 'hq', damage, this);
+    damage = KeywordEngine.modifyDefenseDamageReduction('hq', attacker, damage, this);
+
     defenderPlayer.takeHqDamage(damage);
     this.addLog(this.currentPlayer.name, `[${attacker.name}] 攻击了敌方指挥部，造成了 ${damage} 点伤害。`, 'attack');
     
@@ -274,6 +252,8 @@ export class Game {
     
     // 攻击总部也算作一次击杀（战功）
     this.promoteUnit(attacker, this.currentPlayer);
+    KeywordEngine.afterAttack(attacker, 'hq', this, defenderPlayer);
+    KeywordEngine.afterKill(attacker, 'hq', this, this.currentPlayer);
     
     attacker.hasAttackedThisTurn = true;
     return true;
@@ -285,6 +265,7 @@ export class Game {
     if (index !== -1) {
       player.board.splice(index, 1);
       player.graveyard.push(unit);
+      KeywordEngine.onDeath(unit, this, player);
     }
   }
 

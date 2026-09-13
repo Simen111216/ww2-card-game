@@ -53,8 +53,11 @@ export interface UnitCard extends BaseCard {
   line: 'support' | 'frontline'; // 所处战线
   kills?: number; // 击杀数
   rank?: number; // 军衔等级 (0:新兵, 1:老兵, 2:精锐, 3:王牌)
+  exclusiveId?: string; // 专属词条的内部唯一标识 (用于底层逻辑绑定)
   exclusiveName?: string; // 专属词条名称
   exclusiveDesc?: string; // 专属词条描述
+  hasShield?: boolean; // 护盾状态
+  burnStacks?: number; // 灼烧层数
 }
 
 export interface OrderCard extends BaseCard {

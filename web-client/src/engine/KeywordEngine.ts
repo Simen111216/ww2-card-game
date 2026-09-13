@@ -1,0 +1,358 @@
+import { Game } from './Game';
+import { Player } from './Player';
+import { UnitCategory, Keyword, Faction, CardType, type UnitCard } from './types';
+
+export class KeywordEngine {
+  // 1. 部署时触发 (onDeploy)
+  public static onDeploy(unit: UnitCard, game: Game, owner: Player) {
+    switch (unit.exclusiveId) {
+      case 'soviet_6': // 钢铁壁垒 (KV-1)
+      case 'german_6': // 陆上霸主 (虎式)
+      case 'adv_2':    // 帝国终焉 (虎王)
+        game.addLog(owner.name, `[${unit.name}] 触发专属词条，嘲讽全场！`, 'skill');
+        if (!unit.keywords.includes(Keyword.GUARD)) {
+          unit.keywords.push(Keyword.GUARD);
+        }
+        break;
+      case 'soviet_7': // 柏林先锋 (IS-2)
+        game.addLog(owner.name, `[${unit.name}] 触发【柏林先锋】，获得护盾！`, 'skill');
+        unit.hasShield = true;
+        break;
+      case 'adv_3': // 天降奇兵 (101空降师)
+      case 'uk_2':  // 空降奇袭 (红魔伞兵)
+      case 'usa_2': // 丛林利刃 (游骑兵)
+        game.addLog(owner.name, `[${unit.name}] 奇袭入场！无视敌方守护！`, 'skill');
+        break;
+      case 'usa_4': // 后期王牌 (M26 潘兴)
+        game.addLog(owner.name, `[${unit.name}] 触发【后期王牌】，清除了我方所有负面效果！`, 'skill');
+        owner.board.forEach(u => u.burnStacks = 0);
+        break;
+      case 'france_3': // 快速穿插 (S35 骑兵坦克)
+        game.addLog(owner.name, `[${unit.name}] 触发【快速穿插】，直接突进前线！`, 'skill');
+        unit.line = 'frontline';
+        break;
+    }
+  }
+
+  // 2. 死亡时触发 (onDeath)
+  public static onDeath(unit: UnitCard, game: Game, owner: Player) {
+    // 浴血卫国 (斯大林格勒近卫师) - 友军阵亡加属性
+    owner.board.filter(u => u.exclusiveId === 'adv_1').forEach(u => {
+      if (u !== unit) {
+        u.attack += 1;
+        u.maxHp += 1;
+        u.hp += 1;
+        game.addLog(owner.name, `[${u.name}] 触发【浴血卫国】，因友军阵亡全属性提升！`, 'skill');
+      }
+    });
+
+    switch (unit.exclusiveId) {
+      case 'soviet_1': // 人海
+        game.addLog(owner.name, `[${unit.name}] 阵亡，触发【人海】免费召唤一名动员兵！`, 'skill');
+        const token: UnitCard = {
+          ...unit,
+          id: Math.random().toString(36).substring(7),
+          exclusiveId: undefined, 
+          exclusiveName: undefined,
+          exclusiveDesc: undefined,
+          hp: unit.maxHp,
+          hasAttackedThisTurn: true,
+          hasMovedThisTurn: true
+        };
+        owner.board.push(token);
+        break;
+      case 'soviet_4': // 量产铁军
+      case 'soviet_5': // 攻坚改良
+        game.addLog(owner.name, `[${unit.name}] 阵亡，触发量产特性，返还 2 点 CP！`, 'skill');
+        owner.cp += 2;
+        break;
+      case 'german_1': // 决死
+        game.addLog(owner.name, `[${unit.name}] 阵亡，【决死】生效，全体友军士气大振！`, 'skill');
+        break;
+      case 'adv_2': // 帝国终焉
+        game.addLog(owner.name, `[${unit.name}] 阵亡，【帝国终焉】反噬，掉落 2 点 CP。`, 'skill');
+        owner.cp = Math.max(0, owner.cp - 2);
+        break;
+      case 'usa_1': // 后勤充沛 (G.I.大兵)
+        if (Math.random() > 0.5) {
+           game.addLog(owner.name, `[${unit.name}] 阵亡，【后勤充沛】触发，免费重生！`, 'skill');
+           const token: UnitCard = {
+             ...unit,
+             id: Math.random().toString(36).substring(7),
+             hp: unit.maxHp,
+             hasAttackedThisTurn: true,
+             hasMovedThisTurn: true
+           };
+           owner.board.push(token);
+        }
+        break;
+    }
+  }
+
+  // 3. 回合开始时触发 (onTurnStart)
+  public static onTurnStart(game: Game, player: Player) {
+    const opponent = game.currentPlayer === game.player1 ? game.player2 : game.player1;
+
+    player.board.forEach(unit => {
+      // uk_4: 丘吉尔 免疫灼烧
+      if (unit.exclusiveId === 'uk_4') unit.burnStacks = 0;
+
+      // 灼烧结算
+      if (unit.burnStacks && unit.burnStacks > 0) {
+        unit.hp -= unit.burnStacks;
+        game.addLog(player.name, `[${unit.name}] 受到 ${unit.burnStacks} 点灼烧伤害！`, 'system');
+        unit.burnStacks--;
+      }
+
+      // german_4: 机动补给 (半履带车) - 简化的群疗效果
+      if (unit.exclusiveId === 'german_4') {
+        const pBoard = player.board;
+        let healed = false;
+        pBoard.forEach(u => {
+          if (u.hp < u.maxHp) {
+            u.hp = Math.min(u.maxHp, u.hp + 2);
+            healed = true;
+          }
+        });
+        if (healed) game.addLog(player.name, `[${unit.name}] 触发【机动补给】，治愈了友军。`, 'skill');
+      }
+
+      // usa_5: 持续压制 (M7牧师)
+      if (unit.exclusiveId === 'usa_5') {
+        game.addLog(player.name, `[${unit.name}] 触发【持续压制】，轰炸敌方后排！`, 'skill');
+        opponent.board.filter(u => u.line === 'support').forEach(u => u.hp -= 1);
+      }
+    });
+  }
+
+  // 4. 计算攻击方最终伤害 (modifyAttackDamage)
+  public static modifyAttackDamage(attacker: UnitCard, defender: UnitCard | 'hq', baseDamage: number, game: Game): number {
+    let finalDamage = baseDamage;
+
+    const owner = game.currentPlayer.board.includes(attacker) ? game.currentPlayer : (game.currentPlayer === game.player1 ? game.player2 : game.player1);
+
+    // 动态光环加成
+    let auraBonus = 0;
+    owner.board.forEach(u => {
+      if (u.exclusiveId === 'soviet_1' && attacker.deployCost <= 2) auraBonus += 1; // 人海
+      if (u.exclusiveId === 'soviet_3' && attacker.category === UnitCategory.INFANTRY && attacker.faction === Faction.SOVIET) auraBonus += 2; // 督战
+      if (u.exclusiveId === 'german_5' && attacker.category === UnitCategory.ARMOR && attacker.deployCost >= 4 && attacker.deployCost <= 7) auraBonus += 2; // 战场中坚
+      if (u.exclusiveId === 'usa_3') auraBonus += 1; // 工业洪流 (谢尔曼)
+      if (u.exclusiveId === 'france_6' && attacker.exclusiveId === 'france_6' && owner.board.some(x => x.exclusiveId === 'france_1')) auraBonus += 3; // 复国雄鹰
+      if (u.exclusiveId === 'adv_5' && attacker.faction === Faction.FRANCE) auraBonus += 2; // 光复山河 翻倍(简化为固定加成)
+    });
+    // 人海最多叠加3层
+    if (attacker.deployCost <= 2 && auraBonus > 3) auraBonus = 3;
+    finalDamage += auraBonus;
+
+    // 针对单位的伤害修正
+    if (defender !== 'hq') {
+      if (attacker.exclusiveId === 'soviet_5' && defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
+        finalDamage = Math.floor(finalDamage * 1.2); // 攻坚改良
+      }
+      if (attacker.exclusiveId === 'soviet_7' && defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
+        finalDamage = Math.floor(finalDamage * 1.5); // 柏林先锋
+      }
+      if (attacker.exclusiveId === 'soviet_8' && defender.category === UnitCategory.ARMOR) {
+        finalDamage = Math.floor(finalDamage * 1.5); // 猎甲暴击
+      }
+      if (attacker.exclusiveId === 'soviet_10' && defender.category !== UnitCategory.AIR_FORCE) {
+        finalDamage *= 2; // 黑死神对地
+      }
+      if (attacker.exclusiveId === 'german_8') {
+        if (defender.category === UnitCategory.AIR_FORCE && defender.deployCost <= 7) {
+           finalDamage = 99; // 两用绝杀 秒杀空军
+        } else if (defender.category === UnitCategory.ARMOR) {
+           finalDamage = Math.floor(finalDamage * 1.5);
+        }
+      }
+      if (attacker.exclusiveId === 'german_10') {
+         finalDamage = Math.floor(finalDamage * 1.5); // 斯图卡暴击
+      }
+      if (attacker.exclusiveId === 'adv_4' && !attacker.hasAttackedThisTurn) { // SAS首次攻击
+         if (defender.deployCost >= 6) finalDamage = 99; // 秒杀高阶
+      }
+      if (attacker.exclusiveId === 'usa_4' && defender.faction === Faction.GERMANY && defender.category === UnitCategory.ARMOR && defender.deployCost >= 7) {
+         finalDamage += 5; // 后期王牌 对德系高阶装甲真实伤害(简化为+5)
+      }
+      if (attacker.exclusiveId === 'uk_5' && defender.hp <= defender.maxHp / 2) {
+         finalDamage += 3; // 25磅炮 锁定残血
+      }
+      if (attacker.exclusiveId === 'uk_6' && defender.faction === Faction.GERMANY && defender.category === UnitCategory.AIR_FORCE) {
+         finalDamage = Math.floor(finalDamage * 1.5); // 英伦守护 对德系空军
+      }
+      if (attacker.exclusiveId === 'france_2') {
+         // 场上友军越少，伤害越高 (上限+3)
+         finalDamage += Math.max(0, 4 - owner.board.length);
+      }
+      if (attacker.exclusiveId === 'france_5' && !attacker.hasMovedThisTurn) {
+         finalDamage += 2; // 固守炮击 不移动伤害提升
+      }
+    } else {
+      if (attacker.exclusiveId === 'soviet_7') {
+         finalDamage = Math.floor(finalDamage * 1.5); // 柏林先锋拆家
+      }
+    }
+
+    return finalDamage;
+  }
+
+  // 5. 计算防御方免伤/减伤 (modifyDefenseDamageReduction)
+  public static modifyDefenseDamageReduction(defender: UnitCard | 'hq', attacker: UnitCard, damage: number, game: Game): number {
+    let finalDamage = damage;
+    if (defender === 'hq') return finalDamage;
+
+    if (defender.hasShield) {
+      game.addLog('系统', `[${defender.name}] 的护盾抵挡了所有伤害！`, 'skill');
+      defender.hasShield = false;
+      return 0;
+    }
+
+    // 基础重甲判定 (-2)
+    if (defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
+      // german_7: 精准破甲 (无视50%重甲减免，即只减1)
+      if (attacker.exclusiveId === 'german_7') {
+         finalDamage = Math.max(0, finalDamage - 1);
+      } else {
+         finalDamage = Math.max(0, finalDamage - 2);
+      }
+    }
+
+    // 专属词条判定
+    if (defender.exclusiveId === 'soviet_2' && defender.hp <= defender.maxHp / 2) {
+      finalDamage = Math.floor(finalDamage * 0.7); // 死守 30%免伤
+    }
+    if (defender.exclusiveId === 'soviet_6' && (attacker.category === UnitCategory.ARTILLERY || attacker.category === UnitCategory.AIR_FORCE)) {
+      finalDamage = Math.floor(finalDamage * 0.5); // 钢铁壁垒
+    }
+    if (defender.exclusiveId === 'soviet_10' && attacker.category !== UnitCategory.AIR_FORCE) {
+      finalDamage = Math.floor(finalDamage * 0.6); // 黑死神免伤40%
+    }
+    if (defender.exclusiveId === 'german_6' || defender.exclusiveId === 'adv_2') {
+      const maxDmg = Math.floor(defender.maxHp * 0.3);
+      if (finalDamage > maxDmg) {
+         game.addLog('系统', `[${defender.name}] 霸体生效，单次受伤不超过 30%！`, 'skill');
+         finalDamage = maxDmg;
+      }
+    }
+    if (defender.exclusiveId === 'france_2') {
+      const owner = game.currentPlayer.board.includes(defender) ? game.currentPlayer : (game.currentPlayer === game.player1 ? game.player2 : game.player1);
+      const reduction = Math.min(0.5, 0.1 * Math.max(0, 5 - owner.board.length));
+      finalDamage = Math.floor(finalDamage * (1 - reduction)); // 绝境坚守
+    }
+    if (defender.exclusiveId === 'adv_5' && defender.hp <= defender.maxHp / 4) {
+      game.addLog('系统', `[${defender.name}] 触发光复山河，残血无敌！`, 'skill');
+      finalDamage = 0;
+    }
+    if (defender.exclusiveId === 'adv_1') {
+      if (finalDamage >= defender.hp && defender.hp > 1) {
+         game.addLog('系统', `[${defender.name}] 触发【浴血卫国】，坚守绝境不被秒杀！`, 'skill');
+         finalDamage = defender.hp - 1;
+      }
+    }
+
+    // 光环减伤
+    const defOwner = game.currentPlayer.board.includes(defender) ? game.currentPlayer : (game.currentPlayer === game.player1 ? game.player2 : game.player1);
+    if (defender.category === UnitCategory.AIR_FORCE && defOwner.board.some(u => u.exclusiveId === 'usa_6')) {
+       finalDamage = Math.floor(finalDamage * 0.7); // 全域护航 空军免伤30%
+    }
+    if (defOwner.board.some(u => u.exclusiveId === 'uk_1' && u.line === defender.line)) {
+       finalDamage = Math.floor(finalDamage * 0.85); // 英伦防线 同排15%免伤
+    }
+
+    return finalDamage;
+  }
+
+  // 6. 攻击后触发 (afterAttack - 用于附加效果如灼烧、AOE等)
+  public static afterAttack(attacker: UnitCard, defender: UnitCard | 'hq', game: Game, pDef: Player) {
+    if (attacker.exclusiveId === 'soviet_9') { // 喀秋莎 火海覆盖
+      game.addLog(game.currentPlayer.name, `[${attacker.name}] 触发【火海覆盖】，对敌方前排造成 AOE 灼烧！`, 'skill');
+      pDef.board.filter(u => u.line === 'frontline').forEach(u => {
+        if (u !== defender) { // 目标已经受过主伤害
+          u.hp -= 2; 
+        }
+        u.burnStacks = (u.burnStacks || 0) + 1;
+      });
+    }
+    if (attacker.exclusiveId === 'german_10' && defender !== 'hq') { // 斯图卡压制
+       game.addLog(game.currentPlayer.name, `[${attacker.name}] 触发【尖啸俯冲】，压制了目标！`, 'skill');
+       (defender as UnitCard).attack = Math.max(1, (defender as UnitCard).attack - 2);
+    }
+    if (attacker.exclusiveId === 'uk_3') { // 十字军 机动游击
+       if (attacker.line === 'frontline') {
+          attacker.line = 'support';
+          game.addLog(game.currentPlayer.name, `[${attacker.name}] 攻击后后撤至支援阵线！`, 'skill');
+       }
+    }
+    if (attacker.exclusiveId === 'uk_7') { // 兰开斯特 纵深打击
+       game.addLog(game.currentPlayer.name, `[${attacker.name}] 触发【纵深打击】，造成大范围 AOE！`, 'skill');
+       pDef.board.forEach(u => {
+          if (u !== defender) u.hp -= 2;
+       });
+    }
+    if (attacker.exclusiveId === 'france_4' && defender !== 'hq') { // B1 双线火力
+       const others = pDef.board.filter(u => u !== defender);
+       if (others.length > 0) {
+          const target = others[Math.floor(Math.random() * others.length)];
+          target.hp -= Math.max(1, attacker.attack - 2);
+          game.addLog(game.currentPlayer.name, `[${attacker.name}] 触发【双线火力】，同时打击了 [${target.name}]！`, 'skill');
+       }
+    }
+    if (attacker.exclusiveId === 'france_1' && defender !== 'hq') {
+       (defender as UnitCard).hasAttackedThisTurn = true; // 变相降低攻速
+       game.addLog(game.currentPlayer.name, `[${attacker.name}] 袭扰了目标，使其本回合无法反击/攻击！`, 'skill');
+    }
+  }
+
+  // 7. 击杀后触发 (afterKill)
+  public static afterKill(attacker: UnitCard, defender: UnitCard | 'hq', game: Game, owner: Player) {
+    if (defender === 'hq') return;
+
+    // 空降奇袭 / 天降奇兵
+    if (['uk_2', 'usa_advanced', 'adv_3'].includes(attacker.exclusiveId || '')) {
+      attacker.hasAttackedThisTurn = false;
+      game.addLog(owner.name, `[${attacker.name}] 触发奇袭，击杀目标后可再次行动！`, 'skill');
+    }
+    
+    // 制空先锋
+    if (attacker.exclusiveId === 'german_9' && defender.category === UnitCategory.AIR_FORCE) {
+      attacker.hasAttackedThisTurn = false;
+      game.addLog(owner.name, `[${attacker.name}] 触发【制空先锋】，击落敌机后可再次行动！`, 'skill');
+    }
+
+    // 步坦协同 回血
+    if (attacker.exclusiveId === 'german_3') {
+       attacker.hp = Math.min(attacker.maxHp, attacker.hp + 2);
+    }
+    
+    // uk_6 英伦守护
+    if (attacker.exclusiveId === 'uk_6' && defender.category === UnitCategory.AIR_FORCE && defender.faction === Faction.GERMANY) {
+       attacker.hasShield = true;
+       game.addLog(owner.name, `[${attacker.name}] 触发【英伦守护】，击落敌机获得护盾！`, 'skill');
+    }
+  }
+
+  // 8. 动态目标合法性拦截 (canTarget)
+  public static canTarget(attacker: UnitCard, defender: UnitCard | 'hq', game: Game, pDef: Player): { valid: boolean; reason?: string } {
+    if (defender !== 'hq') {
+       if (defender.exclusiveId === 'france_1' && defender.keywords.includes(Keyword.AMBUSH)) {
+          return { valid: false, reason: `[${defender.name}] 处于潜伏状态，无法被锁定！` };
+       }
+    }
+
+    if (attacker.category === UnitCategory.INFANTRY && defender !== 'hq' && defender.category === UnitCategory.AIR_FORCE) {
+      return { valid: false, reason: `步兵 [${attacker.name}] 无法攻击空军 [${defender.name}]！` };
+    }
+
+    const guards = pDef.board.filter(u => u.keywords.includes(Keyword.GUARD));
+    const hasAirborne = ['uk_2', 'usa_2', 'adv_3', 'usa_advanced'].includes(attacker.exclusiveId || '');
+    
+    if (guards.length > 0 && !hasAirborne) {
+      if (defender === 'hq' || !defender.keywords.includes(Keyword.GUARD)) {
+        return { valid: false, reason: `敌方存在守护单位，必须先攻击守护单位！` };
+      }
+    }
+
+    return { valid: true };
+  }
+}

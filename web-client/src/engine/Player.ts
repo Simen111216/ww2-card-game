@@ -1,5 +1,6 @@
 import { CardType, Faction, Keyword } from './types';
 import type { BaseCard, UnitCard, OrderCard, EnvironmentCard, HQCard, Commander } from './types';
+import { KeywordEngine } from './KeywordEngine';
 
 export class Player {
   public name: string;
@@ -109,7 +110,10 @@ export class Player {
       u.hasMovedThisTurn = true;
       this.board.push(u);
       console.log(`${this.name} 部署了单位 [${card.name}]`);
-      if (game) game.addLog(this.name, `消耗 ${card.deployCost} CP 部署了 [${card.name}]。`, 'play');
+      if (game) {
+        game.addLog(this.name, `消耗 ${card.deployCost} CP 部署了 [${card.name}]。`, 'play');
+        KeywordEngine.onDeploy(u, game, this);
+      }
     } else if (card.type === CardType.ORDER) {
       console.log(`${this.name} 使用了指令卡 [${card.name}]`);
       if (game) {
