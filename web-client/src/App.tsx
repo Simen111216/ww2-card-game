@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import i18n from './i18n';
 import './index.css';
 
+import { AudioEngine } from './engine/AudioEngine';
+
 // --- 指挥官系统库 ---
 export function getCommandersData(): Commander[] {
   const commanders: Commander[] = [
@@ -653,6 +655,33 @@ export function getCampaignScenarios(): CampaignScenario[] {
     }
   ];
 }
+
+const TypewriterText = ({ text, speed = 30 }: { text: string, speed?: number }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [isTyping, setIsTyping] = useState(true);
+
+  useEffect(() => {
+    let i = 0;
+    setDisplayedText('');
+    setIsTyping(true);
+    const timer = setInterval(() => {
+      setDisplayedText(text.substring(0, i));
+      i++;
+      if (i > text.length) {
+        clearInterval(timer);
+        setIsTyping(false);
+      }
+    }, speed);
+    return () => clearInterval(timer);
+  }, [text, speed]);
+
+  return (
+    <span>
+      {displayedText}
+      {isTyping && <span className="typewriter-cursor inline-block w-[2px] h-[1em] ml-1 bg-white align-middle" />}
+    </span>
+  );
+};
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -1419,6 +1448,7 @@ export default function App() {
     setAttackAnim({ attackerId: attacker.id, defenderId: defId, phase: 'windup' });
     await new Promise(r => setTimeout(r, 300));
     setAttackAnim({ attackerId: attacker.id, defenderId: defId, phase: 'strike' });
+    AudioEngine.playAttackSound(attacker.category === UnitCategory.ARTILLERY, attacker.category === UnitCategory.AIR_FORCE);
     await new Promise(r => setTimeout(r, 100));
 
     const atkHpBefore = attacker.hp;
@@ -1448,6 +1478,7 @@ export default function App() {
 
       if (defDamage > 0) {
         spawnAndSyncVfx('damage', `-${defDamage}`, defId);
+        AudioEngine.playDamageSound();
       } else if (defDamage === 0) {
         if (typeof defender !== 'string' && defender.keywords.includes(Keyword.HEAVY_ARMOR) && attacker.category !== UnitCategory.ARTILLERY) {
            spawnAndSyncVfx('armor', '格挡', defId);
@@ -1459,13 +1490,16 @@ export default function App() {
       
       if (atkDamage > 0) {
         spawnAndSyncVfx('damage', `-${atkDamage}`, attacker.id);
+        AudioEngine.playDamageSound();
       }
 
       if (defHpAfter <= 0 && typeof defender !== 'string') {
         spawnAndSyncVfx('death', '', defId);
+        AudioEngine.playDeathSound();
       }
       if (atkHpAfter <= 0) {
         spawnAndSyncVfx('death', '', attacker.id);
+        AudioEngine.playDeathSound();
       }
     }
 
@@ -1482,6 +1516,7 @@ export default function App() {
   executeAttackRef.current = executeAttack;
 
   const runPlayAnim = async (player: 'p1' | 'p2', index: number, card: BaseCard) => {
+    AudioEngine.playRadioSound();
     if (player === 'p1') {
       setHiddenHandIndex(index);
     }
@@ -1683,13 +1718,13 @@ export default function App() {
     return (
       <motion.div 
         key={unit.id} layout
-        initial={{ opacity: 0, scale: 0.5, y: isP1 ? 50 : -50 }}
+        initial={{ opacity: 0, scale: 1.2, y: isP1 ? -100 : 100, filter: 'drop-shadow(0 30px 20px rgba(0,0,0,0.8))' }}
         animate={{ 
           opacity: 1, 
           y: isAttacker ? (attackAnim.phase === 'windup' ? (isP1 ? 40 : -40) : (isP1 ? -150 : 150)) : (isDefender ? [-10, 10, -10, 10, 0] : 0),
           x: isDefender ? [-10, 10, -10, 10, 0] : 0,
           scale: isAttacker ? (attackAnim.phase === 'windup' ? 1.1 : 1.3) : (isDefender ? 0.9 : 1),
-          filter: isDefender ? 'brightness(3) sepia(1) hue-rotate(-50deg) saturate(5) drop-shadow(0 0 30px red)' : 'none',
+          filter: isDefender ? 'brightness(3) sepia(1) hue-rotate(-50deg) saturate(5) drop-shadow(0 0 30px red)' : 'drop-shadow(0 5px 5px rgba(0,0,0,0.5))',
           zIndex: isAttacker ? 50 : (isDefender ? 40 : 10)
         }}
         exit={{ opacity: 0, scale: 1.5, filter: 'brightness(0) drop-shadow(0 0 50px red) blur(5px)', transition: { duration: 0.6 } }}
@@ -1710,7 +1745,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col font-sans overflow-x-hidden overflow-y-auto relative">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col font-sans overflow-x-hidden overflow-y-auto relative crt-filter crt-flicker">
       {/* 侧边对战记录栏 */}
       <div className={`fixed right-0 top-0 bottom-0 w-80 bg-gray-900 border-l-4 border-gray-700 shadow-[-10px_0_30px_rgba(0,0,0,0.8)] z-[250] transition-transform duration-300 flex flex-col ${showLogs ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="bg-gray-800 p-4 border-b-2 border-gray-700 flex justify-between items-center">
@@ -1730,7 +1765,9 @@ export default function App() {
                 ${log.type === 'skill' ? 'text-purple-300' : ''}
                 ${log.type === 'environment' ? 'text-amber-300' : ''}
                 ${log.type === 'system' ? 'text-gray-400 italic' : ''}
-              `}>{log.message}</div>
+              `}>
+                <TypewriterText text={log.message} />
+              </div>
             </div>
           ))}
           <div ref={logsEndRef} />

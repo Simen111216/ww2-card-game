@@ -7,3 +7,73 @@ body {
   background-color: #1a202c; /* 深色背景，更适合战棋桌面 */
   color: #f7fafc;
 }
+
+/* 战争复古 CRT 滤镜效果 */
+.crt-filter::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%,
+      rgba(0, 0, 0, 0.1) 50%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 0, 0, 0.03),
+      rgba(0, 255, 0, 0.01),
+      rgba(0, 0, 255, 0.03)
+    );
+  z-index: 9999;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.crt-filter::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 100%);
+  z-index: 9998;
+  pointer-events: none;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.95; }
+  5% { opacity: 0.85; }
+  10% { opacity: 0.95; }
+  15% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+.crt-flicker {
+  animation: flicker 4s infinite;
+}
+
+/* 打字机光标动画 */
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: #fff; }
+}
+.typewriter-cursor {
+  border-right: 2px solid #fff;
+  animation: blink-caret 0.75s step-end infinite;
+}
+
+/* 部署扬尘动画 */
+@keyframes dust-deploy {
+  0% { transform: scale(1.2) translateY(-20px); opacity: 0; filter: drop-shadow(0 20px 10px rgba(0,0,0,0.5)); }
+  70% { transform: scale(0.95) translateY(2px); opacity: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8)); }
+  100% { transform: scale(1) translateY(0); filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5)); }
+}
+.anim-deploy {
+  animation: dust-deploy 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
