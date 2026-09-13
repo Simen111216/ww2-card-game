@@ -301,7 +301,7 @@ export function createGermanOrders(): OrderCard[] {
         const hasAirForce = enemy.board.some(u => u.category === UnitCategory.AIR_FORCE);
         const hqId = enemy === game.player2 ? 'p2-hq' : 'p1-hq';
         if (hasAirForce && Math.random() < 0.5) {
-          game.addLog(enemy.name, `敌方战斗机成功拦截了 V1飞弹！`, 'system');
+          game.addLog(enemy.name, i18n.t('game.interceptedV1'), 'system');
           game.onVfx?.('armor', '被拦截', hqId);
         } else {
           enemy.takeHqDamage(4);
@@ -732,7 +732,7 @@ export default function App() {
       setAiFaction(p2Fac);
     }
 
-    const p1 = new Player("指挥官 (我方)", p1Fac, buildDeck(p1Fac));
+    const p1 = new Player(t('game.myCommander'), p1Fac, buildDeck(p1Fac));
     p1.commander = getCommandersData().find(c => c.faction === p1Fac) || null;
     
     let p2Deck = buildDeck(p2Fac);
@@ -740,7 +740,7 @@ export default function App() {
         p2Deck = buildDeck(p2Fac, (window as any).guestDeckCounts);
     }
     
-    const p2 = new Player(gameMode === 'ai' || isCampaign ? "AI 指挥官 (敌方)" : "敌方指挥官", p2Fac, p2Deck);
+    const p2 = new Player(gameMode === 'ai' || isCampaign ? t('game.aiCommander') : t('game.enemyCommander'), p2Fac, p2Deck);
     p2.commander = getCommandersData().find(c => c.faction === p2Fac) || null;
     const newGame = new Game(p1, p2);
 
@@ -810,10 +810,10 @@ export default function App() {
         setAiFaction(data.p1Faction as Faction);
         
         // 客机收到游戏开始指令，初始化本地 Game 对象用于渲染
-        const p1 = new Player("指挥官 (我方)", data.p2Faction as Faction, buildDeck(data.p2Faction as Faction));
+        const p1 = new Player(t('game.myCommander'), data.p2Faction as Faction, buildDeck(data.p2Faction as Faction));
         p1.commander = getCommandersData().find(c => c.faction === data.p2Faction) || null;
         
-        const p2 = new Player("敌方指挥官", data.p1Faction as Faction, []);
+        const p2 = new Player(t('game.enemyCommander'), data.p1Faction as Faction, []);
         p2.commander = getCommandersData().find(c => c.faction === data.p1Faction) || null;
         
         const newGame = new Game(p1, p2);
@@ -1050,7 +1050,8 @@ export default function App() {
   // 回合切换横幅动画
   useEffect(() => {
     if (gamePhase === 'playing' && game) {
-      setTurnBanner(game.currentPlayer === game.player1 ? '我方回合' : '敌方回合');
+      const msg = game.currentPlayer === p1 ? t('game.myTurn') : t('game.enemyTurn');
+      setTurnBanner(msg);
       const t = setTimeout(() => setTurnBanner(null), 1500);
       return () => clearTimeout(t);
     }
@@ -1219,7 +1220,7 @@ export default function App() {
                   <section>
                     <h3 className="text-xl font-bold text-white mb-2">2. 战场与部署</h3>
                     <ul className="list-disc pl-5 space-y-1">
-                      <li>战场分为三层：<strong>己方支援战线</strong> -&gt; <strong>前线交火区</strong> -&gt; <strong>敌方支援战线</strong>。</li>
+                      <li>{t('menu.rules.rule4_1')}<strong>{t('game.mySupportLine')}</strong> -&gt; <strong>{t('game.frontline')}</strong> -&gt; <strong>{t('game.enemySupportLine')}</strong>{t('menu.rules.rule4_2')}</li>
                       <li>打出的单位默认部署在<strong>支援战线</strong>，需要消耗对应的部署指挥点 (左上角数值)。</li>
                       <li>刚部署的单位本回合无法攻击（除非拥有【闪击】词条）。</li>
                       <li>近战单位（步兵/装甲）只有在<strong>敌方前线没有单位阻挡</strong>时，才能消耗移动点推进到前线。</li>
@@ -1502,7 +1503,7 @@ export default function App() {
           // 射程验证
           if (attacker.category !== UnitCategory.ARTILLERY && attacker.category !== UnitCategory.AIR_FORCE) {
              if (attacker.line === 'support' && defender.line === 'support') {
-                 showToast("近战单位在支援战线只能攻击敌方前线单位！");
+                 showToast(t('game.meleeSupportLineTarget'));
                  return;
              }
           }
@@ -1529,7 +1530,7 @@ export default function App() {
         // 射程验证
         if (attacker.category !== UnitCategory.ARTILLERY && attacker.category !== UnitCategory.AIR_FORCE) {
            if (attacker.line === 'support') {
-               showToast("必须进入前线才能攻击敌方总部！");
+               showToast(t('game.mustEnterFrontlineToAttackHq'));
                return;
            }
         }
@@ -1537,7 +1538,7 @@ export default function App() {
         // 守护验证由 Game.ts 处理，这里如果失败给个提示
         const guards = p2.board.filter(u => u.keywords.includes(Keyword.GUARD));
         if (guards.length > 0) {
-            showToast("必须先消灭敌方的【守护】单位！");
+            showToast(t('game.mustDestroyGuardUnitsFirst'));
             return;
         }
 
@@ -1565,8 +1566,8 @@ export default function App() {
            networkManager.send({ type: 'SYNC_STATE', state: game!.serialize() });
          }
       } else {
-         if (p1.cp < unit.moveCost) showToast("CP不足！");
-         else showToast("无法移动，敌方可能控制着前线！");
+         if (p1.cp < unit.moveCost) showToast(t('game.notEnoughCp'));
+         else showToast(t('game.cannotMoveEnemyControl'));
       }
     }
   };
@@ -1657,7 +1658,7 @@ export default function App() {
             transition={{ type: 'spring', damping: 12, stiffness: 100 }}
             className="fixed inset-0 flex items-center justify-center pointer-events-none z-[160]"
           >
-            <h1 className={`text-9xl font-black italic tracking-widest drop-shadow-[0_0_30px_rgba(0,0,0,1)] uppercase -rotate-6 ${turnBanner === '敌方回合' ? 'text-red-600' : 'text-blue-500'}`}>
+            <h1 className={`text-9xl font-black italic tracking-widest drop-shadow-[0_0_30px_rgba(0,0,0,1)] uppercase -rotate-6 ${turnBanner === t('game.enemyTurn') ? 'text-red-600' : 'text-blue-500'}`}>
               {turnBanner}
             </h1>
           </motion.div>
@@ -1777,7 +1778,7 @@ export default function App() {
 
         {/* 敌方支援战线 */}
         <div className="flex-1 flex items-center justify-center gap-4 w-full border-b-2 border-dashed border-red-900/50 relative">
-          <div className="absolute top-2 left-4 text-red-700/40 font-black text-3xl pointer-events-none">敌方支援战线</div>
+          <div className="absolute top-2 left-4 text-red-700/40 font-black text-3xl pointer-events-none">{t('game.enemySupportLine')}</div>
           <AnimatePresence mode="popLayout">{p2.board.map((unit, i) => unit.line === 'support' && renderUnit(unit, 'p2', i))}</AnimatePresence>
           
           <AnimatePresence>
@@ -1812,7 +1813,7 @@ export default function App() {
 
         {/* 前线交火区 */}
         <div className="flex-1 flex flex-col justify-center gap-4 w-full bg-red-900/10 border-y-4 border-red-700 relative py-4">
-          <div className="absolute inset-0 flex items-center justify-center text-red-500/10 font-black text-6xl tracking-widest pointer-events-none uppercase">前线交火区</div>
+          <div className="absolute inset-0 flex items-center justify-center text-red-500/10 font-black text-6xl tracking-widest pointer-events-none uppercase">{t('game.frontline')}</div>
           
           <AnimatePresence>
             {orderVfx && (orderVfx.area === 'p2-frontline' || orderVfx.area === 'p1-frontline' || orderVfx.area === 'p2-board' || orderVfx.area === 'p1-board') && (
@@ -1854,7 +1855,7 @@ export default function App() {
 
         {/* 我方支援战线 */}
         <div className="flex-1 flex items-center justify-center gap-4 w-full border-t-2 border-dashed border-blue-900/50 relative">
-          <div className="absolute bottom-2 left-4 text-blue-700/40 font-black text-3xl pointer-events-none">我方支援战线</div>
+          <div className="absolute bottom-2 left-4 text-blue-700/40 font-black text-3xl pointer-events-none">{t('game.mySupportLine')}</div>
           <AnimatePresence mode="popLayout">{p1.board.map((unit, i) => unit.line === 'support' && renderUnit(unit, 'p1', i))}</AnimatePresence>
 
           <AnimatePresence>
@@ -1911,7 +1912,7 @@ export default function App() {
                        }
                        p1.cp -= p1!.commander!.activeCost;
                        p1.commander!.useActive(game, p1);
-                       showToast(`指挥官技能: ${p1.commander!.activeName}`);
+                       showToast(t('game.cmdSkill', { skill: p1.commander!.activeName }));
                        game.addLog(p1.name, `消耗 ${p1.commander!.activeCost} CP 释放了主动技能 [${p1.commander!.activeName}]！`, 'skill');
                        forceUpdate();
                        if (gameMode === 'multiplayer' && isHost) {
@@ -1942,13 +1943,13 @@ export default function App() {
                {showLogs ? '隐藏日志' : '📜 查看对战日志'}
              </button>
              <div className={`text-xl font-bold mb-2 ${game.currentPlayer === p1 ? 'text-green-400' : 'text-gray-500'}`}>
-                    回合 {game.turnNumber} : {game.currentPlayer.name} 的回合
-                    {game.maxTurns !== Infinity && <span className="ml-4 text-red-400 text-sm">(战役限时: 剩余 {game.maxTurns - game.currentRound + 1} 回合)</span>}
+                    {t('game.turn')}{game.turnNumber} : {game.currentPlayer.name}{t('game.sTurn')}
+                   {game.maxTurns !== Infinity && <span className="ml-4 text-red-400 text-sm">{t('game.campaignLimit', { turns: game.maxTurns - game.currentRound + 1 })}</span>}
                  </div>
              <button onClick={handleEndTurn} disabled={game.currentPlayer !== p1}
                className={`font-bold py-3 px-8 rounded-xl border-b-4 transition-all ${game.currentPlayer === p1 ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-800 text-white active:border-b-0 active:translate-y-1' : 'bg-gray-700 text-gray-500 border-gray-900 cursor-not-allowed'}`}
              >
-               {game.currentPlayer === p1 ? '结束回合' : (gameMode === 'multiplayer' ? '等待对方回合...' : 'AI 思考中...')}
+               {game.currentPlayer === p1 ? t('game.endTurn') : (gameMode === 'multiplayer' ? t('game.waitingOpponent') : t('game.aiThinking'))}
              </button>
           </div>
         </div>
@@ -2008,12 +2009,12 @@ export default function App() {
 
         return (
           <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center flex-col">
-            <h1 className="text-6xl font-bold text-red-500 mb-4 tracking-widest drop-shadow-lg">{isVictory ? '游戏胜利 (VICTORY)' : '游戏失败 (DEFEAT)'}</h1>
-            {isTimeOut && <p className="text-xl text-yellow-500 mb-4 font-bold">时间耗尽！指挥部已下达撤退命令。</p>}
-            {isVictory && gameMode === 'campaign' && (
-              <p className="text-2xl text-green-400 mb-8 font-bold animate-pulse">🎉 战役胜利！高级卡牌奖励已解锁。</p>
-            )}
-            <button onClick={() => window.location.reload()} className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-4 px-12 rounded-xl border-b-4 border-yellow-800 text-2xl transition-transform hover:-translate-y-1 active:translate-y-1 active:border-b-0 mt-4">重新开始</button>
+            <h1 className="text-6xl font-bold text-red-500 mb-4 tracking-widest drop-shadow-lg">{isVictory ? t('game.victory') : t('game.defeat')}</h1>
+            {isTimeOut && <p className="text-xl text-yellow-500 mb-4 font-bold">{t('game.timeUp')}</p>}
+              {isVictory && gameMode === 'campaign' && (
+                <p className="text-2xl text-green-400 mb-8 font-bold animate-pulse">{t('game.campaignVictory')}</p>
+              )}
+            <button onClick={() => window.location.reload()} className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-4 px-12 rounded-xl border-b-4 border-yellow-800 text-2xl transition-transform hover:-translate-y-1 active:translate-y-1 active:border-b-0 mt-4">{t('game.restart')}</button>
           </div>
         );
       })()}

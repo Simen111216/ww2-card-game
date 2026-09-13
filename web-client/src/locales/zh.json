@@ -21,7 +21,11 @@
     "enterCodePrompt": "输入主机房间码",
     "connecting": "正在连接...",
     "connectHost": "连接主机",
-    "enterBattlefield": "进入战场"
+    "enterBattlefield": "进入战场",
+    "rules": {
+      "rule4_1": "战场分为三层：",
+      "rule4_2": "。"
+    }
   },
   "game": {
     "myTurn": "我方回合",
@@ -59,7 +63,11 @@
     "cannotMoveEnemyControl": "无法移动，敌方可能控制着前线！",
     "enemySupportLine": "敌方支援战线",
     "frontline": "前线交火区",
-    "mySupportLine": "我方支援战线"
+    "mySupportLine": "我方支援战线",
+    "myCommander": "指挥官 (我方)",
+    "enemyCommander": "敌方指挥官",
+    "aiCommander": "AI 指挥官 (敌方)",
+    "interceptedV1": "敌方战斗机成功拦截了 V1飞弹！"
   },
   "deckBuilder": {
     "title": "🛠️ 自定义卡组 (Deck Builder)",

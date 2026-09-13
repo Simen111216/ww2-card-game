@@ -21,7 +21,11 @@
     "enterCodePrompt": "Enter Host Room Code",
     "connecting": "Connecting...",
     "connectHost": "Connect to Host",
-    "enterBattlefield": "Enter Battlefield"
+    "enterBattlefield": "Enter Battlefield",
+    "rules": {
+      "rule4_1": "The battlefield is divided into three layers: ",
+      "rule4_2": "."
+    }
   },
   "game": {
     "myTurn": "My Turn",
@@ -45,21 +49,25 @@
     "handSize": "Hand Size: {{count}}",
     "hqHp": "HQ HP: {{hp}} / 25",
     "cp": "CP: {{cp}} / {{maxCp}}",
-    "cpLabel": "Command Points (CP): ",
+    "cpLabel": "CP: ",
     "currentEnv": "🌍 Current Environment",
     "battleLogs": "📜 Battle Logs",
     "advancedDeployment": "Advanced Deployment",
     "cmdSkill": "Commander Skill: {{skill}}",
     "ready": "Ready",
-    "infantryCannotAttackAir": "Infantry cannot attack air units!",
-    "meleeSupportLineTarget": "Melee units in support line can only attack enemy frontline units!",
+    "infantryCannotAttackAir": "Infantry cannot attack Air Force!",
+    "meleeSupportLineTarget": "Melee units in the support line can only attack enemy frontline units!",
     "mustEnterFrontlineToAttackHq": "Must enter frontline to attack enemy HQ!",
     "mustDestroyGuardUnitsFirst": "Must destroy enemy [Guard] units first!",
     "notEnoughCp": "Not enough CP!",
-    "cannotMoveEnemyControl": "Cannot move, enemy may be controlling the frontline!",
+    "cannotMoveEnemyControl": "Cannot move, enemy might control the frontline!",
     "enemySupportLine": "Enemy Support Line",
     "frontline": "Frontline",
-    "mySupportLine": "My Support Line"
+    "mySupportLine": "My Support Line",
+    "myCommander": "Commander (Ally)",
+    "enemyCommander": "Enemy Commander",
+    "aiCommander": "AI Commander (Enemy)",
+    "interceptedV1": "Enemy fighter successfully intercepted the V1 missile!"
   },
   "deckBuilder": {
     "title": "🛠️ Deck Builder",
