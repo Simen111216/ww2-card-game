@@ -947,9 +947,23 @@ export default function App() {
         const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
         await sleep(1000);
 
-        // 0. AI 判断是否使用指挥官技能
+        // 0. AI 判断是否使用指挥官技能 (优化逻辑)
         if (p2.commander && p2.cp >= p2.commander.activeCost && (!p2.commander.currentCooldown || p2.commander.currentCooldown <= 0)) {
-          const shouldUse = Math.random() > 0.5; // 50%概率使用
+          let shouldUse = false;
+          // 根据指挥官和局势判断
+          if (p2.commander.id === 'cmd-zhukov' || p2.commander.id === 'cmd-patton' || p2.commander.id === 'cmd-degaulle') {
+            // 群体增益/回血型：己方场上单位大于等于2时使用
+            if (p2.board.length >= 2) shouldUse = true;
+          } else if (p2.commander.id === 'cmd-rommel') {
+            // 伤害型：敌方场上单位大于等于2时使用
+            if (p1.board.length >= 2) shouldUse = true;
+          } else if (p2.commander.id === 'cmd-monty') {
+            // 护盾型：己方有高价值/残血单位时使用
+            if (p2.board.length >= 1) shouldUse = true;
+          } else {
+            shouldUse = Math.random() > 0.5;
+          }
+
           if (shouldUse) {
              p2.cp -= p2.commander.activeCost;
              p2.commander.currentCooldown = p2.commander.activeCooldown;
@@ -1011,31 +1025,69 @@ export default function App() {
           }
         }
 
-        // 3. AI 攻击阶段
+        // 3. AI 攻击阶段 (仇恨值系统)
         const attackers = p2.board.filter(u => !u.hasAttackedThisTurn);
         for (const unit of attackers) {
           if (!p2.board.includes(unit)) continue;
           if (p2.hqHp <= 0 || p1.hqHp <= 0) break;
 
           let validTargets = p1.board;
+          
+          // 特殊词条判断
+          const hasAirborneStrike = unit.exclusiveName === '空降奇袭' || unit.exclusiveName === 'Airborne Strike' || unit.exclusiveName === '天降奇兵';
+          const isAntiAirPioneer = unit.exclusiveName === '制空先锋' || unit.exclusiveName === 'Air Superiority Pioneer' || unit.exclusiveName === '制空先鋒';
+          const isTankHunter = unit.exclusiveName === '猎甲' || unit.exclusiveName === 'Tank Hunter' || unit.exclusiveName === '獵甲';
+
           // 步兵不打空军
           if (unit.category === UnitCategory.INFANTRY) validTargets = validTargets.filter(t => t.category !== UnitCategory.AIR_FORCE);
           
           // 射程限制
-          if (unit.category !== UnitCategory.ARTILLERY && unit.category !== UnitCategory.AIR_FORCE) {
+          if (unit.category !== UnitCategory.ARTILLERY && unit.category !== UnitCategory.AIR_FORCE && !hasAirborneStrike) {
              if (unit.line === 'support') {
                  validTargets = validTargets.filter(t => t.line === 'frontline');
              }
           }
 
+          // 守护限制 (除非有空降奇袭)
+          const guards = validTargets.filter(t => t.keywords.includes(Keyword.GUARD));
+          if (guards.length > 0 && !hasAirborneStrike) {
+            validTargets = guards; // 只能打守护单位
+          }
+
           if (validTargets.length > 0) {
-            const target = [...validTargets].sort((a, b) => a.hp - b.hp)[0];
-            if (executeAttackRef.current) await executeAttackRef.current(unit, target, p2, p1, false);
+            // 计算仇恨值 (Threat Score)
+            const scoredTargets = validTargets.map(t => {
+              let score = 0;
+              // 1. 击杀潜力：能一击必杀的优先
+              let expectedDamage = unit.attack;
+              if (t.keywords.includes(Keyword.HEAVY_ARMOR)) expectedDamage -= 2;
+              if (expectedDamage >= t.hp) score += 50; 
+              
+              // 2. 目标价值：敌方攻击力越高、费用越高，威胁越大
+              score += t.attack * 2;
+              score += t.deployCost * 3;
+
+              // 3. 残血收割：血量越少越容易被集火
+              score += (t.maxHp - t.hp) * 2;
+
+              // 4. 专属词条优先度
+              if (isAntiAirPioneer && t.category === UnitCategory.AIR_FORCE) score += 100; // 制空先锋优先打飞机
+              if (isTankHunter && t.category === UnitCategory.ARMOR) score += 100; // 猎甲优先打坦克
+              if (hasAirborneStrike && t.line === 'support') score += 40; // 空降兵倾向切后排
+
+              return { target: t, score };
+            });
+
+            // 按仇恨值降序排序，取仇恨值最高的
+            scoredTargets.sort((a, b) => b.score - a.score);
+            const primaryTarget = scoredTargets[0].target;
+
+            if (executeAttackRef.current) await executeAttackRef.current(unit, primaryTarget, p2, p1, false);
           } else {
             // Check if can attack HQ
-            const guards = p1.board.filter(u => u.keywords.includes(Keyword.GUARD));
-            const canAtkHq = (unit.category === UnitCategory.ARTILLERY || unit.category === UnitCategory.AIR_FORCE) || (unit.line === 'frontline');
-            if (guards.length === 0 && canAtkHq) {
+            const hqGuards = p1.board.filter(u => u.keywords.includes(Keyword.GUARD));
+            const canAtkHq = (unit.category === UnitCategory.ARTILLERY || unit.category === UnitCategory.AIR_FORCE) || (unit.line === 'frontline') || hasAirborneStrike;
+            if ((hqGuards.length === 0 || hasAirborneStrike) && canAtkHq) {
                 if (executeAttackRef.current) await executeAttackRef.current(unit, 'hq', p2, p1, false);
             }
           }
