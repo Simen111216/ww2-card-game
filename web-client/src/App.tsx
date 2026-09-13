@@ -178,15 +178,15 @@ export function getAdvancedCardsData(): any[] {
 export function getAdvancedOrdersData(): any[] {
   return [
   {
-    id: 'adv-order-soviet', name: i18n.t('cards.order_41.name'), faction: Faction.SOVIET, type: CardType.ORDER, cost: 6, desc: i18n.t('cards.order_41.desc'),
+    id: 'adv-order-soviet', name: i18n.t('cards.order_41.name'), faction: Faction.SOVIET, type: CardType.ORDER, cost: 6, description: i18n.t('cards.order_41.desc'),
     effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.attack += 5; u.hp += 5; u.maxHp += 5; }); }
   },
   {
-    id: 'adv-order-german', name: i18n.t('cards.order_42.name'), faction: Faction.GERMANY, type: CardType.ORDER, cost: 6, desc: i18n.t('cards.order_42.desc'),
+    id: 'adv-order-german', name: i18n.t('cards.order_42.name'), faction: Faction.GERMANY, type: CardType.ORDER, cost: 6, description: i18n.t('cards.order_42.desc'),
     effect: (game: Game) => { game.currentPlayer.board.forEach(u => { u.attack += 3; u.hasAttackedThisTurn = false; u.hasMovedThisTurn = false; if(!u.keywords.includes(Keyword.HEAVY_ARMOR)) u.keywords.push(Keyword.HEAVY_ARMOR); }); }
   },
   {
-    id: 'adv-order-manhattan', name: i18n.t('cards.order_43.name'), faction: Faction.USA, type: CardType.ORDER, cost: 10, desc: i18n.t('cards.order_43.desc'),
+    id: 'adv-order-manhattan', name: i18n.t('cards.order_43.name'), faction: Faction.USA, type: CardType.ORDER, cost: 10, description: i18n.t('cards.order_43.desc'),
     effect: (game: Game) => { 
       const enemy = game.currentPlayer === game.player1 ? game.player2 : game.player1; 
       const hqId = enemy === game.player2 ? 'p2-hq' : 'p1-hq';
