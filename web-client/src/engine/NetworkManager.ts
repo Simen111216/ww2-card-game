@@ -15,7 +15,9 @@ export type NetworkAction =
   | { type: 'VFX', cardId: string, isP1: boolean }
   | { type: 'START_PLAY_ANIM', index: number, isP1: boolean, card: any }
   | { type: 'START_ATTACK_ANIM', attackerId: string, defenderId: string, isP1: boolean }
-  | { type: 'SPAWN_TRANSIENT_VFX', vfxType: 'damage' | 'heal' | 'armor' | 'death', text: string, targetId: string, isP1: boolean };
+  | { type: 'SPAWN_TRANSIENT_VFX', vfxType: 'damage' | 'heal' | 'armor' | 'death', text: string, targetId: string, isP1: boolean }
+  | { type: 'PING', timestamp: number }
+  | { type: 'PONG', timestamp: number };
 
 export class NetworkManager {
   private peer: Peer | null = null;
@@ -27,6 +29,8 @@ export class NetworkManager {
   public onDataCb?: (data: NetworkAction) => void;
   public onOpenCb?: (id: string) => void;
   public onCloseCb?: () => void;
+  public onPingCb?: (latency: number) => void;
+  private pingInterval: any = null;
 
   constructor() {}
 
@@ -65,12 +69,27 @@ export class NetworkManager {
     if (!this.conn) return;
     this.conn.on('open', () => {
       console.log('Network connected!');
+      // Start pinging
+      this.pingInterval = setInterval(() => {
+        this.send({ type: 'PING', timestamp: Date.now() });
+      }, 2000);
     });
     this.conn.on('data', (data) => {
-      if (this.onDataCb) this.onDataCb(data as NetworkAction);
+      const action = data as NetworkAction;
+      if (action.type === 'PING') {
+        this.send({ type: 'PONG', timestamp: action.timestamp });
+        return;
+      }
+      if (action.type === 'PONG') {
+        const latency = Date.now() - action.timestamp;
+        if (this.onPingCb) this.onPingCb(latency);
+        return;
+      }
+      if (this.onDataCb) this.onDataCb(action);
     });
     this.conn.on('close', () => {
       console.log('Network disconnected!');
+      if (this.pingInterval) clearInterval(this.pingInterval);
       if (this.onCloseCb) this.onCloseCb();
     });
   }

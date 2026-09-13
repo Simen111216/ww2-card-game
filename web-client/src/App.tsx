@@ -664,6 +664,7 @@ export default function App() {
   const [roomId, setRoomId] = useState('');
   const [isHost, setIsHost] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<string>('');
+  const [networkLatency, setNetworkLatency] = useState<number | null>(null);
   const [remoteState, setRemoteState] = useState<any>(null);
 
   const [game, setGame] = useState<Game | null>(null);
@@ -1356,6 +1357,19 @@ export default function App() {
   const p1 = game.player1;
   const p2 = game.player2;
 
+  // 阻止联机客机在不是自己回合时的误触
+  const canInteract = () => {
+    if (gameMode === 'multiplayer') {
+      if (networkManager.isHost) {
+        return game?.currentPlayer === game?.player1;
+      } else {
+        // 在客机视角中，player2 才是客机自己（因为 game state 是主机下发的，p1 是主机，p2 是客机）
+        return game?.currentPlayer.name === game?.player2.name;
+      }
+    }
+    return game?.currentPlayer === game?.player1;
+  };
+
   const playOrderVFX = async (cardId: string, isP1: boolean) => {
     if (cardId.includes('adv-')) {
       setOrderVfx({ type: 'advanced', area: 'global' });
@@ -1991,7 +2005,7 @@ export default function App() {
                     <span className="text-[8px] text-gray-400 mt-1">{p1.commander.passiveDesc}</span>
                   </div>
                 </div>
-                {game.currentPlayer === p1 && p1.cp >= p1.commander.activeCost && (
+                {canInteract() && p1.cp >= p1.commander.activeCost && (
                   <button 
                     onClick={() => {
                        if (gameMode === 'multiplayer' && !isHost) {
@@ -2034,10 +2048,10 @@ export default function App() {
                     {t('game.turn')}{game.turnNumber} : {game.currentPlayer.name}{t('game.sTurn')}
                    {game.maxTurns !== Infinity && <span className="ml-4 text-red-400 text-sm">{t('game.campaignLimit', { turns: game.maxTurns - game.currentRound + 1 })}</span>}
                  </div>
-             <button onClick={handleEndTurn} disabled={game.currentPlayer !== p1}
-               className={`font-bold py-3 px-8 rounded-xl border-b-4 transition-all ${game.currentPlayer === p1 ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-800 text-white active:border-b-0 active:translate-y-1' : 'bg-gray-700 text-gray-500 border-gray-900 cursor-not-allowed'}`}
+             <button onClick={handleEndTurn} disabled={!canInteract()}
+               className={`font-bold py-3 px-8 rounded-xl border-b-4 transition-all ${canInteract() ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-800 text-white active:border-b-0 active:translate-y-1' : 'bg-gray-700 text-gray-500 border-gray-900 cursor-not-allowed'}`}
              >
-               {game.currentPlayer === p1 ? t('game.endTurn') : (gameMode === 'multiplayer' ? t('game.waitingOpponent') : t('game.aiThinking'))}
+               {canInteract() ? t('game.endTurn') : (gameMode === 'multiplayer' ? t('game.waitingOpponent') : t('game.aiThinking'))}
              </button>
           </div>
         </div>
@@ -2055,9 +2069,9 @@ export default function App() {
                 exit={{ y: -200, opacity: 0, scale: 0 }} 
                 transition={{ duration: 0.3 }}
                 whileHover={{ y: -30, rotate: 0, scale: 0.95, zIndex: 40 }}
-                drag={game.currentPlayer === p1 && p1.cp >= card.deployCost} dragSnapToOrigin onDragEnd={(e, info) => handleDragEnd(e, info, i, card)} whileDrag={{ scale: 1, zIndex: 50, rotate: 0 }}
-                className={`relative origin-bottom -mx-3 ${game.currentPlayer === p1 && p1.cp >= card.deployCost ? 'cursor-grab active:cursor-grabbing' : 'cursor-not-allowed'}`}
-              ><CardComponent card={card} canPlay={game.currentPlayer === p1 && p1.cp >= card.deployCost} /></motion.div>
+                drag={canInteract() && p1.cp >= card.deployCost} dragSnapToOrigin onDragEnd={(e, info) => handleDragEnd(e, info, i, card)} whileDrag={{ scale: 1, zIndex: 50, rotate: 0 }}
+                className={`relative origin-bottom -mx-3 ${canInteract() && p1.cp >= card.deployCost ? 'cursor-grab active:cursor-grabbing' : 'cursor-not-allowed'}`}
+              ><CardComponent card={card} canPlay={canInteract() && p1.cp >= card.deployCost} /></motion.div>
             )})}
           </AnimatePresence>
         </div>
