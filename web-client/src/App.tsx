@@ -743,6 +743,8 @@ export default function App() {
     const p2 = new Player(gameMode === 'ai' || isCampaign ? t('game.aiCommander') : t('game.enemyCommander'), p2Fac, p2Deck);
     p2.commander = getCommandersData().find(c => c.faction === p2Fac) || null;
     const newGame = new Game(p1, p2);
+    // Bind vfx function before start game so turn 1 env effects work
+    newGame.onVfx = spawnTransientVfx;
 
     if (isCampaign && scenario) {
       newGame.maxTurns = scenario.maxTurns;
@@ -817,6 +819,7 @@ export default function App() {
         p2.commander = getCommandersData().find(c => c.faction === data.p1Faction) || null;
         
         const newGame = new Game(p1, p2);
+        newGame.onVfx = spawnTransientVfx;
         setGame(newGame);
         setGamePhase('playing');
       } else if (data.type === 'VFX') {
@@ -1050,12 +1053,14 @@ export default function App() {
   // 回合切换横幅动画
   useEffect(() => {
     if (gamePhase === 'playing' && game) {
+      if (!game.currentPlayer) return;
+      const p1 = game.player1;
       const msg = game.currentPlayer === p1 ? t('game.myTurn') : t('game.enemyTurn');
       setTurnBanner(msg);
-      const t = setTimeout(() => setTurnBanner(null), 1500);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setTurnBanner(null), 1500);
+      return () => clearTimeout(timer);
     }
-  }, [game?.turnNumber, gamePhase]);
+  }, [game?.turnNumber, gamePhase, t, game?.currentPlayer]);
 
   // 自动滚动日志
   useEffect(() => {
@@ -1063,6 +1068,15 @@ export default function App() {
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [game?.logs.length, showLogs]);
+
+  // Handle i18n dynamic t function for p1/p2 name when switching language during game
+  useEffect(() => {
+    if (gamePhase === 'playing' && game) {
+      game.player1.name = t('game.myCommander');
+      game.player2.name = gameMode === 'ai' || gameMode === 'campaign' ? t('game.aiCommander') : t('game.enemyCommander');
+      forceUpdate();
+    }
+  }, [i18n.language, gamePhase, t, gameMode]);
 
   if (gamePhase === 'lobby') {
     return (
