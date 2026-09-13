@@ -125,25 +125,43 @@ export class KeywordEngine {
     });
   }
 
-  // 4. 计算攻击方最终伤害 (modifyAttackDamage)
-  public static modifyAttackDamage(attacker: UnitCard, defender: UnitCard | 'hq', baseDamage: number, game: Game): number {
-    let finalDamage = baseDamage;
-
-    const owner = game.currentPlayer.board.includes(attacker) ? game.currentPlayer : (game.currentPlayer === game.player1 ? game.player2 : game.player1);
-
-    // 动态光环加成
+  // 获取面板最终属性 (计算光环)
+  public static getEffectiveStats(unit: UnitCard, owner: Player): { attack: number, defense: number } {
+    let attack = unit.attack;
+    let defense = unit.defense;
+    
     let auraBonus = 0;
     owner.board.forEach(u => {
-      if (u.exclusiveId === 'soviet_1' && attacker.deployCost <= 2) auraBonus += 1; // 人海
-      if (u.exclusiveId === 'soviet_3' && attacker.category === UnitCategory.INFANTRY && attacker.faction === Faction.SOVIET) auraBonus += 2; // 督战
-      if (u.exclusiveId === 'german_5' && attacker.category === UnitCategory.ARMOR && attacker.deployCost >= 4 && attacker.deployCost <= 7) auraBonus += 2; // 战场中坚
+      if (u.exclusiveId === 'soviet_1' && unit.deployCost <= 2) auraBonus += 1; // 人海
+      if (u.exclusiveId === 'soviet_3' && unit.category === UnitCategory.INFANTRY && unit.faction === Faction.SOVIET) auraBonus += 2; // 督战
+      if (u.exclusiveId === 'german_5' && unit.category === UnitCategory.ARMOR && unit.deployCost >= 4 && unit.deployCost <= 7) auraBonus += 2; // 战场中坚
       if (u.exclusiveId === 'usa_3') auraBonus += 1; // 工业洪流 (谢尔曼)
-      if (u.exclusiveId === 'france_6' && attacker.exclusiveId === 'france_6' && owner.board.some(x => x.exclusiveId === 'france_1')) auraBonus += 3; // 复国雄鹰
-      if (u.exclusiveId === 'adv_5' && attacker.faction === Faction.FRANCE) auraBonus += 2; // 光复山河 翻倍(简化为固定加成)
+      if (u.exclusiveId === 'france_6' && unit.exclusiveId === 'france_6' && owner.board.some(x => x.exclusiveId === 'france_1')) auraBonus += 3; // 复国雄鹰
+      if (u.exclusiveId === 'adv_5' && unit.faction === Faction.FRANCE) auraBonus += 2; // 光复山河 翻倍(简化为固定加成)
     });
-    // 人海最多叠加3层
-    if (attacker.deployCost <= 2 && auraBonus > 3) auraBonus = 3;
-    finalDamage += auraBonus;
+    
+    if (unit.deployCost <= 2 && auraBonus > 3) auraBonus = 3;
+    attack += auraBonus;
+
+    // 绝境坚守 (法国外籍军团)
+    if (unit.exclusiveId === 'france_2') {
+       attack += Math.max(0, 4 - owner.board.length);
+    }
+    
+    // 固守炮击
+    if (unit.exclusiveId === 'france_5' && !unit.hasMovedThisTurn) {
+       attack += 2;
+    }
+
+    return { attack, defense };
+  }
+
+  // 4. 计算攻击方最终伤害 (modifyAttackDamage)
+  public static modifyAttackDamage(attacker: UnitCard, defender: UnitCard | 'hq', baseDamage: number, game: Game): number {
+    const owner = game.currentPlayer.board.includes(attacker) ? game.currentPlayer : (game.currentPlayer === game.player1 ? game.player2 : game.player1);
+    
+    // 获取面板基础属性（包含光环）
+    let finalDamage = KeywordEngine.getEffectiveStats(attacker, owner).attack;
 
     // 针对单位的伤害修正
     if (defender !== 'hq') {

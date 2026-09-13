@@ -15,6 +15,8 @@ import './index.css';
 
 import { AudioEngine } from './engine/AudioEngine';
 
+import { KeywordEngine } from './engine/KeywordEngine';
+
 // --- 指挥官系统库 ---
 export function getCommandersData(): Commander[] {
   const commanders: Commander[] = [
@@ -1715,6 +1717,12 @@ export default function App() {
     const isDefender = attackAnim?.defenderId === unit.id && attackAnim.phase === 'strike';
     const isP1 = owner === 'p1';
 
+    let effectiveCard = unit;
+    if (game) {
+       const effectiveStats = KeywordEngine.getEffectiveStats(unit, isP1 ? p1 : p2);
+       effectiveCard = { ...unit, attack: effectiveStats.attack, defense: effectiveStats.defense };
+    }
+
     return (
       <motion.div 
         key={unit.id} layout
@@ -1735,7 +1743,7 @@ export default function App() {
           <div className="absolute -top-3 -right-3 z-20 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg border border-green-700 animate-bounce">可行动</div>
         )}
         <CardComponent 
-          card={unit} 
+          card={effectiveCard} 
           onClick={() => handleBoardUnitClick(owner, i)}
           isSelected={selectedBoardUnit?.player === owner && selectedBoardUnit.index === i}
           canPlay={owner === 'p1' ? game.currentPlayer === p1 : (game.currentPlayer === p1 && selectedBoardUnit?.player === 'p1')} 
@@ -1874,24 +1882,24 @@ export default function App() {
       </AnimatePresence>
 
       <motion.div animate={attackAnim?.defenderId === 'hq' && game.currentPlayer === p1 ? { x: [-10, 10, -10, 10, 0], backgroundColor: ['#1f2937', '#7f1d1d', '#1f2937'] } : {}}
-        className="bg-gray-800 p-4 border-b-4 border-gray-700 flex justify-between items-center shadow-lg z-10 relative">
+        className="bg-gray-800 p-2 border-b-4 border-gray-700 flex justify-between items-center shadow-lg z-10 relative">
         <div className="flex items-center gap-4">
           {/* 敌方指挥官 */}
           {p2.commander && (
-            <div className="w-16 h-16 bg-gray-900 rounded-full border-2 border-red-700 flex items-center justify-center flex-col shadow-lg overflow-hidden group relative">
-              <span className="text-[10px] font-bold text-gray-400 group-hover:hidden text-center">{p2.commander.name.split('·').pop()}</span>
+            <div className="w-12 h-12 bg-gray-900 rounded-full border-2 border-red-700 flex items-center justify-center flex-col shadow-lg overflow-hidden group relative">
+              <span className="text-[9px] font-bold text-gray-400 group-hover:hidden text-center">{p2.commander.name.split('·').pop()}</span>
               <div className="absolute inset-0 bg-black/90 hidden group-hover:flex flex-col items-center justify-center p-1">
-                <span className="text-[8px] text-amber-400 font-bold">{p2.commander.passiveName}</span>
-                <span className="text-[8px] text-blue-400 font-bold mt-1">{p2.commander.activeName}</span>
+                <span className="text-[7px] text-amber-400 font-bold">{p2.commander.passiveName}</span>
+                <span className="text-[7px] text-blue-400 font-bold mt-1">{p2.commander.activeName}</span>
               </div>
             </div>
           )}
           <div id="p2-hq">
-            <h2 className="text-xl font-bold text-gray-300">{p2.name} - {p2.faction}</h2>
-            <div className="flex gap-4 mt-2 text-sm">
-              <span className="bg-red-900 px-3 py-1 rounded-full font-bold">HQ 血量: {p2.hqHp} / 25</span>
-              <span className="bg-blue-900 px-3 py-1 rounded-full">指挥点: {p2.cp} / {p2.maxCp}</span>
-              <span className="bg-gray-700 px-3 py-1 rounded-full">手牌数: {p2.hand.length}</span>
+            <h2 className="text-lg font-bold text-gray-300">{p2.name} - {p2.faction}</h2>
+            <div className="flex gap-4 mt-1 text-xs">
+              <span className="bg-red-900 px-2 py-0.5 rounded-full font-bold">HQ 血量: {p2.hqHp} / 25</span>
+              <span className="bg-blue-900 px-2 py-0.5 rounded-full">指挥点: {p2.cp} / {p2.maxCp}</span>
+              <span className="bg-gray-700 px-2 py-0.5 rounded-full">手牌数: {p2.hand.length}</span>
             </div>
           </div>
         </div>
@@ -1912,7 +1920,7 @@ export default function App() {
         )}
       </motion.div>
 
-      <motion.div className="flex-grow flex flex-col relative p-4 gap-2 bg-[url('https://www.transparenttextures.com/patterns/black-linen.png')] min-h-[600px]"
+      <motion.div className="flex-grow flex flex-col relative p-2 gap-1 bg-[url('https://www.transparenttextures.com/patterns/black-linen.png')] min-h-[400px]"
         animate={ globalShake > 0 ? { x: [-globalShake, globalShake, -globalShake, globalShake, 0], y: [-globalShake, globalShake, -globalShake, globalShake, 0] } : {} } transition={{ duration: 0.3 }}>
         <div className="pointer-events-none fixed inset-0 shadow-[inset_0_0_300px_rgba(0,0,0,1)] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 mix-blend-overlay z-40"></div>
 
@@ -1952,7 +1960,7 @@ export default function App() {
         </div>
 
         {/* 前线交火区 */}
-        <div className="flex-1 flex flex-col justify-center gap-4 w-full bg-red-900/10 border-y-4 border-red-700 relative py-4">
+        <div className="flex-1 flex flex-col justify-center gap-4 w-full bg-red-900/20 border-y-4 border-red-700 relative py-4 shadow-[inset_0_0_50px_rgba(255,0,0,0.2)]">
           <div className="absolute inset-0 flex items-center justify-center text-red-500/10 font-black text-6xl tracking-widest pointer-events-none uppercase">{t('game.frontline')}</div>
           
           <AnimatePresence>
@@ -2070,31 +2078,31 @@ export default function App() {
               </div>
             )}
             <div id="p1-hq">
-              <h2 className="text-2xl font-bold text-white">{p1.name} - {p1.faction}</h2>
-              <div className="flex gap-4 mt-2 text-sm">
-                <span className="bg-red-900 px-3 py-1 rounded-full font-bold shadow-inner">HQ 血量: {p1.hqHp} / 25</span>
-                <span className="bg-blue-900 px-3 py-1 rounded-full font-bold shadow-inner">指挥点(CP): <span className="text-yellow-400 text-lg">{p1.cp}</span> / {p1.maxCp}</span>
-                <span className="bg-gray-700 px-3 py-1 rounded-full">牌库剩余: {p1.deck.length}</span>
+              <h2 className="text-xl font-bold text-white">{p1.name} - {p1.faction}</h2>
+              <div className="flex gap-4 mt-1 text-xs">
+                <span className="bg-red-900 px-2 py-0.5 rounded-full font-bold shadow-inner">HQ 血量: {p1.hqHp} / 25</span>
+                <span className="bg-blue-900 px-2 py-0.5 rounded-full font-bold shadow-inner">指挥点(CP): <span className="text-yellow-400 text-sm">{p1.cp}</span> / {p1.maxCp}</span>
+                <span className="bg-gray-700 px-2 py-0.5 rounded-full">牌库剩余: {p1.deck.length}</span>
               </div>
             </div>
           </div>
           <div className="flex flex-col items-end">
-             <button onClick={() => setShowLogs(!showLogs)} className="mb-4 text-sm bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-full border border-gray-500 transition-colors">
+             <button onClick={() => setShowLogs(!showLogs)} className="mb-2 text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full border border-gray-500 transition-colors">
                {showLogs ? '隐藏日志' : '📜 查看对战日志'}
              </button>
-             <div className={`text-xl font-bold mb-2 ${game.currentPlayer === p1 ? 'text-green-400' : 'text-gray-500'}`}>
+             <div className={`text-lg font-bold mb-1 ${game.currentPlayer === p1 ? 'text-green-400' : 'text-gray-500'}`}>
                     {t('game.turn')}{game.turnNumber} : {game.currentPlayer.name}{t('game.sTurn')}
-                   {game.maxTurns !== Infinity && <span className="ml-4 text-red-400 text-sm">{t('game.campaignLimit', { turns: game.maxTurns - game.currentRound + 1 })}</span>}
+                   {game.maxTurns !== Infinity && <span className="ml-4 text-red-400 text-xs">{t('game.campaignLimit', { turns: game.maxTurns - game.currentRound + 1 })}</span>}
                  </div>
              <button onClick={handleEndTurn} disabled={!canInteract()}
-               className={`font-bold py-3 px-8 rounded-xl border-b-4 transition-all ${canInteract() ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-800 text-white active:border-b-0 active:translate-y-1' : 'bg-gray-700 text-gray-500 border-gray-900 cursor-not-allowed'}`}
+               className={`font-bold py-2 px-6 rounded-xl border-b-4 transition-all text-sm ${canInteract() ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-800 text-white active:border-b-0 active:translate-y-1' : 'bg-gray-700 text-gray-500 border-gray-900 cursor-not-allowed'}`}
              >
                {canInteract() ? t('game.endTurn') : (gameMode === 'multiplayer' ? t('game.waitingOpponent') : t('game.aiThinking'))}
              </button>
           </div>
         </div>
 
-        <div className="flex justify-center -mb-4 overflow-visible pb-4 pt-2 px-4 h-48">
+        <div className="flex justify-center -mb-4 overflow-visible pb-4 pt-2 px-4 h-36">
           <AnimatePresence>
             {p1.hand.map((card, i) => {
               const mid = (p1.hand.length - 1) / 2;

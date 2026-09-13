@@ -37,54 +37,66 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
       id={`card-${card.id}`}
       onClick={canPlay ? onClick : undefined}
       className={`
-        relative w-40 h-64 rounded-lg shadow-lg overflow-hidden border-4 transition-transform duration-200
-        ${bgColor}
-        ${canPlay ? 'cursor-pointer hover:-translate-y-4 hover:shadow-xl' : 'opacity-75 cursor-not-allowed'}
-        ${isSelected ? 'ring-4 ring-yellow-400 -translate-y-4' : 'border-gray-800'}
+        relative w-32 h-48 rounded-lg shadow-lg overflow-hidden border-[3px] transition-transform duration-200
+        ${bgColor} bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] bg-blend-multiply
+        ${canPlay ? 'cursor-pointer hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(0,0,0,0.8)]' : 'opacity-75 cursor-not-allowed'}
+        ${isSelected ? 'ring-4 ring-yellow-400 -translate-y-2' : 'border-gray-800'}
         flex flex-col text-white select-none
       `}
     >
       {/* 部署消耗 - 左上角 */}
-      <div className="absolute top-1 left-1 bg-yellow-500 text-black font-bold rounded-full w-8 h-8 flex items-center justify-center border-2 border-yellow-700 z-10 shadow-sm">
+      <div className="absolute top-1 left-1 bg-yellow-500 text-black font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-yellow-700 z-10 shadow-sm text-sm">
         {card.deployCost}
       </div>
 
       {/* 卡牌类型标识 - 右上角 */}
-      <div className="absolute top-2 right-2 text-xs font-bold uppercase opacity-80 z-10 flex gap-1">
-        {card.isAdvanced && (
-           <span className="bg-amber-600 text-white px-1 rounded shadow-lg border border-amber-400">{t('card.advanced')}</span>
+      <div className="absolute top-1 right-1 text-[10px] font-bold uppercase opacity-80 z-10 flex gap-1 flex-col items-end">
+        <div className="flex gap-1">
+          {card.isAdvanced && (
+             <span className="bg-amber-600 text-white px-1 rounded shadow-lg border border-amber-400">{t('card.advanced')}</span>
+          )}
+          <span className="bg-black/50 px-1 rounded">
+            {card.type === CardType.UNIT ? (unitCard?.category ? t(`card.category.${unitCard.category}`) : t('card.unit')) : t('card.order')}
+          </span>
+        </div>
+        
+        {/* 状态图标 */}
+        {unitCard && (
+          <div className="flex gap-1 mt-0.5">
+            {unitCard.hasShield && <span className="bg-cyan-500 text-white px-1 rounded text-[10px] shadow-sm animate-pulse" title="护盾">🛡️</span>}
+            {unitCard.burnStacks && unitCard.burnStacks > 0 ? <span className="bg-orange-600 text-white px-1 rounded text-[10px] shadow-sm animate-bounce" title={`灼烧 x${unitCard.burnStacks}`}>🔥{unitCard.burnStacks}</span> : null}
+            {unitCard.keywords?.includes('守护' as any) && <span className="bg-gray-400 text-black px-1 rounded text-[10px] shadow-sm" title="守护">🔰</span>}
+          </div>
         )}
-        <span className="bg-black/50 px-1 rounded">
-          {card.type === CardType.UNIT ? (unitCard?.category ? t(`card.category.${unitCard.category}`) : t('card.unit')) : t('card.order')}
-        </span>
       </div>
 
       {/* 图片/插图占位 */}
-      <div className="w-full h-24 bg-gray-900/50 mt-4 border-b-2 border-t-2 border-gray-800 flex items-center justify-center">
-        <span className="text-gray-400 text-sm italic">{t('card.imagePlaceholder')}</span>
+      <div className="w-full h-16 bg-gray-900/80 mt-3 border-b border-t border-gray-600 flex items-center justify-center shadow-inner relative">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')] opacity-50"></div>
+        <span className="text-gray-500 text-[10px] italic z-10">{t('card.imagePlaceholder')}</span>
       </div>
 
       {/* 卡牌名称 */}
-      <div className="px-2 py-1 bg-black/60 text-center font-bold text-sm border-b-2 border-gray-800">
+      <div className="px-1 py-1 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-center font-bold text-xs border-b-2 border-gray-900 leading-tight shadow-md text-amber-50">
         {card.name}
       </div>
       
       {/* 军衔展示区 (仅单位卡且在场上时可能有 rank) */}
       {unitCard && (unitCard.rank || 0) > 0 && (
-        <div className="absolute top-12 left-1/2 -translate-x-1/2 flex gap-0.5 z-10 drop-shadow-md">
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 flex gap-0.5 z-10 drop-shadow-md">
           {Array.from({ length: unitCard.rank! }).map((_, i) => (
-             <span key={i} className="text-yellow-400 text-lg leading-none">★</span>
+             <span key={i} className="text-yellow-400 text-[10px] leading-none">★</span>
           ))}
         </div>
       )}
 
       {/* 卡牌描述 / 词条解析 */}
-      <div className="p-2 text-[9px] flex-grow bg-white/10 text-gray-200 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-track]:bg-transparent flex flex-col justify-start gap-1 leading-tight">
+      <div className="p-1 text-[8px] flex-grow bg-white/10 text-gray-200 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-track]:bg-transparent flex flex-col justify-start gap-0.5 leading-tight">
         {isUnit ? (
           <>
             {/* 专属词条（如果有） */}
             {unitCard.exclusiveName && (
-              <div className="border-b border-gray-600/50 pb-1 mb-1">
+              <div className="border-b border-gray-600/50 pb-0.5 mb-0.5">
                 <span className="font-bold text-yellow-400">◆ {unitCard.exclusiveName}</span>
                 <p className="text-gray-300 mt-0.5">{unitCard.exclusiveDesc}</p>
               </div>
@@ -92,7 +104,7 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
             
             {/* 基础词条 */}
             {unitCard.keywords.length > 0 ? (
-              <div className="flex flex-col gap-1 text-left w-full">
+              <div className="flex flex-col gap-0.5 text-left w-full">
                 {unitCard.keywords.map((kw, i) => (
                   <div key={i} className="flex">
                     <span className="font-bold text-purple-300 shrink-0">【{t(`card.keywords.${kw}`)}】</span>
@@ -101,17 +113,17 @@ export const CardComponent: React.FC<CardProps> = ({ card, onClick, isSelected, 
                 ))}
               </div>
             ) : (
-              !unitCard.exclusiveName && <span className="text-gray-500 italic text-center w-full">{t('card.noSpecialTrait')}</span>
+              !unitCard.exclusiveName && <span className="text-gray-500 italic text-center w-full mt-1">{t('card.noSpecialTrait')}</span>
             )}
           </>
         ) : (
-          <span className="text-center w-full">{card.description}</span>
+          <span className="text-center w-full mt-1">{card.description}</span>
         )}
       </div>
 
       {/* 属性栏 (仅单位卡显示) */}
       {unitCard && (
-        <div className="w-full h-6 shrink-0 bg-black/80 flex justify-between items-center px-2 text-[11px] font-bold border-t-2 border-gray-800">
+        <div className="w-full h-5 shrink-0 bg-black/80 flex justify-between items-center px-1 text-[10px] font-bold border-t-2 border-gray-800">
           <div className="text-red-400 flex items-center" title={t('card.attack')}>
             ⚔ {unitCard.attack}
           </div>
