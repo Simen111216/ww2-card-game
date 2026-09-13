@@ -756,7 +756,8 @@ export default function App() {
     setGamePhase('playing');
     
     if (gameMode === 'multiplayer' && networkManager.isHost) {
-      networkManager.send({ type: 'GAME_START', p1Faction: playerFaction, p2Faction: aiFaction });
+      // Send GAME_START with actual factions used
+      networkManager.send({ type: 'GAME_START', p1Faction: p1Fac, p2Faction: p2Fac });
       networkManager.send({ type: 'SYNC_STATE', state: newGame.serialize() });
     }
   };
@@ -774,7 +775,7 @@ export default function App() {
       if (networkManager.isHost) {
         if (game) networkManager.send({ type: 'SYNC_STATE', state: game.serialize() });
       } else {
-        // Guest joins, send their custom deck config
+        // Guest joins, send their custom deck config and faction
         let deckCounts = {};
         try {
            deckCounts = JSON.parse(localStorage.getItem('customDecks') || '{}')[playerFaction] || {};
@@ -1143,7 +1144,17 @@ export default function App() {
                 <div className="flex flex-col gap-3">
                   {Object.values(Faction).map(f => (
                     <button 
-                      key={f} onClick={() => setPlayerFaction(f)}
+                      key={f} onClick={() => {
+                        setPlayerFaction(f);
+                        if (gameMode === 'multiplayer' && !networkManager.isHost && networkManager.conn) {
+                          let deckCounts = {};
+                          try { deckCounts = JSON.parse(localStorage.getItem('customDecks') || '{}')[f] || {}; } catch(e) {}
+                          networkManager.send({ type: 'GUEST_READY', faction: f, deckCounts });
+                        }
+                        if (gameMode === 'multiplayer' && networkManager.isHost && networkManager.conn) {
+                          networkManager.send({ type: 'HOST_INFO', faction: f });
+                        }
+                      }}
                       className={`px-8 py-3 rounded font-bold transition-all ${playerFaction === f ? 'bg-red-700 text-white border-2 border-red-400 scale-110' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
                     >
                       {f}
