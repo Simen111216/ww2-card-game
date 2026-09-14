@@ -21,6 +21,7 @@ export class KeywordEngine {
       case 'adv_3': // 天降奇兵 (101空降师)
       case 'uk_2':  // 空降奇袭 (红魔伞兵)
       case 'usa_2': // 丛林利刃 (游骑兵)
+      case 'adv_4': // 暗夜绝杀 (SAS特种空勤团)
         game.addLog(owner.name, `[${unit.name}] 奇袭入场！无视敌方守护！`, 'skill');
         break;
       case 'usa_4': // 后期王牌 (M26 潘兴)
@@ -193,9 +194,9 @@ export class KeywordEngine {
       if (attacker.exclusiveId === 'usa_4' && defender.faction === Faction.GERMANY && defender.category === UnitCategory.ARMOR && defender.deployCost >= 7) {
          finalDamage += 5; // 后期王牌 对德系高阶装甲真实伤害(简化为+5)
       }
-      if (attacker.exclusiveId === 'uk_5' && defender.hp <= defender.maxHp / 2) {
-         finalDamage += 3; // 25磅炮 锁定残血
-      }
+      if (attacker.exclusiveId === 'uk_5' && defender.hp <= Math.floor(defender.maxHp / 2)) {
+       finalDamage += 3; // 25磅炮 锁定残血
+    }
       if (attacker.exclusiveId === 'uk_6' && defender.faction === Faction.GERMANY && defender.category === UnitCategory.AIR_FORCE) {
          finalDamage = Math.floor(finalDamage * 1.5); // 英伦守护 对德系空军
       }
@@ -237,7 +238,7 @@ export class KeywordEngine {
     }
 
     // 专属词条判定
-    if (defender.exclusiveId === 'soviet_2' && defender.hp <= defender.maxHp / 2) {
+    if (defender.exclusiveId === 'soviet_2' && defender.hp <= Math.floor(defender.maxHp / 2)) {
       finalDamage = Math.floor(finalDamage * 0.7); // 死守 30%免伤
     }
     if (defender.exclusiveId === 'soviet_6' && (attacker.category === UnitCategory.ARTILLERY || attacker.category === UnitCategory.AIR_FORCE)) {
@@ -258,7 +259,7 @@ export class KeywordEngine {
       const reduction = Math.min(0.5, 0.1 * Math.max(0, 5 - owner.board.length));
       finalDamage = Math.floor(finalDamage * (1 - reduction)); // 绝境坚守
     }
-    if (defender.exclusiveId === 'adv_5' && defender.hp <= defender.maxHp / 4) {
+    if (defender.exclusiveId === 'adv_5' && defender.hp <= Math.floor(defender.maxHp / 4)) {
       game.addLog('系统', `[${defender.name}] 触发光复山河，残血无敌！`, 'skill');
       finalDamage = 0;
     }
@@ -318,7 +319,8 @@ export class KeywordEngine {
     }
     if (attacker.exclusiveId === 'france_1' && defender !== 'hq') {
        (defender as UnitCard).hasAttackedThisTurn = true; // 变相降低攻速
-       game.addLog(game.currentPlayer.name, `[${attacker.name}] 袭扰了目标，使其本回合无法反击/攻击！`, 'skill');
+       (defender as UnitCard).hasMovedThisTurn = true; // 降低移速
+       game.addLog(game.currentPlayer.name, `[${attacker.name}] 袭扰了目标，使其本回合无法移动和攻击！`, 'skill');
     }
   }
 
@@ -326,8 +328,8 @@ export class KeywordEngine {
   public static afterKill(attacker: UnitCard, defender: UnitCard | 'hq', game: Game, owner: Player) {
     if (defender === 'hq') return;
 
-    // 空降奇袭 / 天降奇兵
-    if (['uk_2', 'usa_advanced', 'adv_3'].includes(attacker.exclusiveId || '')) {
+    // 空降奇袭 / 天降奇兵 / 暗夜绝杀(高级潜伏)
+    if (['uk_2', 'adv_3', 'adv_4'].includes(attacker.exclusiveId || '')) {
       attacker.hasAttackedThisTurn = false;
       game.addLog(owner.name, `[${attacker.name}] 触发奇袭，击杀目标后可再次行动！`, 'skill');
     }
@@ -363,7 +365,7 @@ export class KeywordEngine {
     }
 
     const guards = pDef.board.filter(u => u.keywords.includes(Keyword.GUARD));
-    const hasAirborne = ['uk_2', 'usa_2', 'adv_3', 'usa_advanced'].includes(attacker.exclusiveId || '');
+    const hasAirborne = ['uk_2', 'usa_2', 'adv_3', 'adv_4'].includes(attacker.exclusiveId || '');
     
     if (guards.length > 0 && !hasAirborne) {
       if (defender === 'hq' || !defender.keywords.includes(Keyword.GUARD)) {
