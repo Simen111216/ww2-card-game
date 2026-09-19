@@ -465,8 +465,8 @@ export function buildDeck(faction: Faction, customCounts?: Record<string, number
       if (counts) {
           // 将所有单元补充上统一ID，供匹配
           const allUnits = factionUnits.map(u => ({ ...u, id: `${faction}-unit-${u.name}`, type: CardType.UNIT, category: u.cat, deployCost: u.cost, attack: u.atk, defense: u.def, hp: u.hp, maxHp: u.hp, moveCost: 1, keywords: u.keywords || [], line: 'support', hasMovedThisTurn: false, hasAttackedThisTurn: false }));
-          const allAdvUnits = myAdvancedUnits.map(c => ({...c, cat: c.cat, cost: c.cost, atk: c.atk, def: c.def, isAdvanced: true, line: 'support', hasMovedThisTurn: false, hasAttackedThisTurn: false}));
-          const allAdvOrders = myAdvancedOrders.map(c => ({...c, isAdvanced: true}));
+          const allAdvUnits = myAdvancedUnits.map(c => ({...c, category: c.cat, deployCost: c.cost, attack: c.atk, defense: c.def, hp: c.hp, maxHp: c.hp, moveCost: 1, description: c.desc, isAdvanced: true, line: 'support', hasMovedThisTurn: false, hasAttackedThisTurn: false}));
+          const allAdvOrders = myAdvancedOrders.map(c => ({...c, deployCost: c.cost, isAdvanced: true}));
           const allEnvs = ENVIRONMENT_CARDS_DATA.map(e => ({...e, id: `env-${e.name}`, faction}));
           const allPool = [...allUnits, ...allAdvUnits, ...factionOrders, ...allAdvOrders, ...allEnvs];
 

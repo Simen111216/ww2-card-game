@@ -54,8 +54,8 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({ onClose }) => {
     // Add IDs to units/orders if they don't have them
     units = units.map(u => ({ ...u, id: `${faction}-unit-${u.name}`, type: CardType.UNIT, category: u.cat, deployCost: u.cost, attack: u.atk, defense: u.def, hp: u.hp, maxHp: u.hp, moveCost: 1, keywords: u.keywords || [] }));
     
-    const myAdvancedUnits = ADVANCED_CARDS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id)).map(c => ({...c, cat: c.cat, cost: c.cost, atk: c.atk, def: c.def, isAdvanced: true}));
-    const myAdvancedOrders = ADVANCED_ORDERS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id)).map(c => ({...c, isAdvanced: true}));
+    const myAdvancedUnits = ADVANCED_CARDS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id)).map(c => ({...c, category: c.cat, deployCost: c.cost, attack: c.atk, defense: c.def, hp: c.hp, maxHp: c.hp, moveCost: 1, description: c.desc, isAdvanced: true}));
+    const myAdvancedOrders = ADVANCED_ORDERS_DATA.filter(c => c.faction === faction && unlockedIds.includes(c.id)).map(c => ({...c, deployCost: c.cost, isAdvanced: true}));
     
     setAvailableCards([...units, ...myAdvancedUnits, ...orders, ...myAdvancedOrders, ...ENVIRONMENT_CARDS_DATA.map(e => ({...e, id: `env-${e.name}`, faction}))]);
 

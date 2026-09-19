@@ -1,6 +1,7 @@
 import { Game } from './Game';
 import { Player } from './Player';
 import { UnitCategory, Keyword, Faction, CardType, type UnitCard } from './types';
+import { AudioEngine } from './AudioEngine';
 
 export class KeywordEngine {
   // 1. 部署时触发 (onDeploy)
@@ -10,12 +11,14 @@ export class KeywordEngine {
       case 'german_6': // 陆上霸主 (虎式)
       case 'adv_2':    // 帝国终焉 (虎王)
         game.addLog(owner.name, `[${unit.name}] 触发专属词条，嘲讽全场！`, 'skill');
+        AudioEngine.playMetalClangSound();
         if (!unit.keywords.includes(Keyword.GUARD)) {
           unit.keywords.push(Keyword.GUARD);
         }
         break;
       case 'soviet_7': // 柏林先锋 (IS-2)
         game.addLog(owner.name, `[${unit.name}] 触发【柏林先锋】，获得护盾！`, 'skill');
+        AudioEngine.playMetalClangSound();
         unit.hasShield = true;
         break;
       case 'adv_3': // 天降奇兵 (101空降师)
@@ -23,6 +26,7 @@ export class KeywordEngine {
       case 'usa_2': // 丛林利刃 (游骑兵)
       case 'adv_4': // 暗夜绝杀 (SAS特种空勤团)
         game.addLog(owner.name, `[${unit.name}] 奇袭入场！无视敌方守护！`, 'skill');
+        AudioEngine.playSwooshSound();
         break;
       case 'usa_4': // 后期王牌 (M26 潘兴)
         game.addLog(owner.name, `[${unit.name}] 触发【后期王牌】，清除了我方所有负面效果！`, 'skill');
@@ -115,13 +119,27 @@ export class KeywordEngine {
             healed = true;
           }
         });
-        if (healed) game.addLog(player.name, `[${unit.name}] 触发【机动补给】，治愈了友军。`, 'skill');
+        if (healed) {
+          game.addLog(player.name, `[${unit.name}] 触发【机动补给】，治愈了友军。`, 'skill');
+          AudioEngine.playHealSound();
+        }
       }
 
       // usa_5: 持续压制 (M7牧师)
       if (unit.exclusiveId === 'usa_5') {
         game.addLog(player.name, `[${unit.name}] 触发【持续压制】，轰炸敌方后排！`, 'skill');
         opponent.board.filter(u => u.line === 'support').forEach(u => u.hp -= 1);
+      }
+
+      // soviet_3: 督战 (政委) - 每回合可让1个残血友军步兵单位立即行动一次
+      if (unit.exclusiveId === 'soviet_3') {
+        const lowHpInfantry = player.board.find(u => u.category === UnitCategory.INFANTRY && u.hp <= Math.floor(u.maxHp / 2) && u !== unit);
+        if (lowHpInfantry) {
+           // 给予一个临时标记，让它本回合可以攻击两次
+           (lowHpInfantry as any).extraAttackGranted = true;
+           game.addLog(player.name, `[${unit.name}] 触发【督战】，让残血的 [${lowHpInfantry.name}] 狂热，本回合可额外行动一次！`, 'skill');
+           AudioEngine.playWhistleSound();
+        }
       }
     });
   }
@@ -131,18 +149,21 @@ export class KeywordEngine {
     let attack = unit.attack;
     let defense = unit.defense;
     
-    let auraBonus = 0;
+    let humanWaveBonus = 0;
+    let otherAuraBonus = 0;
+    
     owner.board.forEach(u => {
-      if (u.exclusiveId === 'soviet_1' && unit.deployCost <= 2) auraBonus += 1; // 人海
-      if (u.exclusiveId === 'soviet_3' && unit.category === UnitCategory.INFANTRY && unit.faction === Faction.SOVIET) auraBonus += 2; // 督战
-      if (u.exclusiveId === 'german_5' && unit.category === UnitCategory.ARMOR && unit.deployCost >= 4 && unit.deployCost <= 7) auraBonus += 2; // 战场中坚
-      if (u.exclusiveId === 'usa_3') auraBonus += 1; // 工业洪流 (谢尔曼)
-      if (u.exclusiveId === 'france_6' && unit.exclusiveId === 'france_6' && owner.board.some(x => x.exclusiveId === 'france_1')) auraBonus += 3; // 复国雄鹰
-      if (u.exclusiveId === 'adv_5' && unit.faction === Faction.FRANCE) auraBonus += 2; // 光复山河 翻倍(简化为固定加成)
+      if (u.exclusiveId === 'soviet_1' && unit.deployCost <= 2) humanWaveBonus += 1; // 人海
+      if (u.exclusiveId === 'soviet_3' && unit.category === UnitCategory.INFANTRY && unit.faction === Faction.SOVIET && u !== unit) otherAuraBonus += 2; // 督战 (不加成自己)
+      if (u.exclusiveId === 'german_5' && unit.category === UnitCategory.ARMOR && unit.deployCost >= 4 && unit.deployCost <= 7) otherAuraBonus += 2; // 战场中坚
+      if (u.exclusiveId === 'usa_3') otherAuraBonus += 1; // 工业洪流 (谢尔曼)
+      if (u.exclusiveId === 'france_6' && unit.exclusiveId === 'france_6' && owner.board.some(x => x.exclusiveId === 'france_1')) otherAuraBonus += 3; // 复国雄鹰
+      if (u.exclusiveId === 'adv_5' && unit.faction === Faction.FRANCE) otherAuraBonus += 2; // 光复山河 翻倍(简化为固定加成)
     });
     
-    if (unit.deployCost <= 2 && auraBonus > 3) auraBonus = 3;
-    attack += auraBonus;
+    if (humanWaveBonus > 3) humanWaveBonus = 3; // 人海最多叠加3层
+    
+    attack += humanWaveBonus + otherAuraBonus;
 
     // 绝境坚守 (法国外籍军团)
     if (unit.exclusiveId === 'france_2') {
@@ -251,6 +272,7 @@ export class KeywordEngine {
       const maxDmg = Math.floor(defender.maxHp * 0.3);
       if (finalDamage > maxDmg) {
          game.addLog('系统', `[${defender.name}] 霸体生效，单次受伤不超过 30%！`, 'skill');
+         AudioEngine.playMetalClangSound();
          finalDamage = maxDmg;
       }
     }
@@ -261,6 +283,7 @@ export class KeywordEngine {
     }
     if (defender.exclusiveId === 'adv_5' && defender.hp <= Math.floor(defender.maxHp / 4)) {
       game.addLog('系统', `[${defender.name}] 触发光复山河，残血无敌！`, 'skill');
+      AudioEngine.playMetalClangSound();
       finalDamage = 0;
     }
     if (defender.exclusiveId === 'adv_1') {
@@ -322,6 +345,14 @@ export class KeywordEngine {
        (defender as UnitCard).hasMovedThisTurn = true; // 降低移速
        game.addLog(game.currentPlayer.name, `[${attacker.name}] 袭扰了目标，使其本回合无法移动和攻击！`, 'skill');
     }
+    
+    // 消耗额外攻击次数 (由政委等赋予)
+    if ((attacker as any).extraAttackGranted) {
+       (attacker as any).extraAttackGranted = false;
+       attacker.hasAttackedThisTurn = false;
+       attacker.hasMovedThisTurn = false;
+       game.addLog(game.currentPlayer.name, `[${attacker.name}] 消耗狂热状态，可以再次行动！`, 'skill');
+    }
   }
 
   // 7. 击杀后触发 (afterKill)
@@ -332,6 +363,7 @@ export class KeywordEngine {
     if (['uk_2', 'adv_3', 'adv_4'].includes(attacker.exclusiveId || '')) {
       attacker.hasAttackedThisTurn = false;
       game.addLog(owner.name, `[${attacker.name}] 触发奇袭，击杀目标后可再次行动！`, 'skill');
+      AudioEngine.playSwooshSound();
     }
     
     // 制空先锋
