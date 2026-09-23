@@ -25,6 +25,7 @@ export class KeywordEngine {
       case 'uk_2':  // 空降奇袭 (红魔伞兵)
       case 'usa_2': // 丛林利刃 (游骑兵)
       case 'adv_4': // 暗夜绝杀 (SAS特种空勤团)
+      case 'german_11': // 空降突袭 (德军伞兵)
         game.addLog(owner.name, `[${unit.name}] 奇袭入场！无视敌方守护！`, 'skill');
         AudioEngine.playSwooshSound();
         break;
@@ -35,6 +36,27 @@ export class KeywordEngine {
       case 'france_3': // 快速穿插 (S35 骑兵坦克)
         game.addLog(owner.name, `[${unit.name}] 触发【快速穿插】，直接突进前线！`, 'skill');
         unit.line = 'frontline';
+        break;
+      case 'usa_8': // 空投支援 (美军空降兵)
+        game.addLog(owner.name, `[${unit.name}] 触发【空投支援】，召唤大兵！`, 'skill');
+        const giToken: UnitCard = {
+          ...unit,
+          id: Math.random().toString(36).substring(7),
+          exclusiveId: 'usa_1', 
+          name: '大兵(G.I.)',
+          hp: 4, maxHp: 4, attack: 3, defense: 2, cost: 1,
+          hasAttackedThisTurn: true,
+          hasMovedThisTurn: true
+        };
+        owner.board.push(giToken);
+        break;
+      case 'uk_11': // 隐身突袭 (蚊式轰炸机)
+        game.addLog(owner.name, `[${unit.name}] 触发【隐身突袭】，首回合免疫防空锁定！`, 'skill');
+        unit.stealthThisTurn = true;
+        break;
+      case 'adv_8': // 全域空降 (82空降师)
+        game.addLog(owner.name, `[${unit.name}] 触发【全域空降】，突袭入场！`, 'skill');
+        AudioEngine.playSwooshSound();
         break;
     }
   }
@@ -91,6 +113,19 @@ export class KeywordEngine {
            owner.board.push(token);
         }
         break;
+      case 'adv_6': // 钢铁防线 (近卫反坦克连)
+        game.addLog(owner.name, `[${unit.name}] 阵亡，【钢铁防线】触发，留下反坦克地雷！`, 'skill');
+        const mine: UnitCard = {
+          id: `mine-${Math.random().toString(36).substring(7)}`,
+          name: '反坦克地雷',
+          type: CardType.UNIT, category: UnitCategory.INFANTRY, faction: Faction.SOVIET,
+          cost: 0, attack: 10, defense: 1, hp: 1, maxHp: 1, moveCost: 0,
+          keywords: [Keyword.AMBUSH], exclusiveId: 'token_mine',
+          hasMovedThisTurn: true, hasAttackedThisTurn: true, line: 'support',
+          desc: '对装甲单位造成毁灭性打击'
+        };
+        owner.board.push(mine);
+        break;
     }
   }
 
@@ -99,8 +134,18 @@ export class KeywordEngine {
     const opponent = game.currentPlayer === game.player1 ? game.player2 : game.player1;
 
     player.board.forEach(unit => {
-      // uk_4: 丘吉尔 免疫灼烧
-      if (unit.exclusiveId === 'uk_4') unit.burnStacks = 0;
+      // 重置隐身状态
+      if (unit.stealthThisTurn) {
+        unit.stealthThisTurn = false;
+      }
+
+      // uk_4: 丘吉尔 免疫灼烧 / uk_9: 马蒂尔达 免疫灼烧
+      if (unit.exclusiveId === 'uk_4' || unit.exclusiveId === 'uk_9') {
+        if (unit.burnStacks && unit.burnStacks > 0) {
+          unit.burnStacks = 0;
+          game.addLog(player.name, `[${unit.name}] 装甲极厚，免疫了灼烧伤害！`, 'skill');
+        }
+      }
 
       // 灼烧结算
       if (unit.burnStacks && unit.burnStacks > 0) {
@@ -140,6 +185,28 @@ export class KeywordEngine {
            game.addLog(player.name, `[${unit.name}] 触发【督战】，让残血的 [${lowHpInfantry.name}] 狂热，本回合可额外行动一次！`, 'skill');
            AudioEngine.playWhistleSound();
         }
+      }
+
+      // 阵地压制 (BT-7 快速坦克变种逻辑 / 150mm重炮)
+      if (unit.exclusiveId === 'soviet_12') {
+         // 这里可以叠加压制层数
+      }
+      
+      if (unit.exclusiveId === 'german_13') { // 150mm 重榴弹炮
+         if (!unit.chargeStacks) unit.chargeStacks = 0;
+         unit.chargeStacks += 1;
+         if (unit.chargeStacks >= 2) {
+            game.addLog(player.name, `[${unit.name}] 触发【重炮洗地】，全屏范围伤害！`, 'skill');
+            AudioEngine.playAttackSound(true);
+            opponent.board.forEach(u => {
+               u.hasShield = false; // 摧毁护盾
+               u.hp -= 3;
+            });
+            opponent.board = opponent.board.filter(u => u.hp > 0);
+            unit.chargeStacks = 0;
+         } else {
+            game.addLog(player.name, `[${unit.name}] 正在蓄力【重炮洗地】...`, 'skill');
+         }
       }
     });
   }
@@ -228,6 +295,44 @@ export class KeywordEngine {
       if (attacker.exclusiveId === 'france_5' && !attacker.hasMovedThisTurn) {
          finalDamage += 2; // 固守炮击 不移动伤害提升
       }
+      if (attacker.exclusiveId === 'soviet_12' && !defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
+         game.addLog(game.currentPlayer.name, `[${attacker.name}] 触发【高速穿插】，对非重甲单位伤害翻倍！`, 'skill');
+         finalDamage *= 2;
+      }
+      if (defender.category === UnitCategory.AIR_FORCE) {
+         if (attacker.exclusiveId === 'soviet_13') { // Pe-2
+           finalDamage += 2;
+         }
+      }
+      
+      // adv_7: 猎虎无视重甲
+      if (attacker.exclusiveId === 'adv_7') {
+         if (defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
+            finalDamage += 4;
+            game.addLog(game.currentPlayer.name, `[${attacker.name}] 触发【终极反坦】，重创敌方重甲！`, 'skill');
+         }
+      }
+      // german_14: Fw-190
+      if (attacker.exclusiveId === 'german_14' && defender.category === UnitCategory.AIR_FORCE) {
+         finalDamage += 3;
+      }
+      // usa_9: M18地狱猫
+      if (attacker.exclusiveId === 'usa_9' && defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
+         finalDamage += 3;
+      }
+      // usa_11: P-47雷电溅射
+      if (attacker.exclusiveId === 'usa_11' && defender.category !== UnitCategory.AIR_FORCE) {
+         const defOwner = game.currentPlayer.board.includes(defender) ? game.currentPlayer : (game.currentPlayer === game.player1 ? game.player2 : game.player1);
+         defOwner.board.forEach(u => {
+           if (u !== defender && u.line === defender.line) {
+             u.hp -= 1; // 溅射伤害
+           }
+         });
+      }
+      // france_9: 75mm破甲
+      if (attacker.exclusiveId === 'france_9' && defender.keywords.includes(Keyword.HEAVY_ARMOR)) {
+         finalDamage += 2;
+      }
     } else {
       if (attacker.exclusiveId === 'soviet_7') {
          finalDamage = Math.floor(finalDamage * 1.5); // 柏林先锋拆家
@@ -295,8 +400,26 @@ export class KeywordEngine {
 
     // 光环减伤
     const defOwner = game.currentPlayer.board.includes(defender) ? game.currentPlayer : (game.currentPlayer === game.player1 ? game.player2 : game.player1);
-    if (defender.category === UnitCategory.AIR_FORCE && defOwner.board.some(u => u.exclusiveId === 'usa_6')) {
-       finalDamage = Math.floor(finalDamage * 0.7); // 全域护航 空军免伤30%
+
+    // usa_6: 全域护航
+    if (attacker.exclusiveId !== 'usa_6' && !attacker.keywords.includes(Keyword.ANTI_AIR)) {
+      const hasMustang = defOwner.board.some(u => u.exclusiveId === 'usa_6');
+      if (hasMustang && (defender as UnitCard).category === UnitCategory.AIR_FORCE) {
+        game.addLog(defOwner.name, `P-51野马提供【全域护航】，免疫非防空火力！`, 'skill');
+        return 0; // 护航免伤
+      }
+    }
+    
+    // france_7: 马奇诺守备兵 (减免远程炮火)
+    const hasMaginot = defOwner.board.some(u => u.exclusiveId === 'france_7');
+    if (hasMaginot && attacker.category === UnitCategory.ARTILLERY) {
+      finalDamage = Math.max(1, finalDamage - 2);
+      game.addLog(defOwner.name, `马奇诺防线提供【壁垒坚守】，减免炮火伤害！`, 'skill');
+    }
+    
+    // adv_8: 82空降师 (临时免伤)
+    if ((defender as UnitCard).exclusiveId === 'adv_8' && (defender as any).stealthThisTurn) {
+       finalDamage = Math.max(0, finalDamage - 3);
     }
     if (defOwner.board.some(u => u.exclusiveId === 'uk_1' && u.line === defender.line)) {
        finalDamage = Math.floor(finalDamage * 0.85); // 英伦防线 同排15%免伤
@@ -345,6 +468,26 @@ export class KeywordEngine {
        (defender as UnitCard).hasMovedThisTurn = true; // 降低移速
        game.addLog(game.currentPlayer.name, `[${attacker.name}] 袭扰了目标，使其本回合无法移动和攻击！`, 'skill');
     }
+    if (attacker.exclusiveId === 'france_8' && defender !== 'hq') { // FCM 36 游击袭扰
+       (defender as UnitCard).defense = Math.max(0, (defender as UnitCard).defense - 1);
+       game.addLog(game.currentPlayer.name, `[${attacker.name}] 触发【游击袭扰】，降低目标护甲！`, 'skill');
+    }
+    if (attacker.exclusiveId === 'german_12' && defender !== 'hq' && (defender as UnitCard).category === UnitCategory.ARMOR) { // 三号突击炮
+       game.addLog(game.currentPlayer.name, `[${attacker.name}] 触发【反坦克专精】，清空目标重甲！`, 'skill');
+       (defender as UnitCard).keywords = (defender as UnitCard).keywords.filter(k => k !== Keyword.HEAVY_ARMOR);
+    }
+    if (attacker.exclusiveId === 'uk_10' && defender !== 'hq') { // 维克斯重机枪
+       game.addLog(game.currentPlayer.name, `[${attacker.name}] 触发【火力封锁】，压制目标！`, 'skill');
+       (defender as any).suppressed = true;
+    }
+    if (attacker.exclusiveId === 'soviet_11' && defender !== 'hq') { // 苏军狙击手
+       game.addLog(game.currentPlayer.name, `[${attacker.name}] 触发【精准狙杀】，直接削减目标最大生命值！`, 'skill');
+       const reduction = Math.floor((defender as UnitCard).maxHp * 0.3);
+       (defender as UnitCard).maxHp -= reduction;
+       if ((defender as UnitCard).hp > (defender as UnitCard).maxHp) {
+         (defender as UnitCard).hp = (defender as UnitCard).maxHp;
+       }
+    }
     
     // 消耗额外攻击次数 (由政委等赋予)
     if ((attacker as any).extraAttackGranted) {
@@ -358,6 +501,12 @@ export class KeywordEngine {
   // 7. 击杀后触发 (afterKill)
   public static afterKill(attacker: UnitCard, defender: UnitCard | 'hq', game: Game, owner: Player) {
     if (defender === 'hq') return;
+
+    // Fw-190 战斗机
+    if (attacker.exclusiveId === 'german_14' && defender.category === UnitCategory.AIR_FORCE) {
+      game.addLog(owner.name, `[${attacker.name}] 触发【高空压制】，击落敌机，永久提升攻击力！`, 'skill');
+      attacker.attack += 1;
+    }
 
     // 空降奇袭 / 天降奇兵 / 暗夜绝杀(高级潜伏)
     if (['uk_2', 'adv_3', 'adv_4'].includes(attacker.exclusiveId || '')) {
@@ -390,16 +539,29 @@ export class KeywordEngine {
        if (defender.exclusiveId === 'france_1' && defender.keywords.includes(Keyword.AMBUSH)) {
           return { valid: false, reason: `[${defender.name}] 处于潜伏状态，无法被锁定！` };
        }
+       if (attacker.exclusiveId === 'uk_11') { // 蚊式隐身首回合
+          if (defender.keywords.includes(Keyword.ANTI_AIR)) {
+             return { valid: false, reason: `隐身单位无法锁定防空火力！` };
+          }
+       }
+       if (defender.stealthThisTurn && attacker.category !== UnitCategory.ARTILLERY) {
+          return { valid: false, reason: `[${defender.name}] 处于潜伏状态，无法被普攻锁定！` };
+       }
     }
 
     if (attacker.category === UnitCategory.INFANTRY && defender !== 'hq' && defender.category === UnitCategory.AIR_FORCE) {
       return { valid: false, reason: `步兵 [${attacker.name}] 无法攻击空军 [${defender.name}]！` };
     }
 
-    const guards = pDef.board.filter(u => u.keywords.includes(Keyword.GUARD));
-    const hasAirborne = ['uk_2', 'usa_2', 'adv_3', 'adv_4'].includes(attacker.exclusiveId || '');
+    if (attacker.exclusiveId === 'usa_10' && attacker.line === 'support') { // M1迫击炮
+       return { valid: true }; // 曲射覆盖，无视前排
+    }
+
+    // 处理普通守护逻辑
+    const hasGuard = pDef.board.some(u => u.keywords.includes(Keyword.GUARD) && (defender === 'hq' || u.line === defender.line));
+    const hasAirborne = ['uk_2', 'usa_2', 'adv_3', 'adv_4', 'soviet_11', 'german_11', 'adv_8'].includes(attacker.exclusiveId || '');
     
-    if (guards.length > 0 && !hasAirborne) {
+    if (hasGuard && !hasAirborne) {
       if (defender === 'hq' || !defender.keywords.includes(Keyword.GUARD)) {
         return { valid: false, reason: `敌方存在守护单位，必须先攻击守护单位！` };
       }
