@@ -117,7 +117,8 @@ export function getSovietUnits(): any[] {
     { name: i18n.t('cards.unit_10.name'), cat: UnitCategory.ARMOR, cost: 7, atk: 6, def: 9, hp: 14, desc: i18n.t('cards.unit_10.desc'), keywords: [Keyword.HEAVY_ARMOR, Keyword.GUARD], exclusiveId: 'soviet_10', exclusiveName: i18n.t('cards.unit_10.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_10.exclusiveDesc') },
     { name: i18n.t('cards.unit_41.name'), cat: UnitCategory.INFANTRY, cost: 2, atk: 4, def: 1, hp: 2, desc: i18n.t('cards.unit_41.desc'), keywords: [Keyword.AMBUSH], exclusiveId: 'soviet_11', exclusiveName: i18n.t('cards.unit_41.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_41.exclusiveDesc') },
     { name: i18n.t('cards.unit_42.name'), cat: UnitCategory.ARMOR, cost: 3, atk: 4, def: 2, hp: 4, desc: i18n.t('cards.unit_42.desc'), keywords: [Keyword.BLITZ], exclusiveId: 'soviet_12', exclusiveName: i18n.t('cards.unit_42.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_42.exclusiveDesc') },
-    { name: i18n.t('cards.unit_43.name'), cat: UnitCategory.AIR_FORCE, cost: 6, atk: 7, def: 2, hp: 4, desc: i18n.t('cards.unit_43.desc'), keywords: [Keyword.BLITZ], exclusiveId: 'soviet_13', exclusiveName: i18n.t('cards.unit_43.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_43.exclusiveDesc') }
+    { name: i18n.t('cards.unit_43.name'), cat: UnitCategory.AIR_FORCE, cost: 6, atk: 7, def: 2, hp: 4, desc: i18n.t('cards.unit_43.desc'), keywords: [Keyword.BLITZ], exclusiveId: 'soviet_13', exclusiveName: i18n.t('cards.unit_43.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_43.exclusiveDesc') },
+    { name: i18n.t('cards.unit_60.name'), cat: UnitCategory.AIR_FORCE, cost: 6, atk: 8, def: 3, hp: 5, desc: i18n.t('cards.unit_60.desc'), keywords: [Keyword.BLITZ], exclusiveId: 'soviet_14', exclusiveName: i18n.t('cards.unit_60.exclusiveName'), exclusiveDesc: i18n.t('cards.unit_60.exclusiveDesc') }
   ];
 }
 

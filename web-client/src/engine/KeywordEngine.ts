@@ -303,6 +303,9 @@ export class KeywordEngine {
          if (attacker.exclusiveId === 'soviet_13') { // Pe-2
            finalDamage += 2;
          }
+         if (attacker.exclusiveId === 'soviet_14') { // La-5
+           finalDamage += 3; // 对敌方战斗机单位伤害增幅
+         }
       }
       
       // adv_7: 猎虎无视重甲
@@ -504,9 +507,21 @@ export class KeywordEngine {
 
     // Fw-190 战斗机
     if (attacker.exclusiveId === 'german_14' && defender.category === UnitCategory.AIR_FORCE) {
-      game.addLog(owner.name, `[${attacker.name}] 触发【高空压制】，击落敌机，永久提升攻击力！`, 'skill');
-      attacker.attack += 1;
-    }
+       game.addLog(owner.name, `[${attacker.name}] 触发【高空压制】，击落敌机，永久提升攻击力！`, 'skill');
+       attacker.attack += 1;
+     }
+
+     // La-5 战斗机 (红翼骁勇)
+     if (attacker.exclusiveId === 'soviet_14' && defender.category === UnitCategory.AIR_FORCE) {
+       game.addLog(owner.name, `[${attacker.name}] 触发【红翼骁勇】，击落敌机，全军空军战力提升！`, 'skill');
+       owner.board.forEach(u => {
+         if (u.category === UnitCategory.AIR_FORCE) {
+           u.attack += 1;
+           u.maxHp += 1;
+           u.hp += 1;
+         }
+       });
+     }
 
     // 空降奇袭 / 天降奇兵 / 暗夜绝杀(高级潜伏)
     if (['uk_2', 'adv_3', 'adv_4'].includes(attacker.exclusiveId || '')) {
